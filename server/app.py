@@ -6,7 +6,7 @@ app = Flask(__name__)
 app.config.from_object(__name__)
 
 # Enable CORS so our frontend application can access backend end-points
-CORS(app, resources={r'/*': {'origins': '*'}})
+CORS(app, resources={r'/*': {'origins': 'http://localhost:5173'}})
 
 # Class for handling DB connections and operations with psycopg
 class db_utils:
@@ -160,6 +160,22 @@ def get_release():
 
         return jsonify(data)
 
+@app.route('/signup', methods=['GET', 'POST', 'OPTIONS'])
+def user_signup():
+    if request.method == 'POST':
+        print(request.data)
+        return jsonify({})
+
+    return jsonify({})
+
+@app.route('/login', methods=['GET', 'POST', 'OPTIONS'])
+def user_login():
+    if request.method == 'POST':
+        print(request.data)
+        return jsonify({})
+
+    return jsonify({})
+
 @app.route('/ping', methods=['GET'])
 def ping_pong():
 
@@ -220,7 +236,8 @@ def ping_pong():
     # for res in results:
     #     print(res['title'])
 
-    return jsonify(discogs.get_all_master_releases_from_artist('Nirvana'))
+    response = jsonify(discogs.get_all_master_releases_from_artist('Nirvana'))
+    return response
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(port=5001, debug=True)
