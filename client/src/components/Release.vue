@@ -82,7 +82,7 @@ export default {
 	},
 	methods: {
 		getMessage() {
-			const path = 'http://localhost:5000/release/';
+			const path = 'http://localhost:5001/release/';
 			axios.get(path, {params: {release_id: this.$route.params.release_id}})
 				.then((res) => {
 					this.data = res.data.payload;
