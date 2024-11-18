@@ -81,7 +81,7 @@ export default {
     };
   },
   methods: {
-    getMessage() {
+    getRelease() {
       const path = 'http://localhost:5001/release/';
       axios.get(path, {params: {release_id: this.$route.params.release_id}})
         .then((res) => {
@@ -93,7 +93,7 @@ export default {
     },
   },
   created() {
-    this.getMessage();
+    this.getRelease();
   },
 };
 </script>
