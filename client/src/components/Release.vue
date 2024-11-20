@@ -1,5 +1,6 @@
 <template>
-  <div class="container">
+  <Navbar />
+  <div class="container mt-2">
     <div class="row">
       <h1>{{ data.artist[0].artist_name }} - {{ data.release[0].title }}</h1>
       <p>Country: {{ data.release[0].country }}</p>
@@ -72,9 +73,13 @@
 
 <script>
 import axios from 'axios';
+import Navbar from './Navbar.vue';
 
 export default {
   name: 'Release',
+  components: {
+    Navbar
+  },
   data() {
     return {
       data: [],
@@ -178,9 +183,10 @@ pre {
   background-color: #f4f6f8;
   padding: 15px;
   border-radius: 5px;
-  font-family: 'Courier New', monospace;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   font-size: 1rem;
   color: #7f8c8d;
+  white-space: pre-wrap;
 }
 
 .credit-list p {

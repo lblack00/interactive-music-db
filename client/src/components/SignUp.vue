@@ -1,4 +1,5 @@
 <template>
+  <Navbar />
   <div class='container mt-5'>
     <h2>Sign Up</h2>
     <form @submit.prevent='signup'>
@@ -25,9 +26,13 @@
 
 <script>
 import axios from 'axios';
+import Navbar from './Navbar.vue';
 
 export default {
   name: 'SignUp',
+  components: {
+    Navbar
+  },
   data() {
     return {
       username: '',

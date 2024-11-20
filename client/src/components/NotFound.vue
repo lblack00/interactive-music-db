@@ -1,4 +1,5 @@
 <template>
+  <Navbar />
   <div>
     <h1>404 - Page Not Found</h1>
     <p>The page you are looking for does not exist.</p>
@@ -6,8 +7,13 @@
 </template>
 
 <script>
+import Navbar from './Navbar.vue';
+
 export default {
-  name: 'NotFound' 
+  name: 'NotFound',
+  components: {
+    Navbar
+  }
 };
 </script>
 
