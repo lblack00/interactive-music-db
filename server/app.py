@@ -1,8 +1,12 @@
 import psycopg
+import os
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 
 app = Flask(__name__)
+data_directory = os.path.join(os.getcwd(), "data")
+artist_data_file = os.path.join(data_directory, "mock_artist_data.csv")
+release_data_file = os.path.join(data_directory, "mock_releases_data.csv")
 
 # Enable CORS so our frontend application can access backend end-points
 CORS(app, resources={r'/*': {'origins': 'http://localhost:5173'}})
@@ -236,6 +240,17 @@ def user_login():
         return jsonify({})
 
     return jsonify({})
+
+@app.route('/api/home', methods=['GET'])
+def get_home_data():
+    data = {
+        'welcomeMessage': 'Welcome to the Interactive Music Database!',
+        'featuredReleases': [
+            {'title': 'Nirvana - Nevermind', 'releaseYear': 1991},
+            {'title': 'The Beatles - Abbey Road', 'releaseYear': 1969}
+        ]
+    }
+    return jsonify(data)
 
 if __name__ == "__main__":
     app.run(port=5001, debug=True)
