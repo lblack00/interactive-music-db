@@ -38,9 +38,17 @@ export default {
         const response = await axios.post(path, {
           username: this.username,
           password: this.password
+        }, {
+          withCredentials: true
         });
 
         // handle successful login, redirect to different page
+        if (response.status == 200) {
+          alert('Log in successful!');
+          this.$router.push('/');
+        } else {
+          alert('Log in unsuccessful, please try again!');
+        }
       } catch (error) {
         console.error('Error: ', error);
       }

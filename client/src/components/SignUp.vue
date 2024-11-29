@@ -57,6 +57,12 @@ export default {
         });
 
         // handle successful login, redirect to different page
+        if (response.status == 201) {
+          alert('Sign up successful!');
+          this.$router.push('/');
+        } else {
+          alert('Sign up unsuccessful, please try again!');
+        }
       } catch (error) {
         console.error('Error: ', error);
       }

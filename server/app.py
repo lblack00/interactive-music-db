@@ -1,15 +1,24 @@
-import psycopg
+import json
 import os
-from flask import Flask, jsonify, request
+import psycopg
+from flask import Flask, jsonify, request, session, make_response
 from flask_cors import CORS
+from werkzeug.security import generate_password_hash, check_password_hash
 
 app = Flask(__name__)
+app.secret_key = os.urandom(16)
+app.config['SESSION_PERMANENT'] = False
+app.config['SESSION_TYPE'] = 'filesystem'
+app.config['SESSION_COOKIE_DOMAIN'] = 'localhost'
+app.config['SESSION_COOKIE_NAME'] = 'session'
+
+# Enable CORS so our frontend application can access backend end-points
+CORS(app, resources={r'/*': {'origins': 'http://localhost:5173'}},
+    supports_credentials=True)
+
 data_directory = os.path.join(os.getcwd(), "data")
 artist_data_file = os.path.join(data_directory, "mock_artist_data.csv")
 release_data_file = os.path.join(data_directory, "mock_releases_data.csv")
-
-# Enable CORS so our frontend application can access backend end-points
-CORS(app, resources={r'/*': {'origins': 'http://localhost:5173'}})
 
 # Class for handling DB connections and operations with psycopg
 class db_utils:
@@ -173,6 +182,29 @@ class master:
 
         return master.db.read_data(query)
 
+class users:
+    db = db_utils(dbname='users_db', user='postgres')
+
+    @staticmethod
+    def create_new_user(username, email, hashpass):
+        query = """INSERT INTO users (username, email, password)
+                          VALUES ('%s', '%s', '%s');""" % (username, email, hashpass)
+
+        users.db.mutate_data(query)
+
+    @staticmethod
+    def check_username_exists(username):
+        query = "SELECT * FROM users WHERE username='%s';" % username
+
+        return len(users.db.read_data(query)) > 0
+
+    @staticmethod
+    def validate_user(username, password):
+        query = "SELECT * FROM users WHERE username='%s';" % username
+        res = users.db.read_data(query)[0]['password']
+
+        return check_password_hash(res, password)
+
 @app.route('/release/', methods=['GET'])
 def get_release():
     if request.method == 'GET':
@@ -228,20 +260,70 @@ def get_master():
 @app.route('/signup', methods=['GET', 'POST', 'OPTIONS'])
 def user_signup():
     if request.method == 'POST':
-        print(request.data)
-        return jsonify({})
+        resp = json.loads(request.data)
 
-    return jsonify({})
+        username = resp['username']
+        email = resp['email']
+        password = resp['password']
+
+        if not username or not email or not password:
+            return jsonify({'error': 'Missing fields'}), 400
+
+        hashed_pass = generate_password_hash(password)
+
+        try:
+            users.create_new_user(username, email, hashed_pass)
+
+            session.modified = True
+            session['user'] = {'username': username, 'email': email}
+
+            return jsonify({'message': 'User created successfully'}), 201
+        except Exception as e:
+            print(e)
+            return jsonify({'error': 'User signup failed'}), 500
+
+    return jsonify({}), 200
 
 @app.route('/login', methods=['GET', 'POST', 'OPTIONS'])
 def user_login():
     if request.method == 'POST':
-        print(request.data)
-        return jsonify({})
+        resp = json.loads(request.data)
+        username = resp['username']
+        password = resp['password']
+        
+        if not username or not password:
+            return jsonify({'error': 'Missing fields'}), 400
 
-    return jsonify({})
+        if not users.check_username_exists(username):
+            return jsonify({'error': 'Username or password is incorrect'}), 401
 
-@app.route('/api/home', methods=['GET'])
+        if not users.validate_user(username, password):
+            return jsonify({'error': 'Username or password is incorrect'}), 401
+
+        session.modified = True
+        session['user'] = {'username': username}
+        return jsonify({'message': 'Log in successful'}), 200
+
+    return jsonify({}), 200
+
+@app.route('/logout', methods=['POST'])
+def user_logout():
+    session.modified = True
+    session.clear()
+
+    response = jsonify({'message': 'Logged out successfully'})
+    response.set_cookie('session', '', expires=0, domain='localhost', path='/')
+
+    return response, 200
+
+@app.route('/check-session', methods=['GET'])
+def user_check_session():
+    if 'user' in session:
+        return jsonify({'logged_in': True, 'user': session['user']}), 200
+    else:
+        return jsonify({'logged_in': False}), 200
+
+@app.route('/home', methods=['GET'])
 def get_home_data():
     data = {
         'welcomeMessage': 'Welcome to the Interactive Music Database!',
