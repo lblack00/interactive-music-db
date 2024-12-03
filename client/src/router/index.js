@@ -26,6 +26,11 @@ const router = createRouter({
       component: NotFound
     },
     {
+      path: '/',
+      name: 'Home',
+      component: Home
+    },
+    {
       path: '/signup',
       name: 'SignUp',
       component: SignUp
@@ -35,11 +40,6 @@ const router = createRouter({
       name: 'Login',
       component: Login
     },
-    {
-      path: '/',
-      name: 'Home',
-      component: Home
-    }
     {
       path: '/artistPage',
       name: 'ArtistPage',

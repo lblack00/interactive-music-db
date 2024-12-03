@@ -1,5 +1,8 @@
 import 'bootstrap/dist/css/bootstrap.css'
-// import './assets/main.css'
+// This v makes the navbar vertical  - MS
+import './assets/main.css'
+// Should be imported through main.css but I was unable to access it so I reimported it here - MS
+import './assets/base.css'
 
 import { createApp } from 'vue'
 import App from './App.vue'

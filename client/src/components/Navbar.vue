@@ -11,6 +11,7 @@
     <div v-else>
       <ul class="navbar-links">
         <li><router-link to="/">Home</router-link></li>
+        <li><router-link to="/artistPage">Feeling Lucky</router-link></li>
         <li><router-link to="/signup">Sign Up</router-link></li>
         <li><router-link to="/login">Log In</router-link></li>
       </ul>
@@ -71,6 +72,7 @@ export default {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  width: 100%;
 }
 
 .navbar-title {
