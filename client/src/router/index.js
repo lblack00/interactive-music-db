@@ -5,6 +5,7 @@ import NotFound from '../components/NotFound.vue'
 import SignUp from '../components/SignUp.vue'
 import Login from '../components/Login.vue'
 import Home from '../components/Home.vue'
+import ArtistPage from '../components/ArtistPage.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -38,6 +39,11 @@ const router = createRouter({
       path: '/',
       name: 'Home',
       component: Home
+    }
+    {
+      path: '/artistPage',
+      name: 'ArtistPage',
+      component: ArtistPage
     }
   ]
 })
