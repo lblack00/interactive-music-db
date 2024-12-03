@@ -3,7 +3,7 @@
     <div class="ElementPicture" :style="{ backgroundImage: 'url(' + (elementPicture || defaultPicture) + ')' }"></div>
     <div class="ElementScore">{{ formattedScore }}</div>
 
-    <div class="ElementName">{{ elementName }}</div>
+    <div class="ElementName"><a :href="'/' + elementType + '/' + elementName">{{ elementName }}</a></div>
 
     
   </div>
@@ -43,8 +43,8 @@ export default {
     // Compute the default image based on the elementType
     defaultPicture() {
       return this.elementType === 'artist'
-        ? '../client/src/assets/images/UnknownPerson.png'  // Default image for artist
-        : '../client/src/assets/images/UnknownSong.png';  // Default image for song
+        ? '/images/UnknownPerson.png'  // Default image for artist
+        : '/images/UnknownSong.png';  // Default image for song
     },
     formattedScore() {
       // Format the number to two decimal places

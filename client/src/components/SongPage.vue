@@ -3,53 +3,60 @@
   <div class="frame">
       <div class="div">
         <Navbar />
-        <!-- This is the artist picture/name -->
-        <div class="ArtistBlock">
-          <div class="artistPicture" :style="{ backgroundImage: 'url(' + (ArtistPicture) + ')' }"></div>
+        <!-- This is the Song picture/name -->
+        <div class="SongBlock">
+          <div class="SongPicture" />
 
-          <div class="ArtistName">{{ ArtistName }}</div>
+          <div class="SongName">Song Name</div>
         </div>
 
 
-        <!-- This is the artist Info -->
-        <div class="ArtistInfoBlock">
-          <div class="ArtistInfo">
-            <div class="ArtistInfoText">Aliases: Name 1, Name 2</div>
+        <!-- This is the Song Info -->
+        <div class="SongInfoBlock">
+          <div class="SongInfo">
+            <div class="SongInfoText">Song(s): Person 1, Person 2</div>
           </div>
 
-          <div class="ArtistInfo">
-            <div class="ArtistInfoText">Popularity: {{ ArtistPop }}</div>
+          <div class="SongInfo">
+            <div class="SongInfoText">Popularity: XXXXX</div>
           </div>
 
-          <div class="ArtistInfo">
-            <div class="ArtistInfoText">Score: {{ ArtistScore.toFixed(2) }}</div>
+          <div class="SongInfo">
+            <div class="SongInfoText">Score: 8.88</div>
           </div>
 
-          <div class="ArtistInfo">
-            <div class="ArtistInfoText">Date of Birth: {{ ArtistBD }}</div>
+          <div class="SongInfo">
+            <div class="SongInfoText">Release Date: MM/DD/YYYY</div>
           </div>
 
-          <div class="ArtistInfo">
-            <div class="ArtistInfoText">Birth Country: {{ ArtistBC }}</div>
+          <div class="SongInfo">
+            <div class="SongInfoText">Genre</div>
           </div>
 
-          <div class="ArtistInfo">
-            <div class="ArtistInfoText">
-              Member of: 
-              <a href="/band1">Band 1</a>,
-              <a href="/band2">Band 2</a>
-            </div>
+          <div class="SongInfo">
+            <div class="SongInfoText">Length: XXXX</div>
           </div>
 
-          <div class="ArtistInfo">
-            <div class="ArtistInfoText">ETC: XXXX</div>
+          <div class="SongInfo">
+            <div class="SongInfoText">Language: XXXX</div>
+          </div>
+
+
+          <div class="SongInfo">
+            <div class="SongInfoText">ETC: XXXX</div>
           </div>
         </div>
 
 
-        <!-- This is the artist About -->
+        <!-- This is the Song About -->
         <div class="OtherInfoBlcok">
-          <div class="SectionTitle">About</div>
+          <div class="about-wrapper">
+            <p class="about">
+              <span class="text-wrapper-4">&nbsp;&nbsp; </span>
+
+              <span class="SectionTitle">About</span>
+            </p>
+          </div>
 
           <div class="div-wrapper-2">
             <p class="p">
@@ -74,40 +81,43 @@
               reprehenderit in voluptate velit esse cillum dolore eu fugiat
               nulla pariatur. Excepteur sint occaecat cupidatat non proident,
               sunt in culpa qui officia deserunt mollit anim id est laborum.
-              
             </p>
           </div>
         </div>
 
-        <!-- This is the artist Discography -->
+        <!-- This is the Song Discography -->
         <div class="OtherInfoBlcok">
-          <div class="SectionTitle">Discography
-
-            <div class="div-8">
-              <div class="sort-by">Sort By</div>
-                <div class="div-9">
-                  <div class="text-wrapper-6">Popularity</div>
-                </div>
-              </div>
+          <div class="div-7">
+            <div class="discography">&nbsp;&nbsp; 
+              <span class="SectionTitle">Discography</span>
             </div>
 
-        <!-- This is the songs Discography -->
+            <div class="div-8">
+              <div class="sort-by">&nbsp;&nbsp;Sort By</div>
+
+              <div class="div-9">
+                <div class="text-wrapper-6">Popularity</div>
+              </div>
+            </div>
+          </div>
+
+        <!-- This is the related songs -->
         <div class="frame-wrapper">
-          <SongDisplayElement :elementType="'song'" :elementScore="7.50" :elementName="'SongPage'" />
+          <SongDisplayElement :elementType="'Song'" :elementScore="7.50" :elementName="'Holder'" />
           <SongDisplayElement />
           <SongDisplayElement />
           <SongDisplayElement />
           <SongDisplayElement />
         </div>
         <div class="frame-wrapper">
-          <SongDisplayElement :elementType="'song'" :elementScore="7.89" :elementName="'Holder'" />
+          <SongDisplayElement :elementType="'Song'" :elementScore="7.50" :elementName="'Holder'" />
           <SongDisplayElement />
           <SongDisplayElement />
           <SongDisplayElement />
           <SongDisplayElement />
         </div>
         <div class="frame-wrapper">
-          <SongDisplayElement :elementType="'song'" :elementScore="1.62" :elementName="'Holder'" />
+          <SongDisplayElement :elementType="'Song'" :elementScore="7.50" :elementName="'Holder'" />
           <SongDisplayElement />
           <SongDisplayElement />
           <SongDisplayElement />
@@ -123,37 +133,10 @@ import Navbar from './Navbar.vue';
 import SongDisplayElement from './DisplayElement.vue';
 
 export default {
-  name: 'ArtistPage',
+  name: 'SongPage',
   components: {
     Navbar,
     SongDisplayElement
-  },
-  props: {
-    // Declare the variables that will be passed from parent component
-    ArtistName: {
-      type: String,
-      default: 'Unknown Artist', // default to if not specified
-    },
-    ArtistPicture: {
-      type: String,
-      default: '/images/UnknownPerson.png'
-    },
-    ArtistPop: {
-      type: Number,
-      default: 0
-    },
-    ArtistScore: {
-      type: Number,
-      default: 5.00
-    },
-    ArtistBD: {
-      type: String,
-      default: 'MM/DD/YYYY'
-    },
-    ArtistBC: {
-      type: String,
-      default: 'Unknown'
-    }
   },
 };
 </script>
@@ -175,7 +158,7 @@ export default {
   width: 1900px;
 }
 
-.frame .ArtistBlock {
+.frame .SongBlock {
   background-color: #eaeaea;
   height: 528px;
   left: 46px;
@@ -184,18 +167,16 @@ export default {
   width: 470px;
 }
 
-.frame .artistPicture {
+.frame .SongPicture {
   background-color: #dd2424;
   height: 440px;
   left: 15px;
   position: absolute;
   top: 16px;
   width: 440px;
-  background-size: cover;
-  background-position: center;
 }
 
-.frame .ArtistName {
+.frame .SongName {
   color: #030303;
   font-family: var(--subtitle-font-family);
   font-size: var(--subtitle-font-size);
@@ -210,7 +191,7 @@ export default {
   width: 470px;
 }
 
-.frame .ArtistInfoBlock {
+.frame .SongInfoBlock {
   align-items: flex-start;
   background-color: #eaeaea;
   display: flex;
@@ -223,7 +204,7 @@ export default {
   width: 471px;
 }
 
-.frame .ArtistInfo {
+.frame .SongInfo {
   align-items: center;
   align-self: stretch;
   display: flex;
@@ -235,7 +216,7 @@ export default {
   width: 100%;
 }
 
-.frame .ArtistInfoText{
+.frame .SongInfoText{
   color: #000000;
   font-family: var(--single-line-body-base-font-family);
   font-size: var(--single-line-body-base-font-size);
@@ -316,7 +297,7 @@ export default {
 }
 
 .frame .SectionTitle {
-  color: #000000;
+  color:#000000;
   font-family: var(--subtitle-font-family);
   font-size: var(--subtitle-font-size);
   font-style: var(--subtitle-font-style);
@@ -324,10 +305,10 @@ export default {
   letter-spacing: var(--subtitle-letter-spacing);
   line-height: var(--subtitle-line-height);
   text-decoration: underline;
-  margin-left: 20px;
-  width:95%;
-  display: grid;
-  grid-template-columns: auto 1fr;
+  position: relative;
+  align-self:stretch;
+  height:40px;
+  width:max-content;
 }
 
 .frame .div-wrapper-2 {
@@ -384,7 +365,6 @@ export default {
 }
 
 .frame .div-8 {
-  margin-left: auto;
   align-items: flex-start;
   display: flex;
   flex-direction: column;
@@ -416,6 +396,14 @@ export default {
   overflow: hidden;
   position: relative;
   width: 100%;
+}
+
+.frame .chevron-down {
+  height: 32px !important;
+  left: 200px !important;
+  position: absolute !important;
+  top: 0 !important;
+  width: 23px !important;
 }
 
 .frame .text-wrapper-6 {
