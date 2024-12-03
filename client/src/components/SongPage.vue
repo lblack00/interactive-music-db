@@ -5,40 +5,42 @@
         <Navbar />
         <!-- This is the Song picture/name -->
         <div class="SongBlock">
-          <div class="SongPicture" />
+          <div class="SongPicture" :style="{ backgroundImage: 'url(' + (SongPicture) + ')' }"></div>
 
-          <div class="SongName">Song Name</div>
+          <div class="SongName">{{ SongName }}</div>
         </div>
 
 
         <!-- This is the Song Info -->
         <div class="SongInfoBlock">
           <div class="SongInfo">
-            <div class="SongInfoText">Song(s): Person 1, Person 2</div>
+            <div class="SongInfoText">Artists: 
+              <a :href="'/artist/' + ArtistName">{{ ArtistName }}</a>
+            </div>
           </div>
 
           <div class="SongInfo">
-            <div class="SongInfoText">Popularity: XXXXX</div>
+            <div class="SongInfoText">Popularity: {{ SongPop }}</div>
           </div>
 
           <div class="SongInfo">
-            <div class="SongInfoText">Score: 8.88</div>
+            <div class="SongInfoText">Score: {{ SongScore.toFixed(2) }}</div>
           </div>
 
           <div class="SongInfo">
-            <div class="SongInfoText">Release Date: MM/DD/YYYY</div>
+            <div class="SongInfoText">Release Date: {{ SongRD }}</div>
           </div>
 
           <div class="SongInfo">
-            <div class="SongInfoText">Genre</div>
+            <div class="SongInfoText">Genre(s): {{ Genres }}</div>
           </div>
 
           <div class="SongInfo">
-            <div class="SongInfoText">Length: XXXX</div>
+            <div class="SongInfoText">Length: {{ SongLength }}</div>
           </div>
 
           <div class="SongInfo">
-            <div class="SongInfoText">Language: XXXX</div>
+            <div class="SongInfoText">Language: {{ Language }}</div>
           </div>
 
 
@@ -50,13 +52,7 @@
 
         <!-- This is the Song About -->
         <div class="OtherInfoBlcok">
-          <div class="about-wrapper">
-            <p class="about">
-              <span class="text-wrapper-4">&nbsp;&nbsp; </span>
-
-              <span class="SectionTitle">About</span>
-            </p>
-          </div>
+          <div class="SectionTitle">About</div>
 
           <div class="div-wrapper-2">
             <p class="p">
@@ -81,43 +77,57 @@
               reprehenderit in voluptate velit esse cillum dolore eu fugiat
               nulla pariatur. Excepteur sint occaecat cupidatat non proident,
               sunt in culpa qui officia deserunt mollit anim id est laborum.
+              
             </p>
           </div>
         </div>
 
-        <!-- This is the Song Discography -->
         <div class="OtherInfoBlcok">
-          <div class="div-7">
-            <div class="discography">&nbsp;&nbsp; 
-              <span class="SectionTitle">Discography</span>
-            </div>
+          <div class="SectionTitle">Lyrics</div>
+
+          <div class="div-wrapper-2">
+            <p class="p">
+              Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do
+              eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut
+              enim ad minim veniam, quis nostrud exercitation ullamco laboris
+              nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in
+              reprehenderit in voluptate velit esse cillum dolore eu fugiat
+              nulla pariatur. Excepteur sint occaecat cupidatat non proident,
+              sunt in culpa qui officia deserunt mollit anim id est laborum.
+              Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do
+              eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut
+              enim ad minim veniam, quis nostrud exercitation ullamco laboris
+              nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in
+              reprehenderit in voluptate velit esse cillum dolore eu fugiat
+              nulla pariatur. Excepteur sint occaecat cupidatat non proident,
+              sunt in culpa qui officia deserunt mollit anim id est laborum.
+              Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do
+              eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut
+              enim ad minim veniam, quis nostrud exercitation ullamco laboris
+              nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in
+              reprehenderit in voluptate velit esse cillum dolore eu fugiat
+              nulla pariatur. Excepteur sint occaecat cupidatat non proident,
+              sunt in culpa qui officia deserunt mollit anim id est laborum.
+              
+            </p>
+          </div>
+        </div>
+
+        <!-- This is the Related Songs -->
+        <div class="OtherInfoBlcok">
+          <div class="SectionTitle">Related Songs
 
             <div class="div-8">
-              <div class="sort-by">&nbsp;&nbsp;Sort By</div>
-
-              <div class="div-9">
-                <div class="text-wrapper-6">Popularity</div>
+              <div class="sort-by">Sort By</div>
+                <div class="div-9">
+                  <div class="text-wrapper-6">Popularity</div>
+                </div>
               </div>
             </div>
-          </div>
 
-        <!-- This is the related songs -->
+        <!-- This is the songs Discography -->
         <div class="frame-wrapper">
-          <SongDisplayElement :elementType="'Song'" :elementScore="7.50" :elementName="'Holder'" />
-          <SongDisplayElement />
-          <SongDisplayElement />
-          <SongDisplayElement />
-          <SongDisplayElement />
-        </div>
-        <div class="frame-wrapper">
-          <SongDisplayElement :elementType="'Song'" :elementScore="7.50" :elementName="'Holder'" />
-          <SongDisplayElement />
-          <SongDisplayElement />
-          <SongDisplayElement />
-          <SongDisplayElement />
-        </div>
-        <div class="frame-wrapper">
-          <SongDisplayElement :elementType="'Song'" :elementScore="7.50" :elementName="'Holder'" />
+          <SongDisplayElement :elementType="'song'" :elementScore="7.50" :elementName="'SongPage'" />
           <SongDisplayElement />
           <SongDisplayElement />
           <SongDisplayElement />
@@ -137,6 +147,45 @@ export default {
   components: {
     Navbar,
     SongDisplayElement
+  },
+  props: {
+    // Declare the variables that will be passed from parent component
+    SongName: {
+      type: String,
+      default: 'Unknown Song', // default to if not specified
+    },
+    SongPicture: {
+      type: String,
+      default: '/images/UnknownSong.png'
+    },
+    SongPop: {
+      type: Number,
+      default: 0
+    },
+    SongScore: {
+      type: Number,
+      default: 5.00
+    },
+    SongRD: {
+      type: String,
+      default: 'MM/DD/YYYY'
+    },
+    Genres: {
+      type: String,
+      default: 'Unknown'
+    },
+    SongLength: {
+      type: String,
+      default: 'X:XX'
+    },
+    Language: {
+      type: String,
+      default: 'Unknown'
+    },
+    ArtistName: {
+      type: String,
+      default: 'ArtistPage'
+    }
   },
 };
 </script>
@@ -174,6 +223,8 @@ export default {
   position: absolute;
   top: 16px;
   width: 440px;
+  background-size: cover;
+  background-position: center;
 }
 
 .frame .SongName {
@@ -297,7 +348,7 @@ export default {
 }
 
 .frame .SectionTitle {
-  color:#000000;
+  color: #000000;
   font-family: var(--subtitle-font-family);
   font-size: var(--subtitle-font-size);
   font-style: var(--subtitle-font-style);
@@ -305,10 +356,10 @@ export default {
   letter-spacing: var(--subtitle-letter-spacing);
   line-height: var(--subtitle-line-height);
   text-decoration: underline;
-  position: relative;
-  align-self:stretch;
-  height:40px;
-  width:max-content;
+  margin-left: 20px;
+  width:95%;
+  display: grid;
+  grid-template-columns: auto 1fr;
 }
 
 .frame .div-wrapper-2 {
@@ -365,6 +416,7 @@ export default {
 }
 
 .frame .div-8 {
+  margin-left: auto;
   align-items: flex-start;
   display: flex;
   flex-direction: column;
@@ -396,14 +448,6 @@ export default {
   overflow: hidden;
   position: relative;
   width: 100%;
-}
-
-.frame .chevron-down {
-  height: 32px !important;
-  left: 200px !important;
-  position: absolute !important;
-  top: 0 !important;
-  width: 23px !important;
 }
 
 .frame .text-wrapper-6 {
