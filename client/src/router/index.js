@@ -6,6 +6,7 @@ import SignUp from '../components/SignUp.vue'
 import Login from '../components/Login.vue'
 import Home from '../components/Home.vue'
 import ArtistPage from '../components/ArtistPage.vue'
+import SongDisplayElement from '@/components/DisplayElement.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),

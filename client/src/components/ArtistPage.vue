@@ -1,68 +1,82 @@
 <template>
-  <Navbar />
   <!-- This is a comment -->
-  <div className="frame">
-      <div className="div">
+  <div class="frame">
+      <div class="div">
+        <Navbar />
         <!-- This is the artist picture/name -->
-        <div className="div-2">
-          <div className="artistPicture" />
+        <div class="ArtistBlock">
+          <div class="artistPicture" />
 
-          <div className="text-wrapper-2">Artist Name</div>
+          <div class="ArtistName">Artist Name</div>
         </div>
 
 
         <!-- This is the artist Info -->
-        <div className="ArtistInfo">
-          <div className="div-wrapper">
-            <div className="ArtistInfoText">Aliases: Name 1, Name 2</div>
+        <div class="ArtistInfoBlock">
+          <div class="ArtistInfo">
+            <div class="ArtistInfoText">Aliases: Name 1, Name 2</div>
           </div>
 
-          <div className="div-wrapper">
-            <div className="ArtistInfoText">Popularity: XXXXX</div>
+          <div class="ArtistInfo">
+            <div class="ArtistInfoText">Popularity: XXXXX</div>
           </div>
 
-          <div className="div-wrapper">
-            <div className="ArtistInfoText">Score: 8.88</div>
+          <div class="ArtistInfo">
+            <div class="ArtistInfoText">Score: 8.88</div>
           </div>
 
-          <div className="div-wrapper">
-            <div className="ArtistInfoText">Date of Birth: MM/DD/YYYY</div>
+          <div class="ArtistInfo">
+            <div class="ArtistInfoText">Date of Birth: MM/DD/YYYY</div>
           </div>
 
-          <div className="div-wrapper">
-            <div className="ArtistInfoText">Birth Country: United Kingdom</div>
+          <div class="ArtistInfo">
+            <div class="ArtistInfoText">Birth Country: United Kingdom</div>
           </div>
 
-          <div className="div-wrapper">
-            <div className="ArtistInfoText">
-              <span className="span">Member of: </span>
+          <div class="ArtistInfo">
+            <div class="ArtistInfoText">
+              <span class="span">Member of: </span>
 
-              <span className="text-wrapper-3">Group 1</span>
+              <span class="text-wrapper-3">Group 1</span>
 
-              <span className="span">, </span>
+              <span class="span">, </span>
 
-              <span className="text-wrapper-3">Group 2</span>
+              <span class="text-wrapper-3">Group 2</span>
             </div>
           </div>
 
-          <div className="div-wrapper">
-            <div className="ArtistInfoText">ETC: XXXX</div>
+          <div class="ArtistInfo">
+            <div class="ArtistInfoText">ETC: XXXX</div>
           </div>
         </div>
 
 
         <!-- This is the artist About -->
-        <div className="div-5">
-          <div className="about-wrapper">
-            <p className="about">
-              <span className="text-wrapper-4">&nbsp;&nbsp; </span>
+        <div class="OtherInfoBlcok">
+          <div class="about-wrapper">
+            <p class="about">
+              <span class="text-wrapper-4">&nbsp;&nbsp; </span>
 
-              <span className="SectionTitle">About</span>
+              <span class="SectionTitle">About</span>
             </p>
           </div>
 
-          <div className="div-wrapper-2">
-            <p className="p">
+          <div class="div-wrapper-2">
+            <p class="p">
+              Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do
+              eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut
+              enim ad minim veniam, quis nostrud exercitation ullamco laboris
+              nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in
+              reprehenderit in voluptate velit esse cillum dolore eu fugiat
+              nulla pariatur. Excepteur sint occaecat cupidatat non proident,
+              sunt in culpa qui officia deserunt mollit anim id est laborum.
+              Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do
+              eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut
+              enim ad minim veniam, quis nostrud exercitation ullamco laboris
+              nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in
+              reprehenderit in voluptate velit esse cillum dolore eu fugiat
+              nulla pariatur. Excepteur sint occaecat cupidatat non proident,
+              sunt in culpa qui officia deserunt mollit anim id est laborum.
               Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do
               eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut
               enim ad minim veniam, quis nostrud exercitation ullamco laboris
@@ -75,44 +89,57 @@
         </div>
 
         <!-- This is the artist Discography -->
-        <div className="div-5">
-          <div className="div-7">
-            <div className="discography">&nbsp;&nbsp; Discography</div>
+        <div class="OtherInfoBlcok">
+          <div class="div-7">
+            <div class="discography">&nbsp;&nbsp; 
+              <span class="SectionTitle">Discography</span>
+            </div>
 
-            <div className="div-8">
-              <div className="sort-by">&nbsp;&nbsp;Sort By</div>
+            <div class="div-8">
+              <div class="sort-by">&nbsp;&nbsp;Sort By</div>
 
-              <div className="div-9">
-                <Size48 className="chevron-down" />
-                <div className="text-wrapper-6">Popularity</div>
+              <div class="div-9">
+                <div class="text-wrapper-6">Popularity</div>
               </div>
             </div>
           </div>
 
-          <!-- This is the songs Discography -->
-          <div className="frame-wrapper">
-            <div className="displayElement">
-              <div className="ElementInfo">
-                <div className="ElementScore">8.88 </div>div>
-
-                <div className="ElementName" />
-              </div>
-
-              <div className="ElementPicture" />
-            </div>
-          </div>
+        <!-- This is the songs Discography -->
+        <div class="frame-wrapper">
+          <SongDisplayElement :elementType="'artist'" :elementScore="7.50" :elementName="'Holder'" />
+          <SongDisplayElement />
+          <SongDisplayElement />
+          <SongDisplayElement />
+          <SongDisplayElement />
+        </div>
+        <div class="frame-wrapper">
+          <SongDisplayElement :elementType="'artist'" :elementScore="7.50" :elementName="'Holder'" />
+          <SongDisplayElement />
+          <SongDisplayElement />
+          <SongDisplayElement />
+          <SongDisplayElement />
+        </div>
+        <div class="frame-wrapper">
+          <SongDisplayElement :elementType="'artist'" :elementScore="7.50" :elementName="'Holder'" />
+          <SongDisplayElement />
+          <SongDisplayElement />
+          <SongDisplayElement />
+          <SongDisplayElement />
         </div>
       </div>
     </div>
-  </template>
+  </div>
+</template>
 
 <script>
 import Navbar from './Navbar.vue';
+import SongDisplayElement from './DisplayElement.vue';
 
 export default {
   name: 'ArtistPage',
   components: {
-    Navbar
+    Navbar,
+    SongDisplayElement
   },
 };
 </script>
@@ -124,16 +151,17 @@ export default {
   flex-direction: row;
   justify-content: center;
   width: 100%;
+  height: auto;
 }
 
 .frame .div {
   background-color: #ffffff;
-  height: 1080px;
+  height: auto;
   position: relative;
-  width: 1920px;
+  width: 1900px;
 }
 
-.frame .div-2 {
+.frame .ArtistBlock {
   background-color: #eaeaea;
   height: 528px;
   left: 46px;
@@ -151,7 +179,7 @@ export default {
   width: 440px;
 }
 
-.frame .text-wrapper-2 {
+.frame .ArtistName {
   color: #030303;
   font-family: var(--subtitle-font-family);
   font-size: var(--subtitle-font-size);
@@ -166,7 +194,7 @@ export default {
   width: 470px;
 }
 
-.frame .ArtistInfo {
+.frame .ArtistInfoBlock {
   align-items: flex-start;
   background-color: #eaeaea;
   display: flex;
@@ -179,7 +207,7 @@ export default {
   width: 471px;
 }
 
-.frame .div-wrapper {
+.frame .ArtistInfo {
   align-items: center;
   align-self: stretch;
   display: flex;
@@ -224,7 +252,7 @@ export default {
   text-decoration: underline;
 }
 
-.frame .div-5 {
+.frame .OtherInfoBlcok {
   align-items: flex-start;
   background-color: #e9e9e9;
   display: flex;
@@ -234,8 +262,10 @@ export default {
   padding: 9px 12px;
   position: relative;
   margin-bottom: 30px;
+  margin-right: 1000px;
   top: 125px;
-  width: 1200px;
+  width: 1300px;
+  height: auto;
 }
 
 .frame .about-wrapper {
@@ -289,6 +319,7 @@ export default {
   padding: 2px 5px;
   position: relative;
   width: 100%;
+  height: auto;
 }
 
 .frame .p {
@@ -297,7 +328,7 @@ export default {
   font-size: var(--body-base-font-size);
   font-style: var(--body-base-font-style);
   font-weight: var(--body-base-font-weight);
-  height: 118px;
+  height: auto;
   letter-spacing: var(--body-base-letter-spacing);
   line-height: var(--body-base-line-height);
   margin-left: -0.50px;
@@ -391,61 +422,15 @@ export default {
 
 .frame .frame-wrapper {
   align-items: flex-start;
+  align-self: center;
   display: flex;
   flex: 0 0 auto;
   gap: 10px;
   margin-right: -24.00px;
   padding: 10px;
   position: relative;
-  width: 1323px;
+  width: 1200px;
 }
 
-.frame .displayElement {
-  height: 245px;
-  position: relative;
-  width: 215px;
-}
 
-.frame .ElementInfo {
-  height: 30px;
-  left: 0;
-  overflow: hidden;
-  position: absolute;
-  top: 215px;
-  width: 215px;
-}
-
-.frame .ElementScore {
-  background-color: #ffffff;
-  border: 1px solid;
-  border-color: #000000;
-  height: 30px;
-  left: 160px;
-  position: absolute;
-  top: 0;
-  width: 55px;
-  
-}
-
-.frame .ElementName {
-  background-color: #ffffff;
-  border: 1px solid;
-  border-color: #000000;
-  height: 30px;
-  left: 0;
-  position: absolute;
-  top: 0;
-  width: 160px;
-}
-
-.frame .ElementPicture {
-  background-color: #e91d1d;
-  border: 1px solid;
-  border-color: #000000;
-  height: 215px;
-  left: 0;
-  position: absolute;
-  top: 0;
-  width: 215px;
-}
 </style>
