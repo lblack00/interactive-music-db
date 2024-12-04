@@ -8,12 +8,15 @@
       </div>
 
       <div class="search-container">
-        <input 
-          type="text" 
-          v-model="searchQuery" 
-          class="search-bar" 
-          placeholder="Search..." 
-        />
+        <form @submit.prevent="performSearch" class="search-form">
+          <input 
+            type="text" 
+            v-model="searchQuery" 
+            class="search-bar" 
+            placeholder="Search..." 
+          />
+          <button type="submit" class="search-button">Search</button>
+        </form>
         <div v-if="searchQuery" class="search-results">
           <div class="result-item">Predictions/results here...</div>
           <div class="result-item">Predictions/results here...</div>
@@ -22,8 +25,8 @@
         <div class="dropdown-container">
           <select v-model="filterOption" class="filter-dropdown">
             <option value="Artists">Artists</option>
-            <option value="Songs">Songs</option>
-            <option value="Playlists">Playlists</option>
+            <option value="Releases">Releases</option>
+            <option value="Tracks">Tracks</option>
             <option value="Advanced Search">Advanced Search</option>
           </select>
           <select v-model="genreOption" class="filter-dropdown">
@@ -137,6 +140,22 @@ export default {
       } else {
         this.currentIndex[carousel] = 0;
       }
+    },
+    async performSearch() {
+      try {
+        this.$router.push({
+          name: 'SearchResults',
+          params: {
+            query: this.searchQuery.trim()
+          },
+          query: {
+            filterOption: this.filterOption,
+            genreOption: this.genreOption
+          }
+        });
+      } catch (error) {
+        console.error('Error: ', error);
+      }
     }
   },
 };
@@ -178,13 +197,38 @@ export default {
   width: 100%;
 }
 
+.search-form {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  margin-bottom: 20px;
+}
+
 .search-bar {
+  flex: 1;
   padding: 10px;
   font-size: 16px;
-  width: 50%;
-  margin-bottom: 10px;
+  margin-right: 10px;
   border: 1px solid #ccc;
   border-radius: 5px;
+  max-width: 600px;
+  box-sizing: border-box;
+}
+
+.search-button {
+  padding: 10px 20px;
+  font-size: 16px;
+  border: none;
+  border-radius: 5px;
+  background-color: green;
+  color: white;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.search-button:hover {
+  background-color: darkgreen;
 }
 
 .search-results {

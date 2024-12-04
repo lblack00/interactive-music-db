@@ -7,6 +7,8 @@ import Login from '../components/Login.vue'
 import Home from '../components/Home.vue'
 import ArtistPage from '../components/ArtistPage.vue'
 import SongPage from '@/components/SongPage.vue'
+import SearchResults from '../components/SearchResults.vue'
+
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
@@ -41,7 +43,7 @@ const router = createRouter({
       component: Login
     },
     {
-      path: '/artist/artistPage',
+      path: '/artist/:artist_id',
       name: 'ArtistPage',
       component: ArtistPage
     },
@@ -49,7 +51,17 @@ const router = createRouter({
       path: '/song/songPage',
       name: 'SongPage',
       component: SongPage
-    }
+    },
+    {
+      path: '/search/:query',
+      name: 'SearchResults',
+      component: SearchResults,
+      props: route => ({
+        query: route.params.query,
+        filterOption: route.query.filterOption,
+        genreOption: route.query.genreOption
+      }),
+    },
   ]
 })
 

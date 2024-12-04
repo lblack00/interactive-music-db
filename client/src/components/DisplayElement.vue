@@ -3,15 +3,11 @@
     <div class="ElementPicture" :style="{ backgroundImage: 'url(' + (elementPicture || defaultPicture) + ')' }"></div>
     <div class="ElementScore">{{ formattedScore }}</div>
 
-    <div class="ElementName"><a :href="'/' + elementType + '/' + elementName">{{ elementName }}</a></div>
-
-    
+    <div class="ElementName"><a :href="'/' + elementType + '/' + elementID">{{ elementName }}</a></div>
   </div>
 </template>
 
 <script>
-
-
 export default {
   name: 'SongDisplayElement',
   // When passing in values, surrond them with parentheses (ie. :elementName="'Holder'" :elementScore="7.56")
@@ -19,10 +15,10 @@ export default {
     // Declare the variables that will be passed from parent component
     elementType: {
       type: String,
-      default: 'song', // default to 'song' if not specified
+      default: 'master', // default to 'master' if not specified
       validator(value) {
         // Only allow 'artist' or 'song'
-        return ['artist', 'song'].includes(value);
+        return ['artist', 'release', 'master'].includes(value);
       }
     },
     elementPicture: {
@@ -32,6 +28,10 @@ export default {
     elementScore: {
       type: Number,
       default: 8.88
+    },
+    elementID: {
+      type: Number,
+      default: 367084
     },
     elementName: {
       type: String,

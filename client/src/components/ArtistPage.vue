@@ -1,117 +1,93 @@
 <template>
+  <Navbar />
   <!-- This is a comment -->
   <div class="frame">
       <div class="div">
-        <Navbar />
-        <!-- This is the artist picture/name -->
-        <div class="ArtistBlock">
-          <div class="artistPicture" :style="{ backgroundImage: 'url(' + (ArtistPicture) + ')' }"></div>
+        <div class="left-column">
+          <!-- This is the artist picture/name -->
+          <div class="ArtistBlock">
+            <div class="artistPicture" :style="{ backgroundImage: 'url(' + (ArtistPicture) + ')' }"></div>
 
-          <div class="ArtistName">{{ ArtistName }}</div>
-        </div>
-
-
-        <!-- This is the artist Info -->
-        <div class="ArtistInfoBlock">
-          <div class="ArtistInfo">
-            <div class="ArtistInfoText">Aliases: Name 1, Name 2</div>
+            <div class="ArtistName">{{ data.artist[0].name }}</div>
           </div>
 
-          <div class="ArtistInfo">
-            <div class="ArtistInfoText">Popularity: {{ ArtistPop }}</div>
-          </div>
 
-          <div class="ArtistInfo">
-            <div class="ArtistInfoText">Score: {{ ArtistScore.toFixed(2) }}</div>
-          </div>
-
-          <div class="ArtistInfo">
-            <div class="ArtistInfoText">Date of Birth: {{ ArtistBD }}</div>
-          </div>
-
-          <div class="ArtistInfo">
-            <div class="ArtistInfoText">Birth Country: {{ ArtistBC }}</div>
-          </div>
-
-          <div class="ArtistInfo">
-            <div class="ArtistInfoText">
-              Member of: 
-              <a href="/band1">Band 1</a>,
-              <a href="/band2">Band 2</a>
+          <!-- This is the artist Info -->
+          <div class="ArtistInfoBlock">
+            <div class="ArtistInfo">
+              <div class="ArtistInfoText">Aliases: Name 1, Name 2</div>
             </div>
-          </div>
 
-          <div class="ArtistInfo">
-            <div class="ArtistInfoText">ETC: XXXX</div>
-          </div>
-        </div>
+            <div class="ArtistInfo">
+              <div class="ArtistInfoText">Popularity: {{ ArtistPop }}</div>
+            </div>
 
+            <div class="ArtistInfo">
+              <div class="ArtistInfoText">Score: {{ ArtistScore.toFixed(2) }}</div>
+            </div>
 
-        <!-- This is the artist About -->
-        <div class="OtherInfoBlcok">
-          <div class="SectionTitle">About</div>
+            <div class="ArtistInfo">
+              <div class="ArtistInfoText">Date of Birth: {{ ArtistBD }}</div>
+            </div>
 
-          <div class="div-wrapper-2">
-            <p class="p">
-              Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do
-              eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut
-              enim ad minim veniam, quis nostrud exercitation ullamco laboris
-              nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in
-              reprehenderit in voluptate velit esse cillum dolore eu fugiat
-              nulla pariatur. Excepteur sint occaecat cupidatat non proident,
-              sunt in culpa qui officia deserunt mollit anim id est laborum.
-              Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do
-              eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut
-              enim ad minim veniam, quis nostrud exercitation ullamco laboris
-              nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in
-              reprehenderit in voluptate velit esse cillum dolore eu fugiat
-              nulla pariatur. Excepteur sint occaecat cupidatat non proident,
-              sunt in culpa qui officia deserunt mollit anim id est laborum.
-              Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do
-              eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut
-              enim ad minim veniam, quis nostrud exercitation ullamco laboris
-              nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in
-              reprehenderit in voluptate velit esse cillum dolore eu fugiat
-              nulla pariatur. Excepteur sint occaecat cupidatat non proident,
-              sunt in culpa qui officia deserunt mollit anim id est laborum.
-              
-            </p>
-          </div>
-        </div>
+            <div class="ArtistInfo">
+              <div class="ArtistInfoText">Birth Country: {{ ArtistBC }}</div>
+            </div>
 
-        <!-- This is the artist Discography -->
-        <div class="OtherInfoBlcok">
-          <div class="SectionTitle">Discography
-
-            <div class="div-8">
-              <div class="sort-by">Sort By</div>
-                <div class="div-9">
-                  <div class="text-wrapper-6">Popularity</div>
-                </div>
+            <div class="ArtistInfo">
+              <div class="ArtistInfoText">
+                Member of: 
+                <a href="/band1">Band 1</a>,
+                <a href="/band2">Band 2</a>
               </div>
             </div>
 
-        <!-- This is the songs Discography -->
-        <div class="frame-wrapper">
-          <SongDisplayElement :elementType="'song'" :elementScore="7.50" :elementName="'SongPage'" />
-          <SongDisplayElement />
-          <SongDisplayElement />
-          <SongDisplayElement />
-          <SongDisplayElement />
+            <div class="ArtistInfo">
+              <div class="ArtistInfoText">ETC: XXXX</div>
+            </div>
+          </div>
         </div>
-        <div class="frame-wrapper">
-          <SongDisplayElement :elementType="'song'" :elementScore="7.89" :elementName="'Holder'" />
-          <SongDisplayElement />
-          <SongDisplayElement />
-          <SongDisplayElement />
-          <SongDisplayElement />
-        </div>
-        <div class="frame-wrapper">
-          <SongDisplayElement :elementType="'song'" :elementScore="1.62" :elementName="'Holder'" />
-          <SongDisplayElement />
-          <SongDisplayElement />
-          <SongDisplayElement />
-          <SongDisplayElement />
+
+        <div class="right-column">
+          <!-- This is the artist About -->
+          <div class="OtherInfoBlcok">
+            <div class="SectionTitle">About</div>
+
+            <div class="div-wrapper-2">
+              <p class="p">
+                {{ data.artist[0].profile }}
+              </p>
+            </div>
+          </div>
+
+          <!-- This is the artist Discography -->
+          <div class="OtherInfoBlcok">
+            <div class="SectionTitle">Discography
+
+              <div class="div-8">
+                <div class="sort-by">Sort By</div>
+                  <div class="div-9">
+                    <div class="text-wrapper-6">Popularity</div>
+                  </div>
+                </div>
+              </div>
+
+          <!-- This is the songs Discography -->
+          <div class="frame-wrapper">
+            <div v-for="n in 5" :key="n">
+              <SongDisplayElement :elementName="data.discography[n].title" :elementID="data.discography[n].master_id" />
+            </div>
+          </div>
+          <div class="frame-wrapper">
+            <div v-for="n in 5" :key="n">
+              <SongDisplayElement :elementName="data.discography[n + 5].title" :elementID="data.discography[n + 5].master_id" />
+            </div>
+          </div>
+          <div class="frame-wrapper">
+            <div v-for="n in 5" :key="n">
+              <SongDisplayElement :elementName="data.discography[n + 10].title" :elementID="data.discography[n + 10].master_id" />
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -119,6 +95,7 @@
 </template>
 
 <script>
+import axios from 'axios';
 import Navbar from './Navbar.vue';
 import SongDisplayElement from './DisplayElement.vue';
 
@@ -127,6 +104,11 @@ export default {
   components: {
     Navbar,
     SongDisplayElement
+  },
+  data() {
+    return {
+      data: [],
+    };
   },
   props: {
     // Declare the variables that will be passed from parent component
@@ -155,6 +137,23 @@ export default {
       default: 'Unknown'
     }
   },
+  methods: {
+    getArtist() {
+      const path = 'http://localhost:5001/artist';
+      axios.get(path, {params: {artist_id: this.$route.params.artist_id}})
+        .then((res) => {
+          this.data = res.data.payload;
+
+          this.ArtistName = this.data.name;
+        })
+        .catch((error) => {
+          console.log(error);
+        });
+    },
+  },
+  created() {
+    this.getArtist();
+  },
 };
 </script>
 
@@ -167,6 +166,21 @@ export default {
   width: 100%;
   height: auto;
 }
+
+.frame .left-column {
+  width: 40%;
+  display: flex;
+  flex-direction: column;
+  gap: 20px; /* Space between the blocks */
+}
+
+.frame .right-column {
+  width: 55%;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
 
 .frame .div {
   background-color: #ffffff;
@@ -445,6 +459,4 @@ export default {
   position: relative;
   width: 1200px;
 }
-
-
 </style>

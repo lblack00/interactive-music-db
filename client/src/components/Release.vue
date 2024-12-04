@@ -2,7 +2,7 @@
   <Navbar />
   <div class="container mt-2">
     <div class="row">
-      <h1>{{ data.artist[0].artist_name }} - {{ data.release[0].title }}</h1>
+      <h1><router-link :to="`/artist/${data.artist[0].artist_id}`">{{ data.artist[0].artist_name }}</router-link> - {{ data.release[0].title }}</h1>
       <p>Country: {{ data.release[0].country }}</p>
       <p>Released: {{ data.release[0].released }}</p>
       <p>Genre: {{ data.genre.map(entry => entry.genre).join(', ') }} </p>

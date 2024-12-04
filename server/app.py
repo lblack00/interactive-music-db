@@ -16,10 +16,6 @@ app.config['SESSION_COOKIE_NAME'] = 'session'
 CORS(app, resources={r'/*': {'origins': 'http://localhost:5173'}},
     supports_credentials=True)
 
-data_directory = os.path.join(os.getcwd(), "data")
-artist_data_file = os.path.join(data_directory, "mock_artist_data.csv")
-release_data_file = os.path.join(data_directory, "mock_releases_data.csv")
-
 # Class for handling DB connections and operations with psycopg
 class db_utils:
     def __init__(self, dbname, user):
@@ -182,6 +178,44 @@ class master:
 
         return master.db.read_data(query)
 
+class artist:
+    db = db_utils(dbname='discogs_db', user='postgres')
+
+    @staticmethod
+    def get_artist(artist_id):
+        query = "SELECT * FROM artist WHERE id=%d;" % artist_id
+
+        return artist.db.read_data(query)
+
+    @staticmethod
+    def get_discography(artist_id):
+        query = """SELECT * FROM master_artist
+                   JOIN master ON master.id=master_artist.master_id
+                   WHERE artist_id='%s' LIMIT 20;""" % artist_id
+
+        return artist.db.read_data(query)
+
+class search:
+    db = db_utils(dbname='discogs_db', user='postgres')
+
+    @staticmethod
+    def search_artist(artist_name):
+        query = "SELECT * FROM artist WHERE LOWER(name) LIKE '%s' LIMIT 25;" % artist_name.lower()
+
+        return search.db.read_data(query)
+
+    @staticmethod
+    def search_release(release_name):
+        query = "SELECT * FROM master WHERE LOWER(title) LIKE '%s' LIMIT 25;" % release_name.lower()
+
+        return search.db.read_data(query)
+
+    @staticmethod
+    def search_track(track_name):
+        query = "SELECT * FROM release_track WHERE LOWER(title) LIKE '%s' LIMIT 25;" % track_name.lower()
+
+        return search.db.read_data(query)
+
 class users:
     db = db_utils(dbname='users_db', user='postgres')
 
@@ -257,6 +291,21 @@ def get_master():
 
         return jsonify(data)
 
+@app.route('/artist', methods=['GET'])
+def get_artist():
+    if request.method == 'GET':
+        artist_id = int(request.args.get('artist_id'))
+
+        # todo: can add more here
+        data = {
+            'payload': {
+                'artist': artist.get_artist(artist_id),
+                'discography': artist.get_discography(artist_id)
+            }
+        }
+
+        return jsonify(data)
+
 @app.route('/signup', methods=['GET', 'POST', 'OPTIONS'])
 def user_signup():
     if request.method == 'POST':
@@ -323,16 +372,23 @@ def user_check_session():
     else:
         return jsonify({'logged_in': False}), 200
 
-@app.route('/home', methods=['GET'])
-def get_home_data():
-    data = {
-        'welcomeMessage': 'Welcome to the Interactive Music Database!',
-        'featuredReleases': [
-            {'title': 'Nirvana - Nevermind', 'releaseYear': 1991},
-            {'title': 'The Beatles - Abbey Road', 'releaseYear': 1969}
-        ]
-    }
-    return jsonify(data)
+@app.route('/search', methods=['POST'])
+def user_search():
+    datum = json.loads(request.data)
+    if 'filterOption' in datum:
+        if datum['filterOption'].lower() == 'artists':
+            results = search.search_artist(datum['query'])
+            return jsonify({'results': results}), 200
+
+        elif datum['filterOption'].lower() == 'releases':
+            results = search.search_release(datum['query'])
+            return jsonify({'results': results}), 200
+
+        elif datum['filterOption'].lower() == 'tracks':
+            results = search.search_track(datum['query'])
+            return jsonify({'results': results}), 200
+
+    return jsonify({'results':[]}), 200
 
 if __name__ == "__main__":
     app.run(port=5001, debug=True)
