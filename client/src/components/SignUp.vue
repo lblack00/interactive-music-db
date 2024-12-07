@@ -1,3 +1,4 @@
+<!-- This file was written by Lucas Black -->
 <template>
   <Navbar />
   <div class='container mt-5'>

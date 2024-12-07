@@ -1,3 +1,4 @@
+<!-- This file was written by Lucas Black -->
 <template>
   <nav class="navbar">
     <div class="navbar-title">Interactive Music Database</div>

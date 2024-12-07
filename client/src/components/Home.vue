@@ -141,6 +141,7 @@ export default {
         this.currentIndex[carousel] = 0;
       }
     },
+    // The function performSearch() was written by Lucas Black
     async performSearch() {
       try {
         this.$router.push({
