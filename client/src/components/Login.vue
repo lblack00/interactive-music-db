@@ -30,7 +30,16 @@ export default {
     return {
       username: '',
       password: '',
+      returnPath: '/'
     };
+  },
+  created() {
+    // Get return path from URL query parameters
+    const returnTo = this.$route.query.returnTo;
+    if (returnTo) {
+      this.returnPath = returnTo;
+      console.log('Setting return path to:', returnTo);
+    }
   },
   methods: {
     async login() {
@@ -43,15 +52,16 @@ export default {
           withCredentials: true
         });
 
-        // handle successful login, redirect to different page
         if (response.status == 200) {
-          alert('Log in successful!');
-          this.$router.push('/');
+          console.log('Login successful, returning to:', this.returnPath);
+          // Use replace instead of push to avoid browser history issues
+          await this.$router.replace(this.returnPath);
         } else {
-          alert('Log in unsuccessful, please try again!');
+          alert('Login unsuccessful, please try again!');
         }
       } catch (error) {
-        console.error('Error: ', error);
+        console.error('Login error:', error);
+        alert('Login failed. Please check your credentials and try again.');
       }
     },
   },

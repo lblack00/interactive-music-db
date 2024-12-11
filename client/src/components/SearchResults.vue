@@ -10,10 +10,14 @@
           <router-link :to="`/artist/${result.id}`">{{ result.name }}</router-link>
         </div>
         <div v-else-if="filterOption === 'Releases'">
-          <router-link :to="`/master/${result.id}`">{{ result.title }}</router-link>
+          <router-link :to="`/master/${result.id}`">
+            {{ result.title }} ({{ result.year }}) - {{ result.artists }}
+          </router-link>
         </div>
         <div v-else-if="filterOption === 'Tracks'">
-          <router-link :to="`/release/${result.release_id}`">{{ result.title }}</router-link>
+          <router-link :to="`/release/${result.release_id}`">
+            {{ result.title }} - {{ result.release_title }} ({{ result.released }})
+          </router-link>
         </div>
       </div>
     </div>

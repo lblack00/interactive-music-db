@@ -5,17 +5,39 @@ import psycopg
 from flask import Flask, jsonify, request, session, make_response
 from flask_cors import CORS
 from werkzeug.security import generate_password_hash, check_password_hash
+from flask_jwt_extended import JWTManager, jwt_required, get_jwt_identity, create_access_token
+from datetime import timedelta
 
 app = Flask(__name__)
 app.secret_key = os.urandom(16)
-app.config['SESSION_PERMANENT'] = False
-app.config['SESSION_TYPE'] = 'filesystem'
+
+# Session configuration
+app.config['SESSION_COOKIE_SECURE'] = False  # Set to True in production with HTTPS
+app.config['SESSION_COOKIE_HTTPONLY'] = True
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 app.config['SESSION_COOKIE_DOMAIN'] = 'localhost'
-app.config['SESSION_COOKIE_NAME'] = 'session'
+app.config['SESSION_COOKIE_PATH'] = '/'
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=7)  # Session lasts 7 days
+
+# JWT Configuration
+app.config["JWT_SECRET_KEY"] = "your-secret-key"  # Change this to a secure secret key
+jwt = JWTManager(app)
 
 # Enable CORS so our frontend application can access backend end-points
-CORS(app, resources={r'/*': {'origins': 'http://localhost:5173'}},
-    supports_credentials=True)
+CORS(app, 
+    resources={r'/*': {'origins': 'http://localhost:5173'}},
+    supports_credentials=True,
+    expose_headers=['Set-Cookie'],
+    allow_headers=['Content-Type', 'Authorization', 'Access-Control-Allow-Credentials'])
+
+# Add CORS headers to all responses
+@app.after_request
+def after_request(response):
+    response.headers.add('Access-Control-Allow-Origin', 'http://localhost:5173')
+    response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
+    response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
+    response.headers.add('Access-Control-Allow-Credentials', 'true')
+    return response
 
 # Class for handling DB connections and operations with psycopg
 class db_utils:
@@ -40,12 +62,21 @@ class db_utils:
     def mutate_data(self, query=""):
         conn = psycopg.Connection.connect("dbname=%s user=%s" % (self.dbname, self.user))
 
-        with conn.cursor() as cur:
-            # could add a database logger here
-            cur.execute(query)
-
-        conn.commit()
-        conn.close()
+        try:
+            with conn.cursor() as cur:
+                cur.execute(query)
+                if cur.description:  # Check if the query returns data
+                    result = cur.fetchall()  # Get any returned data
+                else:
+                    result = None
+            conn.commit()  # Commit the transaction
+            return result
+        except Exception as e:
+            print(f"Database error: {e}")
+            conn.rollback()  # Rollback on error
+            raise e
+        finally:
+            conn.close()
 
 # Class for building SQL release queries and handing them to database connection
 class release:
@@ -184,7 +215,12 @@ class artist:
 
     @staticmethod
     def get_artist(artist_id):
-        query = "SELECT * FROM artist WHERE id=%d;" % artist_id
+        query = """
+            SELECT a.*, ai.uri as image_uri 
+            FROM artist a
+            LEFT JOIN artist_image ai ON a.id = ai.artist_id
+            WHERE a.id=%d;
+        """ % artist_id
 
         return artist.db.read_data(query)
 
@@ -201,20 +237,47 @@ class search:
 
     @staticmethod
     def search_artist(artist_name):
-        query = "SELECT * FROM artist WHERE LOWER(name) LIKE '%s' LIMIT 25;" % artist_name.lower()
-
+        query = "SELECT * FROM artist WHERE LOWER(name) LIKE '%%%s%%' LIMIT 25;" % artist_name.lower()
         return search.db.read_data(query)
 
     @staticmethod
     def search_release(release_name):
-        query = "SELECT * FROM master WHERE LOWER(title) LIKE '%s' LIMIT 25;" % release_name.lower()
-
+        query = """
+            SELECT 
+                m.id, 
+                m.title, 
+                COALESCE(m.year::text, 'N/A') as year,
+                COALESCE(
+                    (
+                        SELECT STRING_AGG(a.name, ', ')
+                        FROM master_artist ma
+                        JOIN artist a ON ma.artist_id = a.id
+                        WHERE ma.master_id = m.id
+                    ),
+                    'Unknown Artist'
+                ) as artists
+            FROM master m
+            WHERE LOWER(m.title) LIKE '%%%s%%'
+            ORDER BY m.year DESC
+            LIMIT 25;
+        """ % release_name.lower()
         return search.db.read_data(query)
 
     @staticmethod
     def search_track(track_name):
-        query = "SELECT * FROM release_track WHERE LOWER(title) LIKE '%s' LIMIT 25;" % track_name.lower()
-
+        query = """
+            SELECT 
+                rt.title as title,           -- track title
+                rt.release_id,
+                r.title as release_title,    -- album title
+                COALESCE(r.released, 'N/A') as released  -- year with fallback
+            FROM release_track rt
+            JOIN release r ON rt.release_id = r.id
+            WHERE LOWER(rt.title) LIKE '%%%s%%'
+            GROUP BY rt.title, rt.release_id, r.title, r.released
+            ORDER BY rt.title
+            LIMIT 25;
+        """ % track_name.lower()
         return search.db.read_data(query)
 
 class users:
@@ -334,44 +397,50 @@ def user_signup():
 
     return jsonify({}), 200
 
-@app.route('/login', methods=['GET', 'POST', 'OPTIONS'])
-def user_login():
-    if request.method == 'POST':
-        resp = json.loads(request.data)
-        username = resp['username']
-        password = resp['password']
+@app.route('/login', methods=['POST'])
+def login():
+    data = request.get_json()
+    username = data.get('username')
+    password = data.get('password')
+    
+    try:
+        query = "SELECT * FROM users WHERE username = '%s'" % username
+        results = db_utils(dbname='users_db', user='postgres').read_data(query)
         
-        if not username or not password:
-            return jsonify({'error': 'Missing fields'}), 400
-
-        if not users.check_username_exists(username):
-            return jsonify({'error': 'Username or password is incorrect'}), 401
-
-        if not users.validate_user(username, password):
-            return jsonify({'error': 'Username or password is incorrect'}), 401
-
-        session.modified = True
-        session['user'] = {'username': username}
-        return jsonify({'message': 'Log in successful'}), 200
-
-    return jsonify({}), 200
+        if results and check_password_hash(results[0]['password'], password):
+            session.clear()
+            session.permanent = True  # Make the session permanent
+            session['user'] = {
+                'id': results[0]['id'],
+                'username': results[0]['username'],
+                'email': results[0]['email']
+            }
+            
+            response = jsonify({'message': 'Login successful'})
+            return response, 200
+        else:
+            return jsonify({'error': 'Invalid credentials'}), 401
+            
+    except Exception as e:
+        print(f"Login error: {e}")
+        return jsonify({'error': 'Server error'}), 500
 
 @app.route('/logout', methods=['POST'])
 def user_logout():
-    session.modified = True
     session.clear()
-
     response = jsonify({'message': 'Logged out successfully'})
-    response.set_cookie('session', '', expires=0, domain='localhost', path='/')
-
+    response.delete_cookie('session')
     return response, 200
 
 @app.route('/check-session', methods=['GET'])
 def user_check_session():
+    print("Session contents:", session)  # Debug print
     if 'user' in session:
-        return jsonify({'logged_in': True, 'user': session['user']}), 200
-    else:
-        return jsonify({'logged_in': False}), 200
+        return jsonify({
+            'logged_in': True,
+            'user': session['user']
+        }), 200
+    return jsonify({'logged_in': False}), 200
 
 @app.route('/search', methods=['POST'])
 def user_search():
@@ -391,5 +460,106 @@ def user_search():
 
     return jsonify({'results':[]}), 200
 
+#written by jax hendrickson
+@app.route('/ratings', methods=['GET'])
+def get_ratings():
+    item_type = request.args.get('item_type')
+    item_id = request.args.get('item_id')
+    
+    try:
+        # Get average rating and total count
+        query = """
+            SELECT 
+                COALESCE(ROUND(AVG(rating)::numeric, 1), 0) as average,
+                COUNT(*) as total
+            FROM ratings 
+            WHERE item_type = '%s' 
+            AND item_id = %s;
+        """ % (item_type, item_id)
+        
+        result = db_utils(dbname='users_db', user='postgres').read_data(query)
+        
+        if result:
+            return jsonify({
+                'average': float(result[0]['average']) if result[0]['average'] else 0,
+                'total': result[0]['total']
+            })
+        return jsonify({'average': 0, 'total': 0})
+        
+    except Exception as e:
+        print(f"Error fetching ratings: {e}")
+        return jsonify({'error': 'Server error'}), 500
+
+
+#written by jax hendrickson
+@app.route('/user-rating', methods=['GET'])
+def get_user_rating():
+    if 'user' not in session:
+        return jsonify({'error': 'Not logged in'}), 401
+        
+    item_type = request.args.get('item_type')
+    item_id = request.args.get('item_id')
+    user_id = session['user']['id']
+    
+    try:
+        query = """
+            SELECT rating 
+            FROM ratings 
+            WHERE user_id = %s 
+            AND item_type = '%s' 
+            AND item_id = '%s'
+        """ % (user_id, item_type, item_id)
+        
+        result = db_utils(dbname='users_db', user='postgres').read_data(query)
+        
+        if result:
+            return jsonify({'rating': result[0]['rating']}), 200
+        return jsonify({'rating': 0}), 200
+        
+    except Exception as e:
+        print(f"Error getting user rating: {e}")
+        return jsonify({'error': 'Server error'}), 500
+
+#route written by jax hendrickson
+@app.route('/rate', methods=['POST'])
+def rate_item():
+    print("Session contents:", session)  # Debug print
+    if 'user' not in session:
+        return jsonify({'error': 'Not logged in'}), 401
+        
+    data = request.get_json()
+    user_id = session['user']['id']
+    item_type = data.get('item_type')
+    item_id = data.get('item_id')
+    rating = data.get('rating')
+    
+    try:
+        db = db_utils(dbname='users_db', user='postgres')
+        
+        # First try to update existing rating
+        update_query = """
+            UPDATE ratings 
+            SET rating = %s, updated_at = CURRENT_TIMESTAMP
+            WHERE user_id = %s AND item_type = '%s' AND item_id = %s
+            RETURNING id;
+        """ % (rating, user_id, item_type, item_id)
+        
+        result = db.mutate_data(update_query)
+        
+        # If no existing rating, insert new one
+        if not result:
+            insert_query = """
+                INSERT INTO ratings (user_id, item_type, item_id, rating)
+                VALUES (%s, '%s', %s, %s)
+                RETURNING id;
+            """ % (user_id, item_type, item_id, rating)
+            
+            result = db.mutate_data(insert_query)
+            
+        return jsonify({'success': True}), 200
+        
+    except Exception as e:
+        print(f"Error saving rating: {e}")
+        return jsonify({'error': 'Server error'}), 500
 if __name__ == "__main__":
     app.run(port=5001, debug=True)

@@ -1,125 +1,122 @@
 <template>
-  <Navbar />
-  <!-- This is a comment -->
-  <div class="frame">
-      <div class="div">
-        <div class="left-column">
-          <!-- This is the artist picture/name -->
-          <div class="ArtistBlock">
-            <div class="artistPicture" :style="{ backgroundImage: 'url(' + (ArtistPicture) + ')' }"></div>
+  <div class="frame" v-if="data">
+    <div class="div">
+      <Navbar />
+      <!-- New rating header section -->
+      <div class="rating-header">
+        <h1 class="artist-title">{{ data.artist?.[0]?.name }}</h1>
+        <RatingSystem 
+          itemType="artist"
+          :itemId="$route.params.artist_id"
+        />
+      </div>
 
-            <div class="ArtistName">{{ data.artist[0].name }}</div>
-          </div>
+      <!-- Artist block (remove rating from here) -->
+      <div class="ArtistBlock">
+        <div class="artistPicture" :style="{ backgroundImage: `url(${getArtistImage()})` }"></div>
+        <div class="ArtistName">{{ data.artist?.[0]?.name }}</div>
+      </div>
 
+      <!-- Artist Info -->
+      <div class="ArtistInfoBlock">
+        <div class="ArtistInfo">
+          <div class="ArtistInfoText">Aliases: {{ data.aliases?.join(', ') || 'None' }}</div>
+        </div>
 
-          <!-- This is the artist Info -->
-          <div class="ArtistInfoBlock">
-            <div class="ArtistInfo">
-              <div class="ArtistInfoText">Aliases: Name 1, Name 2</div>
-            </div>
+        <div class="ArtistInfo">
+          <div class="ArtistInfoText">Popularity: {{ ArtistPop }}</div>
+        </div>
 
-            <div class="ArtistInfo">
-              <div class="ArtistInfoText">Popularity: {{ ArtistPop }}</div>
-            </div>
+        <div class="ArtistInfo">
+          <div class="ArtistInfoText">Score: {{ ArtistScore.toFixed(2) }}</div>
+        </div>
 
-            <div class="ArtistInfo">
-              <div class="ArtistInfoText">Score: {{ ArtistScore.toFixed(2) }}</div>
-            </div>
+        <div class="ArtistInfo">
+          <div class="ArtistInfoText">Date of Birth: {{ ArtistBD }}</div>
+        </div>
 
-            <div class="ArtistInfo">
-              <div class="ArtistInfoText">Date of Birth: {{ ArtistBD }}</div>
-            </div>
+        <div class="ArtistInfo">
+          <div class="ArtistInfoText">Birth Country: {{ ArtistBC }}</div>
+        </div>
 
-            <div class="ArtistInfo">
-              <div class="ArtistInfoText">Birth Country: {{ ArtistBC }}</div>
-            </div>
-
-            <div class="ArtistInfo">
-              <div class="ArtistInfoText">
-                Member of: 
-                <a href="/band1">Band 1</a>,
-                <a href="/band2">Band 2</a>
-              </div>
-            </div>
-
-            <div class="ArtistInfo">
-              <div class="ArtistInfoText">ETC: XXXX</div>
-            </div>
+        <div class="ArtistInfo">
+          <div class="ArtistInfoText">
+            Member of: 
+            <a href="/band1">Band 1</a>,
+            <a href="/band2">Band 2</a>
           </div>
         </div>
 
-        <div class="right-column">
-          <!-- This is the artist About -->
-          <div class="OtherInfoBlcok">
-            <div class="SectionTitle">About</div>
+        <div class="ArtistInfo">
+          <div class="ArtistInfoText">ETC: XXXX</div>
+        </div>
+      </div>
 
-            <div class="div-wrapper-2">
-              <p class="p">
-                {{ data.artist[0].profile }}
-              </p>
-            </div>
+      <div class="right-column">
+        <!-- About section -->
+        <div class="OtherInfoBlcok">
+          <div class="SectionTitle">About</div>
+          <div class="div-wrapper-2">
+            <p class="p">{{ data.artist?.[0]?.profile || 'No profile available' }}</p>
           </div>
+        </div>
 
-          <!-- This is the artist Discography -->
-          <div class="OtherInfoBlcok">
-            <div class="SectionTitle">Discography
-
-              <div class="div-8">
-                <div class="sort-by">Sort By</div>
-                  <div class="div-9">
-                    <div class="text-wrapper-6">Popularity</div>
-                  </div>
-                </div>
+        <!-- Discography section -->
+        <div class="OtherInfoBlcok" v-if="data.discography">
+          <div class="SectionTitle">
+            Discography
+            <div class="div-8">
+              <div class="sort-by">Sort By</div>
+              <div class="div-9">
+                <div class="text-wrapper-6">Popularity</div>
               </div>
+            </div>
+          </div>
 
-          <!-- This is the songs Discography -->
-          <div class="frame-wrapper">
-            <div v-for="n in 5" :key="n">
-              <SongDisplayElement :elementName="data.discography[n].title" :elementID="data.discography[n].master_id" />
+          <!-- Songs Discography -->
+          <template v-if="data.discography && data.discography.length">
+            <div class="frame-wrapper" v-for="chunk in discographyChunks" :key="chunk.start">
+              <div v-for="n in 5" :key="n">
+                <SongDisplayElement 
+                  v-if="data.discography[chunk.start + n - 1]"
+                  :elementName="data.discography[chunk.start + n - 1].title" 
+                  :elementID="data.discography[chunk.start + n - 1].master_id" 
+                />
+              </div>
             </div>
-          </div>
-          <div class="frame-wrapper">
-            <div v-for="n in 5" :key="n">
-              <SongDisplayElement :elementName="data.discography[n + 5].title" :elementID="data.discography[n + 5].master_id" />
-            </div>
-          </div>
-          <div class="frame-wrapper">
-            <div v-for="n in 5" :key="n">
-              <SongDisplayElement :elementName="data.discography[n + 10].title" :elementID="data.discography[n + 10].master_id" />
-            </div>
-          </div>
+          </template>
         </div>
       </div>
     </div>
   </div>
+  <div v-else class="loading">Loading...</div>
 </template>
 
 <script>
 import axios from 'axios';
 import Navbar from './Navbar.vue';
+import RatingSystem from './RatingSystem.vue';
 import SongDisplayElement from './DisplayElement.vue';
 
 export default {
   name: 'ArtistPage',
   components: {
     Navbar,
+    RatingSystem,
     SongDisplayElement
   },
   data() {
     return {
-      data: [],
+      data: {
+        artist: [],
+        discography: [],
+        aliases: []
+      },
+      loading: true
     };
   },
   props: {
-    // Declare the variables that will be passed from parent component
-    ArtistName: {
-      type: String,
-      default: 'Unknown Artist', // default to if not specified
-    },
-    ArtistPicture: {
-      type: String,
-      default: '/images/UnknownPerson.png'
-    },
+    ArtistName: String,
     ArtistPop: {
       type: Number,
       default: 0
@@ -137,23 +134,44 @@ export default {
       default: 'Unknown'
     }
   },
+  computed: {
+    discographyChunks() {
+      return [
+        { start: 0 },
+        { start: 5 },
+        { start: 10 }
+      ];
+    }
+  },
   methods: {
-    getArtist() {
-      const path = 'http://localhost:5001/artist';
-      axios.get(path, {params: {artist_id: this.$route.params.artist_id}})
-        .then((res) => {
-          this.data = res.data.payload;
-
-          this.ArtistName = this.data.name;
-        })
-        .catch((error) => {
-          console.log(error);
-        });
+    getArtistImage() {
+      console.log('Artist data in getArtistImage:', this.data); // Debug log
+      console.log('Artist images:', this.data.artist?.[0]?.images); // Debug log
+      const artistImage = this.data.artist?.[0]?.images?.[0]?.uri;
+      console.log('Selected image URL:', artistImage); // Debug log
+      return artistImage || '/images/UnknownPerson.png';
     },
+    
+    async getArtist() {
+      try {
+        console.log('Fetching artist with ID:', this.$route.params.artist_id); // Debug log
+        const response = await axios.get('http://localhost:5001/artist', {
+          params: { artist_id: this.$route.params.artist_id }
+        });
+        console.log('Raw API response:', response.data); // Debug log
+        this.data = response.data.payload;
+        this.loading = false;
+        console.log('Processed artist data:', this.data); // Debug log
+      } catch (error) {
+        console.error('Error fetching artist:', error);
+        console.log('Error details:', error.response?.data); // Debug log
+        this.loading = false;
+      }
+    }
   },
   created() {
     this.getArtist();
-  },
+  }
 };
 </script>
 
@@ -194,7 +212,7 @@ export default {
   height: 528px;
   left: 46px;
   position: absolute;
-  top: 126px;
+  top: 246px;
   width: 470px;
 }
 
@@ -459,4 +477,22 @@ export default {
   position: relative;
   width: 1200px;
 }
+
+.rating-header {
+  position: relative;
+  width: 100%;
+  padding: 20px 0;
+  background: linear-gradient(to bottom, #f8f8f8, #ffffff);
+  border-bottom: 1px solid #eaeaea;
+  margin-top: 60px;
+  text-align: center;
+}
+
+.artist-title {
+  font-size: 2.5rem;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 15px;
+}
+
 </style>

@@ -1,3 +1,4 @@
+<!-- This file was written by Jax Hendrickson -->
 <template>
   <div class="carousel">
     <div v-for="(item, index) in items" :key="index">

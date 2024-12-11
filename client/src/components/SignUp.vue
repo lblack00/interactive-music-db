@@ -40,34 +40,50 @@ export default {
       email: '',
       password: '',
       confirmPassword: '',
+      returnPath: '/'  // Default to home
     };
+  },
+  created() {
+    // Store the previous path if it exists
+    if (this.$route.query.returnTo) {
+      this.returnPath = decodeURIComponent(this.$route.query.returnTo);
+    }
   },
   methods: {
     async signup() {
-      if (this.password != this.confirmPassword) {
-        alert('Password do not match!');
+      if (this.password !== this.confirmPassword) {
+        alert('Passwords do not match!');
         return;
       }
 
       try {
         const path = 'http://localhost:5001/signup';
-        const response = await axios.post(path, {
+        const data = {
           username: this.username,
           email: this.email,
           password: this.password
+        };
+
+        const response = await axios.post(path, data, {
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          withCredentials: true  // Important for CORS with credentials
         });
 
-        // handle successful login, redirect to different page
-        if (response.status == 201) {
-          alert('Sign up successful!');
-          this.$router.push('/');
-        } else {
-          alert('Sign up unsuccessful, please try again!');
+        if (response.status === 201) {
+          console.log('Signup successful');
+          this.$router.push(this.returnPath || '/');
         }
       } catch (error) {
-        console.error('Error: ', error);
+        console.error('Signup error:', error);
+        if (error.response?.data?.error) {
+          alert(error.response.data.error);
+        } else {
+          alert('An error occurred during signup. Please try again.');
+        }
       }
-    },
+    }
   },
 };
 </script>

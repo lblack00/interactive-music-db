@@ -1,159 +1,132 @@
 <template>
-  <!-- This is a comment -->
-  <div class="frame">
-      <div class="div">
-        <Navbar />
-        <!-- This is the Song picture/name -->
-        <div class="SongBlock">
-          <div class="SongPicture" :style="{ backgroundImage: 'url(' + (SongPicture) + ')' }"></div>
+  <div class="frame" v-if="data">
+    <div class="div">
+      <Navbar />
+      <!-- Song picture/name -->
+      <div class="SongBlock">
+        <div class="SongPicture" :style="{ backgroundImage: 'url(' + (SongPicture) + ')' }"></div>
+        <div class="SongName">{{ data.master?.[0]?.title || 'Unknown Song' }}</div>
+        <RatingSystem 
+          itemType="master"
+          :itemId="$route.params.master_id"
+        />
+      </div>
 
-          <div class="SongName">{{ SongName }}</div>
+      <!-- Song Info -->
+      <div class="SongInfoBlock">
+        <div class="SongInfo">
+          <div class="SongInfoText">
+            Artists: 
+            <router-link 
+              v-if="data.artist?.[0]" 
+              :to="`/artist/${data.artist[0].artist_id}`"
+            >
+              {{ data.artist[0].artist_name }}
+            </router-link>
+          </div>
         </div>
 
+        <div class="SongInfo">
+          <div class="SongInfoText">Popularity: {{ SongPop }}</div>
+        </div>
 
-        <!-- This is the Song Info -->
-        <div class="SongInfoBlock">
-          <div class="SongInfo">
-            <div class="SongInfoText">Artists: 
-              <a :href="'/artist/' + ArtistName">{{ ArtistName }}</a>
+        <div class="SongInfo">
+          <div class="SongInfoText">Score: {{ SongScore.toFixed(2) }}</div>
+        </div>
+
+        <div class="SongInfo">
+          <div class="SongInfoText">Release Date: {{ data.master?.[0]?.year || 'Unknown' }}</div>
+        </div>
+
+        <div class="SongInfo">
+          <div class="SongInfoText">
+            Genre(s): {{ data.genre?.map(g => g.genre).join(', ') || 'Unknown' }}
+          </div>
+        </div>
+
+        <div class="SongInfo">
+          <div class="SongInfoText">Length: {{ SongLength }}</div>
+        </div>
+
+        <div class="SongInfo">
+          <div class="SongInfoText">Language: {{ Language }}</div>
+        </div>
+      </div>
+
+      <!-- About section -->
+      <div class="OtherInfoBlcok">
+        <div class="SectionTitle">About</div>
+        <div class="div-wrapper-2">
+          <p class="p">{{ data.master?.[0]?.notes || 'No description available.' }}</p>
+        </div>
+      </div>
+
+      <!-- Lyrics section -->
+      <div class="OtherInfoBlcok">
+        <div class="SectionTitle">Lyrics</div>
+        <div class="div-wrapper-2">
+          <p class="p">{{ data.lyrics || 'No lyrics available.' }}</p>
+        </div>
+      </div>
+
+      <!-- Related Songs -->
+      <div class="OtherInfoBlcok" v-if="data.related">
+        <div class="SectionTitle">
+          Related Songs
+          <div class="div-8">
+            <div class="sort-by">Sort By</div>
+            <div class="div-9">
+              <div class="text-wrapper-6">Popularity</div>
             </div>
           </div>
-
-          <div class="SongInfo">
-            <div class="SongInfoText">Popularity: {{ SongPop }}</div>
-          </div>
-
-          <div class="SongInfo">
-            <div class="SongInfoText">Score: {{ SongScore.toFixed(2) }}</div>
-          </div>
-
-          <div class="SongInfo">
-            <div class="SongInfoText">Release Date: {{ SongRD }}</div>
-          </div>
-
-          <div class="SongInfo">
-            <div class="SongInfoText">Genre(s): {{ Genres }}</div>
-          </div>
-
-          <div class="SongInfo">
-            <div class="SongInfoText">Length: {{ SongLength }}</div>
-          </div>
-
-          <div class="SongInfo">
-            <div class="SongInfoText">Language: {{ Language }}</div>
-          </div>
-
-
-          <div class="SongInfo">
-            <div class="SongInfoText">ETC: XXXX</div>
-          </div>
         </div>
 
-
-        <!-- This is the Song About -->
-        <div class="OtherInfoBlcok">
-          <div class="SectionTitle">About</div>
-
-          <div class="div-wrapper-2">
-            <p class="p">
-              Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do
-              eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut
-              enim ad minim veniam, quis nostrud exercitation ullamco laboris
-              nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in
-              reprehenderit in voluptate velit esse cillum dolore eu fugiat
-              nulla pariatur. Excepteur sint occaecat cupidatat non proident,
-              sunt in culpa qui officia deserunt mollit anim id est laborum.
-              Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do
-              eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut
-              enim ad minim veniam, quis nostrud exercitation ullamco laboris
-              nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in
-              reprehenderit in voluptate velit esse cillum dolore eu fugiat
-              nulla pariatur. Excepteur sint occaecat cupidatat non proident,
-              sunt in culpa qui officia deserunt mollit anim id est laborum.
-              Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do
-              eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut
-              enim ad minim veniam, quis nostrud exercitation ullamco laboris
-              nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in
-              reprehenderit in voluptate velit esse cillum dolore eu fugiat
-              nulla pariatur. Excepteur sint occaecat cupidatat non proident,
-              sunt in culpa qui officia deserunt mollit anim id est laborum.
-              
-            </p>
-          </div>
-        </div>
-
-        <div class="OtherInfoBlcok">
-          <div class="SectionTitle">Lyrics</div>
-
-          <div class="div-wrapper-2">
-            <p class="p">
-              Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do
-              eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut
-              enim ad minim veniam, quis nostrud exercitation ullamco laboris
-              nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in
-              reprehenderit in voluptate velit esse cillum dolore eu fugiat
-              nulla pariatur. Excepteur sint occaecat cupidatat non proident,
-              sunt in culpa qui officia deserunt mollit anim id est laborum.
-              Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do
-              eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut
-              enim ad minim veniam, quis nostrud exercitation ullamco laboris
-              nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in
-              reprehenderit in voluptate velit esse cillum dolore eu fugiat
-              nulla pariatur. Excepteur sint occaecat cupidatat non proident,
-              sunt in culpa qui officia deserunt mollit anim id est laborum.
-              Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do
-              eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut
-              enim ad minim veniam, quis nostrud exercitation ullamco laboris
-              nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in
-              reprehenderit in voluptate velit esse cillum dolore eu fugiat
-              nulla pariatur. Excepteur sint occaecat cupidatat non proident,
-              sunt in culpa qui officia deserunt mollit anim id est laborum.
-              
-            </p>
-          </div>
-        </div>
-
-        <!-- This is the Related Songs -->
-        <div class="OtherInfoBlcok">
-          <div class="SectionTitle">Related Songs
-
-            <div class="div-8">
-              <div class="sort-by">Sort By</div>
-                <div class="div-9">
-                  <div class="text-wrapper-6">Popularity</div>
-                </div>
-              </div>
-            </div>
-
-        <!-- This is the songs Discography -->
+        <!-- Songs Display -->
         <div class="frame-wrapper">
-          <SongDisplayElement :elementType="'song'" :elementScore="7.50" :elementName="'SongPage'" />
-          <SongDisplayElement />
-          <SongDisplayElement />
-          <SongDisplayElement />
-          <SongDisplayElement />
+          <template v-if="data.related && data.related.length">
+            <SongDisplayElement 
+              v-for="(song, index) in data.related.slice(0, 5)" 
+              :key="index"
+              :elementType="'master'"
+              :elementScore="song.score || 0"
+              :elementName="song.title"
+              :elementID="song.master_id"
+            />
+          </template>
         </div>
       </div>
     </div>
   </div>
+  <div v-else class="loading">Loading...</div>
 </template>
 
 <script>
+import axios from 'axios';
 import Navbar from './Navbar.vue';
 import SongDisplayElement from './DisplayElement.vue';
+import RatingSystem from './RatingSystem.vue';
 
 export default {
   name: 'SongPage',
   components: {
     Navbar,
-    SongDisplayElement
+    SongDisplayElement,
+    RatingSystem
+  },
+  data() {
+    return {
+      data: {
+        master: [],
+        artist: [],
+        genre: [],
+        related: [],
+        lyrics: null
+      },
+      loading: true
+    };
   },
   props: {
-    // Declare the variables that will be passed from parent component
-    SongName: {
-      type: String,
-      default: 'Unknown Song', // default to if not specified
-    },
+    SongName: String,
     SongPicture: {
       type: String,
       default: '/images/UnknownSong.png'
@@ -166,27 +139,32 @@ export default {
       type: Number,
       default: 5.00
     },
-    SongRD: {
-      type: String,
-      default: 'MM/DD/YYYY'
-    },
-    Genres: {
-      type: String,
-      default: 'Unknown'
-    },
     SongLength: {
       type: String,
-      default: 'X:XX'
+      default: 'Unknown'
     },
     Language: {
       type: String,
       default: 'Unknown'
-    },
-    ArtistName: {
-      type: String,
-      default: 'ArtistPage'
     }
   },
+  methods: {
+    async getSong() {
+      try {
+        const response = await axios.get('http://localhost:5001/master', {
+          params: { master_id: this.$route.params.master_id }
+        });
+        this.data = response.data.payload;
+        this.loading = false;
+      } catch (error) {
+        console.error('Error fetching song:', error);
+        this.loading = false;
+      }
+    }
+  },
+  created() {
+    this.getSong();
+  }
 };
 </script>
 

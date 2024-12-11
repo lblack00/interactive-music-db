@@ -5,7 +5,7 @@
     <div v-if="loggedIn">
       <ul class="navbar-links">
         <li><router-link to="/">Home</router-link></li>
-        <li @click="logout"><router-link>Log Out</router-link></li>
+        <li><router-link to="/" @click.prevent="logout">Log Out</router-link></li>
       </ul>
     </div>
     <div v-else>
@@ -34,32 +34,38 @@ export default {
   methods: {
     async checkSession() {
       try {
-        const response = await axios.get('http://localhost:5001/check-session');
+        const response = await axios.get('http://localhost:5001/check-session', {
+          withCredentials: true
+        });
         this.loggedIn = response.data.logged_in;
-        this.user = response.data.user || null;
+        if (response.data.logged_in) {
+          this.user = response.data.user;
+        }
       } catch (error) {
-        console.error('Error checking user session:', error);
+        console.error('Error checking session:', error);
+        this.loggedIn = false;
+        this.user = null;
       }
     },
     async logout() {
       try {
-        await axios.post('http://localhost:5001/logout');
+        await axios.post('http://localhost:5001/logout', {}, {
+          withCredentials: true
+        });
         this.loggedIn = false;
         this.user = null;
-        this.$forceUpdate();
         alert("Log out successful!");
+        this.$router.push('/');
       } catch (error) {
         console.error('Error logging out:', error);
       }
-    },
+    }
   },
   mounted() {
     this.checkSession();
   },
-  beforeRouteEnter(to, from, next) {
-    next(vm => {
-      vm.$forceUpdate();
-    })
+  created() {
+    this.checkSession();
   }
 }
 </script>

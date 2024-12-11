@@ -1,18 +1,29 @@
 <!-- This file was written by Lucas Black -->
 <template>
   <Navbar />
-  <div class="container mt-2">
+  <div class="container mt-2" v-if="data && data.release">
     <div class="row">
-      <h1><router-link :to="`/artist/${data.artist[0].artist_id}`">{{ data.artist[0].artist_name }}</router-link> - {{ data.release[0].title }}</h1>
-      <p>Country: {{ data.release[0].country }}</p>
-      <p>Released: {{ data.release[0].released }}</p>
-      <p>Genre: {{ data.genre.map(entry => entry.genre).join(', ') }} </p>
-      <p>Style: {{ data.style.map(entry => entry.style).join(', ') }}</p>
+      <h1>
+        <router-link v-if="data.artist?.[0]" :to="`/artist/${data.artist[0].artist_id}`">
+          {{ data.artist[0].artist_name }}
+        </router-link>
+        - {{ data.release?.[0]?.title }}
+      </h1>
+      
+      <RatingSystem 
+        itemType="release"
+        :itemId="$route.params.release_id"
+      />
+      
+      <p>Country: {{ data.release?.[0]?.country || 'Unknown' }}</p>
+      <p>Released: {{ data.release?.[0]?.released || 'Unknown' }}</p>
+      <p>Genre: {{ data.genre?.map(entry => entry.genre).join(', ') || 'Unknown' }}</p>
+      <p>Style: {{ data.style?.map(entry => entry.style).join(', ') || 'Unknown' }}</p>
     </div>
 
     <br>
 
-    <div class="row">
+    <div class="row" v-if="data.tracks?.length">
       <div class="col-sm-10">
         <h2>Tracklist</h2>
         <hr>
@@ -26,16 +37,16 @@
           <tbody>
             <tr v-for="(track, index) in data.tracks" :key="index">
               <td>{{ track.title }}</td>
-              <td>{{ track.duration }}</td>
+              <td>{{ track.duration || '--:--' }}</td>
             </tr>
           </tbody>
         </table>
       </div>
     </div>
 
-    <br v-if="data.release[0].notes">
+    <br v-if="data.release?.[0]?.notes">
 
-    <div class="row" v-if="data.release[0].notes">
+    <div class="row" v-if="data.release?.[0]?.notes">
       <h2>Notes</h2>
       <hr>
       <p><pre>{{ data.release[0].notes }}</pre></p>
@@ -43,64 +54,91 @@
 
     <br>
 
-    <div class="row" v-if="data.track_artist.length">
-      <!-- todo: depending on if there are all null roles,
-               credits shouldn't be shown (small hack above in v-if) -->
+    <div class="row" v-if="hasCredits">
       <h2>Credits</h2>
       <hr>
-      <!-- passing a .filter function to only show credits with non-null roles -->
-      <p v-for="(credit, index) in data.track_artist.filter(x => x.role !== null)" :key="index">
+      <p v-for="(credit, index) in filteredTrackArtists" :key="`track-${index}`">
         {{ credit.role }} - {{ credit.artist_name }}
       </p>
-      <p v-for="(credit, index) in data.artist.filter(x => x.role !== null)" :key="index">
+      <p v-for="(credit, index) in filteredArtists" :key="`artist-${index}`">
         {{ credit.role }} - {{ credit.artist_name }}
       </p>
     </div>
 
-    <br v-if="data.company.length">
+    <br v-if="data.company?.length">
 
-    <div class="row" v-if="data.company.length">
-      <!-- todo: depending on if there are all null roles,
-               credits shouldn't be shown (small hack above in v-if) -->
+    <div class="row" v-if="data.company?.length">
       <h2>Companies</h2>
       <hr>
-      <!-- passing a .filter function to only show credits with non-null roles -->
-      <p v-for="(company, index) in data.company.filter(x => x.company_name !== null)" :key="index">
+      <p v-for="(company, index) in filteredCompanies" :key="index">
         {{ company.entity_type_name }} - {{ company.company_name }}
       </p>
     </div>
+  </div>
+  <div v-else class="container mt-2">
+    <div class="loading">Loading...</div>
   </div>
 </template>
 
 <script>
 import axios from 'axios';
 import Navbar from './Navbar.vue';
+import RatingSystem from './RatingSystem.vue';
 
 export default {
   name: 'Release',
   components: {
-    Navbar
+    Navbar,
+    RatingSystem
   },
   data() {
     return {
-      data: [],
+      data: {
+        release: [],
+        artist: [],
+        tracks: [],
+        genre: [],
+        style: [],
+        track_artist: [],
+        company: []
+      },
+      loading: true
     };
   },
-  methods: {
-    getRelease() {
-      const path = 'http://localhost:5001/release/';
-      axios.get(path, {params: {release_id: this.$route.params.release_id}})
-        .then((res) => {
-          this.data = res.data.payload;
-        })
-        .catch((error) => {
-          console.log(error);
-        });
+  computed: {
+    filteredTrackArtists() {
+      return this.data.track_artist?.filter(x => x.role !== null) || [];
     },
+    filteredArtists() {
+      return this.data.artist?.filter(x => x.role !== null) || [];
+    },
+    filteredCompanies() {
+      return this.data.company?.filter(x => x.company_name !== null) || [];
+    },
+    hasCredits() {
+      return (
+        (this.data.track_artist?.some(x => x.role !== null) || false) ||
+        (this.data.artist?.some(x => x.role !== null) || false)
+      );
+    }
+  },
+  methods: {
+    async getRelease() {
+      try {
+        const response = await axios.get('http://localhost:5001/release/', {
+          params: { release_id: this.$route.params.release_id }
+        });
+        this.data = response.data.payload;
+        this.loading = false;
+      } catch (error) {
+        console.error('Error fetching release:', error);
+        this.loading = false;
+      }
+    }
   },
   created() {
     this.getRelease();
-  },
+  }
 };
 </script>
 
