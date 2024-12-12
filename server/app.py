@@ -474,7 +474,7 @@ def get_ratings():
                 COUNT(*) as total
             FROM ratings 
             WHERE item_type = '%s' 
-            AND item_id = %s;
+            AND item_id = '%s'
         """ % (item_type, item_id)
         
         result = db_utils(dbname='users_db', user='postgres').read_data(query)
