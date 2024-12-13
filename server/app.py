@@ -561,5 +561,6 @@ def rate_item():
     except Exception as e:
         print(f"Error saving rating: {e}")
         return jsonify({'error': 'Server error'}), 500
+
 if __name__ == "__main__":
     app.run(port=5001, debug=True)

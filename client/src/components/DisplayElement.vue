@@ -1,3 +1,4 @@
+<!-- This file was written by Matthew Stenvold -->
 <template>
   <div class="displayElementFrame">
     <div class="ElementPicture" :style="{ backgroundImage: 'url(' + (elementPicture || defaultPicture) + ')' }"></div>

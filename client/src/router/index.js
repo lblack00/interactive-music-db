@@ -10,6 +10,8 @@ import SongPage from '@/components/SongPage.vue'
 import SearchResults from '../components/SearchResults.vue'
 
 // Release, Master, NotFound, SignUp, Login, and SearchResults were written by Lucas Black
+// Home was written by Jax Hendrickson
+// SongPage and ArtistPage were written by Matthew Stenvold
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [

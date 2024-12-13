@@ -1,7 +1,7 @@
 <!-- This file was written by Lucas Black -->
 <template>
   <nav class="navbar">
-    <div class="navbar-title">Interactive Music Database</div>
+    <div class="navbar-title">Pass the Aux</div>
     <div v-if="loggedIn">
       <ul class="navbar-links">
         <li><router-link to="/">Home</router-link></li>

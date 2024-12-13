@@ -5,7 +5,7 @@
       <Navbar />
 
       <div class="welcome-message">
-        Welcome to the Interactive Music Database! Explore what's trending, or use the filters to search for your favorite songs, artists, or playlists!
+        Welcome to Pass the Aux! Explore what's trending, or use the filters to search for your favorite songs, artists, or playlists!
       </div>
 
       <div class="search-container">
