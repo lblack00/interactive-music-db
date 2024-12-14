@@ -540,7 +540,7 @@ def rate_item():
         update_query = """
             UPDATE ratings 
             SET rating = %s, updated_at = CURRENT_TIMESTAMP
-            WHERE user_id = %s AND item_type = '%s' AND item_id = %s
+            WHERE user_id = %s AND item_type = '%s' AND item_id = '%s'
             RETURNING id;
         """ % (rating, user_id, item_type, item_id)
         
@@ -550,7 +550,7 @@ def rate_item():
         if not result:
             insert_query = """
                 INSERT INTO ratings (user_id, item_type, item_id, rating)
-                VALUES (%s, '%s', %s, %s)
+                VALUES (%s, '%s', '%s', %s)
                 RETURNING id;
             """ % (user_id, item_type, item_id, rating)
             
