@@ -2,6 +2,7 @@
 import json
 import os
 import psycopg
+from psycopg_pool import ConnectionPool
 from flask import Flask, jsonify, request, session, make_response
 from flask_cors import CORS
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -44,39 +45,42 @@ class db_utils:
     def __init__(self, dbname, user):
         self.dbname = dbname
         self.user = user
+        self.pool = ConnectionPool("dbname=%s user=%s" % (self.dbname, self.user),
+                                    min_size=1, max_size=10)
 
-    def read_data(self, query=""):
-        conn = psycopg.Connection.connect("dbname=%s user=%s" % (self.dbname, self.user),
-            row_factory=psycopg.rows.dict_row)
+    def read_data(self, query="", query_params=()):
+        # Ensure all query_params are tuples
+        if not isinstance(query_params, tuple):
+            query_params = (query_params,)
 
-        results = []
-        with conn.cursor() as cur:
-            # could add a database logger here
-            cur.execute(query)
-            results = cur.fetchall()
+        with self.pool.connection() as conn:
+            with conn.cursor(row_factory=psycopg.rows.dict_row) as cur:
+                cur.execute(query, query_params)
+                return cur.fetchall()
 
-        conn.close()
+        return []
 
-        return results
+    def mutate_data(self, query="", query_params=()):
+        if not isinstance(query_params, tuple):
+            query_params = (query_params,)
 
-    def mutate_data(self, query=""):
-        conn = psycopg.Connection.connect("dbname=%s user=%s" % (self.dbname, self.user))
+        with self.pool.connection() as conn:
+            try:
+                with conn.cursor() as cur:
+                    cur.execute(query, query_params)
+                    result = cur.fetchall() if cur.description else None
+                conn.commit()
+                return result
+            except Exception as e:
+                print(f"Database error: {e}")
+                conn.rollback()  # Rollback on error
+                raise e
 
-        try:
-            with conn.cursor() as cur:
-                cur.execute(query)
-                if cur.description:  # Check if the query returns data
-                    result = cur.fetchall()  # Get any returned data
-                else:
-                    result = None
-            conn.commit()  # Commit the transaction
-            return result
-        except Exception as e:
-            print(f"Database error: {e}")
-            conn.rollback()  # Rollback on error
-            raise e
-        finally:
-            conn.close()
+    def __exit__(self, exc_type, exc_value, traceback):
+        # Cleanup the pool
+        self.pool.close()
+        if exc_type is not None:
+            print(f"Exception occured: {exc_value}")
 
 # Class for building SQL release queries and handing them to database connection
 class release:
@@ -85,83 +89,83 @@ class release:
     # def get_track_credits(track_id):
     @staticmethod
     def get_all_versions_of_master(master_id):
-        query = "SELECT * FROM release WHERE master_id=%d;" % master_id
+        query = "SELECT * FROM release WHERE master_id=%s;"
 
-        return release.db.read_data(query)
+        return release.db.read_data(query, (master_id,))
 
     @staticmethod
     def get_release(release_id):
         # todo: need to sanitize SQL input from a user
-        query = "SELECT * FROM release WHERE id=%d;" % release_id
+        query = "SELECT * FROM release WHERE id=%s;"
 
-        return release.db.read_data(query)
+        return release.db.read_data(query, (release_id,))
 
     @staticmethod
     def get_release_tracklist(release_id):
         # todo: need to sanitize SQL input from a user
-        query = "SELECT * FROM release_track WHERE release_id=%d;" % release_id
+        query = "SELECT * FROM release_track WHERE release_id=%s;"
 
-        return release.db.read_data(query)
+        return release.db.read_data(query, (release_id,))
 
     @staticmethod
     def get_release_genre(release_id):
-        query = "SELECT * FROM release_genre WHERE release_id=%d;" % release_id
+        query = "SELECT * FROM release_genre WHERE release_id=%s;"
 
-        return release.db.read_data(query)
+        return release.db.read_data(query, (release_id,))
 
     @staticmethod
     def get_release_style(release_id):
-        query = "SELECT * FROM release_style WHERE release_id=%d;" % release_id
+        query = "SELECT * FROM release_style WHERE release_id=%s;"
 
-        return release.db.read_data(query)
+        return release.db.read_data(query, (release_id,))
 
     @staticmethod
     def get_release_label(release_id):
-        query = "SELECT * FROM release_label WHERE release_id=%d;" % release_id
+        query = "SELECT * FROM release_label WHERE release_id=%s;"
 
-        return release.db.read_data(query)
+        return release.db.read_data(query, (release_id,))
 
     @staticmethod
     def get_release_artist(release_id):
-        query = "SELECT * FROM release_artist WHERE release_id=%d;" % release_id
+        query = "SELECT * FROM release_artist WHERE release_id=%s;"
 
-        return release.db.read_data(query)
+        return release.db.read_data(query, (release_id,))
 
     @staticmethod
     def get_release_track_artist(release_id):
-        query = "SELECT * FROM release_track_artist WHERE release_id=%d;" % release_id
+        query = "SELECT * FROM release_track_artist WHERE release_id=%s;"
 
-        return release.db.read_data(query)
+        return release.db.read_data(query, (release_id,))
 
     @staticmethod
     def get_release_format(release_id):
-        query = "SELECT * FROM release_format WHERE release_id=%d;" % release_id
+        query = "SELECT * FROM release_format WHERE release_id=%s;"
 
-        return release.db.read_data(query)
+        return release.db.read_data(query, (release_id,))
 
     @staticmethod
     def get_release_identifier(release_id):
-        query = "SELECT * FROM release_identifier WHERE release_id=%d;" % release_id
+        query = "SELECT * FROM release_identifier WHERE release_id=%s;"
 
-        return release.db.read_data(query)
+        return release.db.read_data(query, (release_id,))
 
     @staticmethod
     def get_release_video(release_id):
-        query = "SELECT * FROM release_video WHERE release_id=%d;" % release_id
+        query = "SELECT * FROM release_video WHERE release_id=%s;"
 
-        return release.db.read_data(query)
+        return release.db.read_data(query, (release_id,))
 
     @staticmethod
     def get_release_company(release_id):
-        query = "SELECT * FROM release_company WHERE release_id=%d;" % release_id
+        query = "SELECT * FROM release_company WHERE release_id=%s;"
 
-        return release.db.read_data(query)
+        return release.db.read_data(query, (release_id,))
 
     @staticmethod
     def get_release_image(release_id):
-        query = "SELECT * FROM release_image WHERE release_id=%d;" % release_id
+        query = "SELECT * FROM release_image WHERE release_id=%s;"
 
-        return release.db.read_data(query)
+        return release.db.read_data(query, (release_id,))
 
 class master:
     db = db_utils(dbname='discogs_db', user='postgres')
@@ -170,45 +174,45 @@ class master:
     def get_all_master_releases_from_artist(artist_name):
         query = """SELECT * FROM master_artist
                    JOIN master ON master.id=master_artist.master_id
-                   WHERE artist_name='%s';""" % artist_name
+                   WHERE artist_name='%s';"""
 
-        return master.db.read_data(query)
+        return master.db.read_data(query, (artist_name,))
 
     @staticmethod
     def get_master(master_id):
-        query = "SELECT * FROM master WHERE id=%d;" % master_id
+        query = "SELECT * FROM master WHERE id=%s;"
 
-        return master.db.read_data(query)
+        return master.db.read_data(query, (master_id,))
 
     @staticmethod
     def get_master_artist(master_id):
-        query = "SELECT * FROM master_artist WHERE master_id=%d;" % master_id
+        query = "SELECT * FROM master_artist WHERE master_id=%s;"
 
-        return master.db.read_data(query)
+        return master.db.read_data(query, (master_id,))
 
     @staticmethod
     def get_master_video(master_id):
-        query = "SELECT * FROM master_video WHERE master_id=%d;" % master_id
+        query = "SELECT * FROM master_video WHERE master_id=%s;"
 
-        return master.db.read_data(query)
+        return master.db.read_data(query, (master_id,))
 
     @staticmethod
     def get_master_genre(master_id):
-        query = "SELECT * FROM master_genre WHERE master_id=%d;" % master_id
+        query = "SELECT * FROM master_genre WHERE master_id=%s;"
 
-        return master.db.read_data(query)
+        return master.db.read_data(query, (master_id,))
 
     @staticmethod
     def get_master_style(master_id):
-        query = "SELECT * FROM master_style WHERE master_id=%d;" % master_id
+        query = "SELECT * FROM master_style WHERE master_id=%s;"
 
-        return master.db.read_data(query)
+        return master.db.read_data(query, (master_id,))
 
     @staticmethod
     def get_master_release_id(master_id):
-        query = "SELECT main_release FROM master WHERE id=%d;" % master_id
+        query = "SELECT main_release FROM master WHERE id=%s;"
 
-        return master.db.read_data(query)
+        return master.db.read_data(query, (master_id,))
 
 class artist:
     db = db_utils(dbname='discogs_db', user='postgres')
@@ -219,26 +223,26 @@ class artist:
             SELECT a.*, ai.uri as image_uri 
             FROM artist a
             LEFT JOIN artist_image ai ON a.id = ai.artist_id
-            WHERE a.id=%d;
-        """ % artist_id
+            WHERE a.id=%s;
+        """
 
-        return artist.db.read_data(query)
+        return artist.db.read_data(query, (artist_id))
 
     @staticmethod
     def get_discography(artist_id):
         query = """SELECT * FROM master_artist
                    JOIN master ON master.id=master_artist.master_id
-                   WHERE artist_id='%s' LIMIT 20;""" % artist_id
+                   WHERE artist_id=%s LIMIT 20;"""
 
-        return artist.db.read_data(query)
+        return artist.db.read_data(query, (artist_id))
 
 class search:
     db = db_utils(dbname='discogs_db', user='postgres')
 
     @staticmethod
     def search_artist(artist_name):
-        query = "SELECT * FROM artist WHERE LOWER(name) LIKE '%%%s%%' LIMIT 25;" % artist_name.lower()
-        return search.db.read_data(query)
+        query = "SELECT * FROM artist WHERE LOWER(name) LIKE %s ORDER BY name LIMIT 25;"
+        return search.db.read_data(query, ("%" + artist_name.lower() + "%",))
 
     @staticmethod
     def search_release(release_name):
@@ -257,11 +261,11 @@ class search:
                     'Unknown Artist'
                 ) as artists
             FROM master m
-            WHERE LOWER(m.title) LIKE '%%%s%%'
+            WHERE LOWER(m.title) LIKE %s
             ORDER BY m.year DESC
             LIMIT 25;
-        """ % release_name.lower()
-        return search.db.read_data(query)
+        """
+        return search.db.read_data(query, ("%" + release_name.lower() + "%",))
 
     @staticmethod
     def search_track(track_name):
@@ -273,12 +277,11 @@ class search:
                 COALESCE(r.released, 'N/A') as released  -- year with fallback
             FROM release_track rt
             JOIN release r ON rt.release_id = r.id
-            WHERE LOWER(rt.title) LIKE '%%%s%%'
+            WHERE LOWER(rt.title) LIKE %s
             GROUP BY rt.title, rt.release_id, r.title, r.released
-            ORDER BY rt.title
             LIMIT 25;
-        """ % track_name.lower()
-        return search.db.read_data(query)
+        """
+        return search.db.read_data(query, ("%" + track_name.lower() + "%",))
 
 class users:
     db = db_utils(dbname='users_db', user='postgres')
@@ -286,22 +289,28 @@ class users:
     @staticmethod
     def create_new_user(username, email, hashpass):
         query = """INSERT INTO users (username, email, password)
-                          VALUES ('%s', '%s', '%s');""" % (username, email, hashpass)
+                          VALUES (%s, %s, %s);"""
 
-        users.db.mutate_data(query)
+        users.db.mutate_data(query, (username, email, hashpass))
 
     @staticmethod
     def check_username_exists(username):
-        query = "SELECT * FROM users WHERE username='%s';" % username
+        query = "SELECT * FROM users WHERE username=%s;"
 
-        return len(users.db.read_data(query)) > 0
+        return len(users.db.read_data(query, (username,))) > 0
 
     @staticmethod
     def validate_user(username, password):
-        query = "SELECT * FROM users WHERE username='%s';" % username
-        res = users.db.read_data(query)[0]['password']
+        query = "SELECT * FROM users WHERE username=%s;"
+        res = users.db.read_data(query, (username,))[0]['password']
 
         return check_password_hash(res, password)
+
+    @staticmethod
+    def get_user(username):
+        query = "SELECT * FROM users WHERE username=%s;"
+
+        return users.db.read_data(query, (username,))
 
 @app.route('/release/', methods=['GET'])
 def get_release():
@@ -387,8 +396,16 @@ def user_signup():
         try:
             users.create_new_user(username, email, hashed_pass)
 
+            results = users.get_user(username)
+
+            session.clear()
             session.modified = True
-            session['user'] = {'username': username, 'email': email}
+            session.permanent = True  # Make the session permanent
+            session['user'] = {
+                'id': results[0]['id'],
+                'username': results[0]['username'],
+                'email': results[0]['email']
+            }
 
             return jsonify({'message': 'User created successfully'}), 201
         except Exception as e:
@@ -404,8 +421,7 @@ def login():
     password = data.get('password')
     
     try:
-        query = "SELECT * FROM users WHERE username = '%s'" % username
-        results = db_utils(dbname='users_db', user='postgres').read_data(query)
+        results = users.get_user(username)
         
         if results and check_password_hash(results[0]['password'], password):
             session.clear()
@@ -473,11 +489,11 @@ def get_ratings():
                 COALESCE(ROUND(AVG(rating)::numeric, 1), 0) as average,
                 COUNT(*) as total
             FROM ratings 
-            WHERE item_type = '%s' 
-            AND item_id = '%s'
-        """ % (item_type, item_id)
+            WHERE item_type = %s 
+            AND item_id = %s
+        """
         
-        result = db_utils(dbname='users_db', user='postgres').read_data(query)
+        result = db_utils(dbname='users_db', user='postgres').read_data(query, (item_type, item_id))
         
         if result:
             return jsonify({
@@ -506,11 +522,11 @@ def get_user_rating():
             SELECT rating 
             FROM ratings 
             WHERE user_id = %s 
-            AND item_type = '%s' 
-            AND item_id = '%s'
-        """ % (user_id, item_type, item_id)
+            AND item_type = %s 
+            AND item_id = %s
+        """
         
-        result = db_utils(dbname='users_db', user='postgres').read_data(query)
+        result = db_utils(dbname='users_db', user='postgres').read_data(query, (user_id, item_type, item_id))
         
         if result:
             return jsonify({'rating': result[0]['rating']}), 200
@@ -540,21 +556,21 @@ def rate_item():
         update_query = """
             UPDATE ratings 
             SET rating = %s, updated_at = CURRENT_TIMESTAMP
-            WHERE user_id = %s AND item_type = '%s' AND item_id = '%s'
+            WHERE user_id = %s AND item_type = %s AND item_id = %s
             RETURNING id;
-        """ % (rating, user_id, item_type, item_id)
+        """
         
-        result = db.mutate_data(update_query)
+        result = db.mutate_data(update_query, (rating, user_id, item_type, item_id))
         
         # If no existing rating, insert new one
         if not result:
             insert_query = """
                 INSERT INTO ratings (user_id, item_type, item_id, rating)
-                VALUES (%s, '%s', '%s', %s)
+                VALUES (%s, %s, %s, %s)
                 RETURNING id;
-            """ % (user_id, item_type, item_id, rating)
+            """
             
-            result = db.mutate_data(insert_query)
+            result = db.mutate_data(insert_query, (user_id, item_type, item_id, rating))
             
         return jsonify({'success': True}), 200
         
