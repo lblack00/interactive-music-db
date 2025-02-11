@@ -1,116 +1,134 @@
 <!-- This file was written by Jax Hendrickson -->
 <template>
-  <div class="frame">
-    <div class="div">
-      <Navbar />
+  <Navbar />
 
-      <div class="welcome-message">
-        Welcome to Pass the Aux! Explore what's trending, or use the filters to search for your favorite songs, artists, or playlists!
+  <div class="welcome-message">
+    Welcome to Pass the Aux! Explore what's trending, or use the filters to search for your favorite songs, artists, or playlists!
+  </div>
+
+  <div class="search-container">
+    <form @submit.prevent="performSearch" class="search-form">
+      <div class="search-input-container">
+        <input 
+          type="text" 
+          v-model="searchQuery" 
+          class="search-bar" 
+          placeholder="Search..." 
+          @input="getPreviewResults"
+        />
+        <button type="submit" class="search-button">Search</button>
       </div>
-
-      <div class="search-container">
-        <form @submit.prevent="performSearch" class="search-form">
-          <div class="search-input-container">
-            <input 
-              type="text" 
-              v-model="searchQuery" 
-              class="search-bar" 
-              placeholder="Search..." 
-              @input="getPreviewResults"
-            />
-            <button type="submit" class="search-button">Search</button>
-          </div>
-          
-          <!-- Preview Results Dropdown -->
-          <div v-if="searchQuery && (isSearching || previewResults.length)" class="search-preview">
-            <div v-if="isSearching" class="preview-item">
-              Searching, wait just a second...
-            </div>
-            <template v-else>
-              <div 
-                v-for="(result, index) in previewResults.slice(0, 3)" 
-                :key="index" 
-                class="preview-item"
-                @click="handlePreviewClick(result)"
-              >
-                <template v-if="filterOption === 'Artists'">
-                  {{ result.name }}
-                </template>
-                <template v-else-if="filterOption === 'Releases'">
-                  {{ result.title }} ({{ result.year }}) - {{ result.artists }}
-                </template>
-                <template v-else-if="filterOption === 'Tracks'">
-                  {{ result.title }} - {{ result.release_title }}
-                </template>
-              </div>
-              <div class="preview-footer" @click.prevent="performSearch">
-                See all results...
-              </div>
+      
+      <!-- Preview Results Dropdown -->
+      <div v-if="searchQuery && (isSearching || previewResults.length)" class="search-preview">
+        <div v-if="isSearching" class="preview-item">
+          Searching, wait just a second...
+        </div>
+        <template v-else>
+          <div 
+            v-for="(result, index) in previewResults.slice(0, 3)" 
+            :key="index" 
+            class="preview-item"
+            @click="handlePreviewClick(result)"
+          >
+            <template v-if="filterOption === 'Artists'">
+              {{ result.name }}
+            </template>
+            <template v-else-if="filterOption === 'Releases'">
+              {{ result.title }} ({{ result.year }}) - {{ result.artists }}
+            </template>
+            <template v-else-if="filterOption === 'Tracks'">
+              {{ result.title }} - {{ result.release_title }}
             </template>
           </div>
-        </form>
-
-        <div class="dropdown-container">
-          <select v-model="filterOption" class="filter-dropdown">
-            <option value="Artists">Artists</option>
-            <option value="Releases">Releases</option>
-            <option value="Tracks">Tracks</option>
-            <option value="Advanced Search">Advanced Search</option>
-          </select>
-          <select v-model="genreOption" class="filter-dropdown">
-            <option value="Genres" disabled>Genres</option>
-            <option value="-">-</option>
-            <option value="Pop">Pop</option>
-            <option value="Rock">Rock</option>
-            <option value="Hip-hop">Hip-hop</option>
-            <option value="Jazz">Jazz</option>
-          </select>
-        </div>
+          <div class="preview-footer" @click.prevent="performSearch">
+            See all results...
+          </div>
+        </template>
       </div>
+    </form>
 
-      <div class="carousel-container">
-        <div class="carousel-section">
-          <h3 class="carousel-title">Featured Songs</h3>
-          <div class="carousel">
-            <router-link 
-              v-for="(item, index) in featuredSongs" 
-              :key="index" 
-              :to="item.link"
-              class="carousel-link"
-            >
-              <img :src="item.image" />
-            </router-link>
-          </div>
-        </div>
+    <div class="dropdown-container">
+      <select v-model="filterOption" class="filter-dropdown">
+        <option value="Artists">Artists</option>
+        <option value="Releases">Releases</option>
+        <option value="Tracks">Tracks</option>
+      </select>
+      <select v-model="genreOption" class="filter-dropdown">
+        <option value="Genres" disabled>Genres</option>
+        <option value="-">-</option>
+        <option value="Pop">Pop</option>
+        <option value="Rock">Rock</option>
+        <option value="Hip-hop">Hip-hop</option>
+        <option value="Jazz">Jazz</option>
+      </select>
+    </div>
+  </div>
 
-        <div class="carousel-section">
-          <h3 class="carousel-title">Popular Artists</h3>
-          <div class="carousel">
-            <router-link 
-              v-for="(item, index) in popularArtists" 
-              :key="index" 
-              :to="item.link"
-              class="carousel-link"
-            >
-              <img :src="item.image" />
-            </router-link>
-          </div>
-        </div>
+  <br>
 
-        <div class="carousel-section">
-          <h3 class="carousel-title">Trending Now</h3>
-          <div class="carousel">
-            <router-link 
-              v-for="(item, index) in trendingNow" 
-              :key="index" 
-              :to="item.link"
-              class="carousel-link"
-            >
-              <img :src="item.image" />
+  <div class="container">
+    <h3 class="carousel-title">Featured Songs</h3>
+    <div class="d-flex align-center v-col-auto">
+      <v-carousel show-arrows="hover">
+        <v-carousel-item
+          v-for="(item, i) in featuredSongs"
+          :key="item"
+          :value="i"
+          :to="item.link">
+            <router-link :key="i" :to="item.link">
+              <v-img 
+                :src="item.image || '/images/UnknownSong.png'" 
+                class="w-100 h-100"
+                contain 
+              />
             </router-link>
-          </div>
-        </div>
-      </div>
+        </v-carousel-item>
+      </v-carousel>
+    </div>
+
+    <br>
+    <br>
+
+    <h3 class="carousel-title">Popular Artists</h3>
+    <div class="d-flex align-center v-col-auto">
+      <v-carousel show-arrows="hover">
+        <v-carousel-item
+          v-for="(item, i) in popularArtists"
+          :key="item"
+          :value="i"
+          :to="item.link">
+            <router-link :key="i" :to="item.link">
+              <v-img 
+                :src="item.image || '/images/UnknownPerson.png'" 
+                class="w-100 h-100"
+                contain 
+              />
+            </router-link>
+        </v-carousel-item>
+      </v-carousel>
+    </div>
+
+    <br>
+    <br>
+
+    <h3 class="carousel-title">Trending Now</h3>
+    <div class="d-flex align-center v-col-auto">
+      <v-carousel show-arrows="hover">
+        <v-carousel-item
+          v-for="(item, i) in trendingNow"
+          :key="item"
+          :value="i"
+          :to="item.link">
+            <router-link :key="i" :to="item.link">
+              <v-img 
+                :src="item.image || '/images/UnknownSong.png'" 
+                class="w-100 h-100"
+                contain 
+              />
+            </router-link>
+        </v-carousel-item>
+      </v-carousel>
     </div>
   </div>
 </template>
@@ -171,51 +189,6 @@ export default {
     };
   },
   methods: {
-    prevSlide(carousel) {
-      const items = carousel === 'popular' ? this.popularArtists : 
-                    carousel === 'featured' ? this.featuredSongs : 
-                    this.trendingNow;
-      
-      const currentPosition = this.currentIndex[carousel];
-      const itemWidth = 270; // Width of item (250px) + gap (20px)
-      const containerWidth = document.querySelector('.carousel').offsetWidth;
-      const maxScroll = items.length * itemWidth - containerWidth;
-      
-      let newPosition = currentPosition + itemWidth;
-      if (newPosition > maxScroll) {
-        newPosition = 0; // Loop to start
-      }
-      
-      this.currentIndex[carousel] = newPosition;
-      const carouselElement = document.querySelector(`.carousel-section:nth-child(${carousel === 'featured' ? 1 : carousel === 'popular' ? 2 : 3}) .carousel`);
-      carouselElement.scrollTo({
-        left: newPosition,
-        behavior: 'smooth'
-      });
-    },
-
-    nextSlide(carousel) {
-      const items = carousel === 'popular' ? this.popularArtists : 
-                    carousel === 'featured' ? this.featuredSongs : 
-                    this.trendingNow;
-      
-      const currentPosition = this.currentIndex[carousel];
-      const itemWidth = 270; // Width of item (250px) + gap (20px)
-      const containerWidth = document.querySelector('.carousel').offsetWidth;
-      const maxScroll = items.length * itemWidth - containerWidth;
-      
-      let newPosition = currentPosition - itemWidth;
-      if (newPosition < 0) {
-        newPosition = maxScroll; // Loop to end
-      }
-      
-      this.currentIndex[carousel] = newPosition;
-      const carouselElement = document.querySelector(`.carousel-section:nth-child(${carousel === 'featured' ? 1 : carousel === 'popular' ? 2 : 3}) .carousel`);
-      carouselElement.scrollTo({
-        left: newPosition,
-        behavior: 'smooth'
-      });
-    },
     async getPreviewResults() {
       if (this.searchTimeout) {
         clearTimeout(this.searchTimeout);
@@ -280,103 +253,6 @@ export default {
 
 <style scoped>
 
-.frame {
-  background: linear-gradient(to bottom, #ffffff, #f0f0f0);
-  min-height: 100vh;
-  padding: 20px 0;
-  position: relative;
-  overflow: hidden; 
-}
-
-.frame::before,
-.frame::after {
-  content: '';
-  position: fixed;
-  top: 0;
-  bottom: 0;
-  width: 300px; 
-  background-image: url('/images/music_texture.jpg'); 
-  background-size: cover;
-  background-repeat: no-repeat;
-  z-index: 1000;
-  opacity: 1;
-}
-
-.frame::before {
-  left: 0;
-}
-
-.frame::after {
-  right: 0;
-}
-
-
-.carousel-nav {
-  display: none;
-}
-
-
-.carousel {
-  display: flex;
-  overflow-x: auto;
-  padding: 20px 0;
-  width: 100%;
-  position: relative;
-  scroll-behavior: smooth;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-}
-
-.carousel-link {
-  position: relative;
-  overflow: hidden;
-  border-radius: 12px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
-  transition: all 0.3s ease;
-  transform: perspective(800px);
-  margin-right: -50px; 
-  margin-left: 0;
-  z-index: 1; 
-}
-
-.carousel-link:hover {
-  transform: perspective(800px) rotateY(20deg) translateY(-10px);
-  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.25);
-  z-index: 2; 
-}
-
-
-.carousel img {
-  width: 250px;
-  height: 250px;
-  object-fit: cover;
-  border-radius: 12px;
-  border: 4px solid white; 
-}
-
-
-.carousel-link::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  box-shadow: inset -10px 0 10px -10px rgba(0, 0, 0, 0.5);
-  pointer-events: none;
-  border-radius: 12px;
-}
-
-
-.carousel-section {
-  padding: 30px 60px; 
-}
-
-
-.frame .div {
-  padding: 0 40px;
-}
-
 .welcome-message {
   font-size: 24px;
   color: #1a1a1a;
@@ -421,13 +297,13 @@ export default {
 }
 
 .search-bar:focus {
-  border-color: green;
-  box-shadow: 0 0 0 3px rgba(0, 128, 0, 0.1);
+  border-color: blue;
+  box-shadow: 0 0 0 3px rgba(0, 0, 128, 0.1);
   outline: none;
 }
 
 .search-button {
-  background: green;
+  background: blue;
   color: white;
   padding: 15px 30px;
   border-radius: 8px;
@@ -437,9 +313,9 @@ export default {
 }
 
 .search-button:hover {
-  background: darkgreen;
+  background: darkblue;
   transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0, 128, 0, 0.2);
+  box-shadow: 0 4px 8px rgba(0, 0, 128, 0.2);
 }
 
 .search-results {
@@ -483,124 +359,13 @@ export default {
 }
 
 .filter-dropdown:hover {
-  border-color: green;
+  border-color: blue;
 }
 
 .filter-dropdown:focus {
   outline: none;
-  border-color: green;
-  box-shadow: 0 0 0 3px rgba(0, 128, 0, 0.1);
-}
-
-.carousel-container {
-  width: 80%; 
-  margin: 0 auto 30x;
-  background: rgba(255, 255, 255, 0.8);
-  padding: 10px 20px;
-  border-radius: 15px;
-  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
-}
-
-.carousel-section {
-  background: white;
-  padding: 30px 60px;
-  border-radius: 15px;
-  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
-  margin-bottom: 40px;
-  transition: transform 0.3s ease;
-  position: relative;
-  width: 100%;
-}
-
-.carousel-section:hover {
-  transform: translateY(-5px);
-}
-
-.carousel-title {
-  font-size: 28px;
-  color: #2c3e50;
-  margin-bottom: 25px;
-  position: relative;
-  padding-bottom: 10px;
-}
-
-.carousel-title::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 60px;
-  height: 3px;
-  background: green;
-  border-radius: 2px;
-}
-
-.carousel-items {
-  display: flex;
-  transition: transform 0.5s ease;
-}
-
-.carousel-item {
-  flex: 0 0 100%;
-  padding: 0 10px;
-  cursor: pointer;
-}
-
-.carousel-item img {
-  width: 250px;
-  height: 250px;
-  object-fit: cover;
-  border-radius: 12px;
-  transition: transform 0.5s ease;
-}
-
-.carousel-item:hover img {
-  transform: scale(1.05);
-}
-
-.carousel-item-info {
-  text-align: center;
-  margin-top: 10px;
-  padding: 0 10px;
-}
-
-.carousel-item-info .title,
-.carousel-item-info .name {
-  font-weight: bold;
-  color: #333;
-  margin-bottom: 5px;
-}
-
-.carousel-item-info .artist {
-  color: #666;
-}
-
-.carousel-nav {
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  background-color: green;
-  color: white;
-  border: none;
-  font-size: 24px;
-  padding: 10px;
-  cursor: pointer;
-  border-radius: 50%;
-  z-index: 10;
-  transition: background-color 0.3s, transform 0.3s;
-}
-
-.carousel-nav.left {
-  left: 10px;
-}
-
-.carousel-nav.right {
-  right: 10px;
-}
-
-.carousel-nav:hover {
-  background-color: darkgreen;
-  transform: scale(1.1) translateY(-50%);
+  border-color: blue;
+  box-shadow: 0 0 0 3px rgba(0, 0, 128, 0.1);
 }
 
 .search-input-container {
@@ -657,139 +422,6 @@ export default {
   width: 100%;
 }
 
-.carousel-items {
-  display: flex;
-  transition: transform 0.5s ease;
-}
-
-.carousel-item {
-  flex: 0 0 100%;
-  padding: 0 10px;
-  cursor: pointer;
-}
-
-.carousel-item img {
-  width: 250px;
-  height: 250px;
-  object-fit: cover;
-  border-radius: 12px;
-  transition: transform 0.5s ease;
-}
-
-.carousel-item:hover img {
-  transform: scale(1.05);
-}
-
-.carousel-item-info {
-  text-align: center;
-  margin-top: 10px;
-  padding: 0 10px;
-}
-
-.carousel-item-info .title,
-.carousel-item-info .name {
-  font-weight: bold;
-  color: #333;
-  margin-bottom: 5px;
-}
-
-.carousel-item-info .artist {
-  color: #666;
-}
-
-.carousel-nav {
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  background-color: green;
-  color: white;
-  border: none;
-  font-size: 30px;
-  padding: 10px 15px;
-  cursor: pointer;
-  border-radius: 50%;
-  z-index: 1;
-  transition: background-color 0.3s;
-}
-
-.carousel-nav.left {
-  left: 10px;
-}
-
-.carousel-nav.right {
-  right: 10px;
-}
-
-.carousel-nav:hover {
-  background-color: darkgreen;
-}
-
-.carousel-link::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(to top, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0) 50%);
-  border-radius: 12px;
-  opacity: 0;
-  transition: opacity 0.3s ease;
-}
-
-.carousel-link:hover::after {
-  opacity: 1;
-}
-
-
-.carousel-link::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  box-shadow: inset -10px 0 10px -10px rgba(0, 0, 0, 0.5);
-  pointer-events: none;
-  border-radius: 12px;
-}
-
-
-.navbar {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  width: 100%;
-  background-color: green;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); 
-  z-index: 2000;
-  padding: 15px 0;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  border-bottom: 1px solid #e0e0e0; 
-}
-
-
-.navbar-content {
-  width: 100%;
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 20px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-
-.carousel-container {
-  width: 80%; 
-  max-width: 1000px;
-  margin: 60px auto 0;
-  padding: 20px 0;
-}
-
 .search-container {
   width: 60%; 
   max-width: 800px;
@@ -809,4 +441,9 @@ export default {
   border-radius: 10px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
+
+.v-carousel {
+  border-radius: 15px;
+}
+
 </style>
