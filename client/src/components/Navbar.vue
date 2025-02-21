@@ -6,6 +6,7 @@
       <ul class="navbar-links">
         <li><router-link to="/">Home</router-link></li>
         <li><router-link to="/" @click.prevent="logout">Log Out</router-link></li>
+        <li><router-link to="/user"><v-icon>mdi-account</v-icon></router-link></li>
       </ul>
     </div>
     <div v-else>
@@ -16,6 +17,7 @@
       </ul>
     </div>
   </nav>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
 </template>
 
 <script>

@@ -8,6 +8,12 @@ import Home from '../components/Home.vue'
 import ArtistPage from '../components/ArtistPage.vue'
 import SongPage from '@/components/SongPage.vue'
 import SearchResults from '../components/SearchResults.vue'
+import Countdown from '../components/Countdown.vue'
+import PlaylistSystem from '../components/PlaylistSystem.vue'
+import Forum from '../components/Forum.vue'
+import ForumThread from '../components/ForumThread.vue'
+import UserProfile from '../components/UserProfile.vue'
+import AdminDashboard from '../components/AdminDashboard.vue'
 
 // Release, Master, NotFound, SignUp, Login, and SearchResults were written by Lucas Black
 // Home was written by Jax Hendrickson
@@ -54,6 +60,36 @@ const router = createRouter({
       path: '/song/songPage',
       name: 'SongPage',
       component: SongPage
+    },
+    {
+      path: '/countdown',
+      name: 'Countdown',
+      component: Countdown
+    },
+    {
+      path: '/playlist',
+      name: 'PlaylistSystem',
+      component: PlaylistSystem
+    },
+    {
+      path: '/forum',
+      name: 'Forum',
+      component: Forum
+    },
+    {
+      path: '/forum-thread',
+      name: 'ForumThread',
+      component: ForumThread
+    },
+    {
+      path: '/user',
+      name: 'UserProfile',
+      component: UserProfile
+    },
+    {
+      path: '/admin',
+      name: 'AdminDashboard',
+      component: AdminDashboard
     },
     {
       path: '/search/:query',

@@ -415,7 +415,7 @@ def user_signup():
     return jsonify({}), 200
 
 @app.route('/login', methods=['POST'])
-def login():
+def user_login():
     data = request.get_json()
     username = data.get('username')
     password = data.get('password')
