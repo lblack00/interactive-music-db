@@ -2,7 +2,6 @@
 import json
 import os
 import psycopg
-from psycopg_pool import ConnectionPool
 from flask import Flask, jsonify, request, session, make_response
 from flask_cors import CORS
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -45,42 +44,45 @@ class db_utils:
     def __init__(self, dbname, user):
         self.dbname = dbname
         self.user = user
-        self.pool = ConnectionPool("dbname=%s user=%s" % (self.dbname, self.user),
-                                    min_size=1, max_size=10)
 
     def read_data(self, query="", query_params=()):
-        # Ensure all query_params are tuples
         if not isinstance(query_params, tuple):
             query_params = (query_params,)
 
-        with self.pool.connection() as conn:
-            with conn.cursor(row_factory=psycopg.rows.dict_row) as cur:
-                cur.execute(query, query_params)
-                return cur.fetchall()
+        conn = psycopg.Connection.connect("dbname=%s user=%s" % (self.dbname, self.user),
+            row_factory=psycopg.rows.dict_row)
 
-        return []
+        results = []
+        with conn.cursor() as cur:
+            # could add a database logger here
+            cur.execute(query, query_params)
+            results = cur.fetchall()
+
+        conn.close()
+
+        return results
 
     def mutate_data(self, query="", query_params=()):
         if not isinstance(query_params, tuple):
             query_params = (query_params,)
 
-        with self.pool.connection() as conn:
-            try:
-                with conn.cursor() as cur:
-                    cur.execute(query, query_params)
-                    result = cur.fetchall() if cur.description else None
-                conn.commit()
-                return result
-            except Exception as e:
-                print(f"Database error: {e}")
-                conn.rollback()  # Rollback on error
-                raise e
+        conn = psycopg.Connection.connect("dbname=%s user=%s" % (self.dbname, self.user))
 
-    def __exit__(self, exc_type, exc_value, traceback):
-        # Cleanup the pool
-        self.pool.close()
-        if exc_type is not None:
-            print(f"Exception occured: {exc_value}")
+        try:
+            with conn.cursor() as cur:
+                cur.execute(query, query_params)
+                if cur.description:  # Check if the query returns data
+                    result = cur.fetchall()  # Get any returned data
+                else:
+                    result = None
+            conn.commit()  # Commit the transaction
+            return result
+        except Exception as e:
+            print(f"Database error: {e}")
+            conn.rollback()  # Rollback on error
+            raise e
+        finally:
+            conn.close()
 
 # Class for building SQL release queries and handing them to database connection
 class release:
