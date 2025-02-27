@@ -575,28 +575,26 @@ def rate_item():
 @app.route('/upcoming-releases', methods=['GET'])
 @cross_origin(supports_credentials=True)
 def get_upcoming_releases():
-    print("Endpoint hit: /upcoming-releases")  # Debug print
     try:
-        mock_releases = [
-            {
-                "id": 1,
-                "title": "The New Album",
-                "artist": "Taylor Swift",
-                "release_date": "2024-04-19",
-                "cover_url": "https://example.com/cover1.jpg"
-            },
-            {
-                "id": 2,
-                "title": "Future Nostalgia 2",
-                "artist": "Dua Lipa",
-                "release_date": "2024-05-01",
-                "cover_url": "https://example.com/cover2.jpg"
-            }
-        ]
-        print("Sending response...")  # Debug print
-        return jsonify({"releases": mock_releases}), 200
+        query = """
+            SELECT 
+                id,
+                title,
+                artist,
+                release_date,
+                additional_info,
+                source_url
+            FROM upcoming_releases
+            WHERE release_date >= CURRENT_DATE
+            ORDER BY release_date ASC
+            LIMIT 50;
+        """
+        
+        releases = db_utils(dbname='discogs_db', user='postgres').read_data(query)
+        return jsonify({"releases": releases}), 200
+        
     except Exception as e:
-        print(f"Error occurred: {str(e)}")  # Debug print
+        print(f"Error fetching releases: {e}")
         return jsonify({'error': str(e)}), 500
 
 if __name__ == "__main__":
