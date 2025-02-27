@@ -7,6 +7,7 @@ from flask_cors import CORS
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_jwt_extended import JWTManager, jwt_required, get_jwt_identity, create_access_token
 from datetime import timedelta
+from flask_cors import cross_origin
 
 app = Flask(__name__)
 app.secret_key = os.urandom(16)
@@ -29,15 +30,6 @@ CORS(app,
     supports_credentials=True,
     expose_headers=['Set-Cookie'],
     allow_headers=['Content-Type', 'Authorization', 'Access-Control-Allow-Credentials'])
-
-# Add CORS headers to all responses
-@app.after_request
-def after_request(response):
-    response.headers.add('Access-Control-Allow-Origin', 'http://localhost:5173')
-    response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
-    response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
-    response.headers.add('Access-Control-Allow-Credentials', 'true')
-    return response
 
 # Class for handling DB connections and operations with psycopg
 class db_utils:
@@ -579,6 +571,33 @@ def rate_item():
     except Exception as e:
         print(f"Error saving rating: {e}")
         return jsonify({'error': 'Server error'}), 500
+
+@app.route('/upcoming-releases', methods=['GET'])
+@cross_origin(supports_credentials=True)
+def get_upcoming_releases():
+    print("Endpoint hit: /upcoming-releases")  # Debug print
+    try:
+        mock_releases = [
+            {
+                "id": 1,
+                "title": "The New Album",
+                "artist": "Taylor Swift",
+                "release_date": "2024-04-19",
+                "cover_url": "https://example.com/cover1.jpg"
+            },
+            {
+                "id": 2,
+                "title": "Future Nostalgia 2",
+                "artist": "Dua Lipa",
+                "release_date": "2024-05-01",
+                "cover_url": "https://example.com/cover2.jpg"
+            }
+        ]
+        print("Sending response...")  # Debug print
+        return jsonify({"releases": mock_releases}), 200
+    except Exception as e:
+        print(f"Error occurred: {str(e)}")  # Debug print
+        return jsonify({'error': str(e)}), 500
 
 if __name__ == "__main__":
     app.run(port=5001, debug=True)
