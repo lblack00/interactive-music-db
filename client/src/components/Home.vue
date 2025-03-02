@@ -1,136 +1,159 @@
 <!-- This file was written by Jax Hendrickson -->
+<!--ARIA Landmarks added by Chantelle Cabanilla-->
 <template>
-  <Navbar />
 
-  <div class="welcome-message">
-    Welcome to Pass the Aux! Explore what's trending, or use the filters to search for your favorite songs, artists, or playlists!
-  </div>
+  <header role="navigation">
+    <Navbar />
+  </header>
 
-  <div class="search-container">
-    <form @submit.prevent="performSearch" class="search-form">
-      <div class="search-input-container">
-        <input 
-          type="text" 
-          v-model="searchQuery" 
-          class="search-bar" 
-          placeholder="Search..." 
-          @input="getPreviewResults"
-        />
-        <button type="submit" class="search-button">Search</button>
-      </div>
-      
-      <!-- Preview Results Dropdown -->
-      <div v-if="searchQuery && (isSearching || previewResults.length)" class="search-preview">
-        <div v-if="isSearching" class="preview-item">
-          Searching, wait just a second...
+  <main>
+    <div class="welcome-message" aria-label="Welcome message">
+      Welcome to Pass the Aux! Explore what's trending, or use the filters to search for your favorite songs, artists, or playlists!
+    </div>
+
+    <div class="search-container" role="search" aria-label="Search for music">
+      <form @submit.prevent="performSearch" class="search-form">
+        <div class="search-input-container">
+          <label for="search-input" class="sr-only">Search for music</label>
+          <input 
+            type="text" 
+            v-model="searchQuery" 
+            class="search-bar" 
+            placeholder="Search..." 
+            @input="getPreviewResults"
+          />
+          <button type="submit" class="search-button">Search</button>
         </div>
-        <template v-else>
-          <div 
-            v-for="(result, index) in previewResults.slice(0, 3)" 
-            :key="index" 
-            class="preview-item"
-            @click="handlePreviewClick(result)"
-          >
-            <template v-if="filterOption === 'Artists'">
-              {{ result.name }}
-            </template>
-            <template v-else-if="filterOption === 'Releases'">
-              {{ result.title }} ({{ result.year }}) - {{ result.artists }}
-            </template>
-            <template v-else-if="filterOption === 'Tracks'">
-              {{ result.title }} - {{ result.release_title }}
-            </template>
+        
+        <!-- Preview Results Dropdown -->
+        <div v-if="searchQuery && (isSearching || previewResults.length)" 
+          class="search-preview" 
+          id="search-results" 
+          role="listbox" 
+          aria-label="Search suggestions">
+          <div v-if="isSearching" class="preview-item" role="status">
+            Searching, wait just a second...
           </div>
-          <div class="preview-footer" @click.prevent="performSearch">
-            See all results...
-          </div>
-        </template>
+          <template v-else>
+            <div 
+              v-for="(result, index) in previewResults.slice(0, 3)" 
+              :key="index" 
+              class="preview-item"
+              @click="handlePreviewClick(result)"
+              role="option"
+              :aria-selected="false"
+              tabindex="0"
+            >
+              <template v-if="filterOption === 'Artists'">
+                {{ result.name }}
+              </template>
+              <template v-else-if="filterOption === 'Releases'">
+                {{ result.title }} ({{ result.year }}) - {{ result.artists }}
+              </template>
+              <template v-else-if="filterOption === 'Tracks'">
+                {{ result.title }} - {{ result.release_title }}
+              </template>
+            </div>
+            <div class="preview-footer" @click.prevent="performSearch">
+              See all results...
+            </div>
+          </template>
+        </div>
+      </form>
+
+      <div class="dropdown-container">
+        <label for="filter-option" class="sr-only">Select filter type</label>
+        <select v-model="filterOption" class="filter-dropdown" aria-label="Filter by type">
+          <option value="Artists">Artists</option>
+          <option value="Releases">Releases</option>
+          <option value="Tracks">Tracks</option>
+        </select>
+        <label for="genre-option" class="sr-only">Select genre</label>
+        <select v-model="genreOption" class="filter-dropdown" aria-label="Filter by genre">
+          <option value="Genres" disabled>Genres</option>
+          <option value="-">-</option>
+          <option value="Pop">Pop</option>
+          <option value="Rock">Rock</option>
+          <option value="Hip-hop">Hip-hop</option>
+          <option value="Jazz">Jazz</option>
+        </select>
       </div>
-    </form>
-
-    <div class="dropdown-container">
-      <select v-model="filterOption" class="filter-dropdown">
-        <option value="Artists">Artists</option>
-        <option value="Releases">Releases</option>
-        <option value="Tracks">Tracks</option>
-      </select>
-      <select v-model="genreOption" class="filter-dropdown">
-        <option value="Genres" disabled>Genres</option>
-        <option value="-">-</option>
-        <option value="Pop">Pop</option>
-        <option value="Rock">Rock</option>
-        <option value="Hip-hop">Hip-hop</option>
-        <option value="Jazz">Jazz</option>
-      </select>
-    </div>
-  </div>
-
-  <br>
-
-  <div class="container">
-    <h3 class="carousel-title">Featured Songs</h3>
-    <div class="d-flex align-center v-col-auto">
-      <v-carousel show-arrows="hover">
-        <v-carousel-item
-          v-for="(item, i) in featuredSongs"
-          :key="item"
-          :value="i"
-          :to="item.link">
-            <router-link :key="i" :to="item.link">
-              <v-img 
-                :src="item.image || '/images/UnknownSong.png'" 
-                class="w-100 h-100"
-                contain 
-              />
-            </router-link>
-        </v-carousel-item>
-      </v-carousel>
     </div>
 
     <br>
-    <br>
+    <section class="container" aria-label="Music collections">
+      <article role = "region" aria-labelledby="featured-songs-title">
+      <h3 id="featured-songs-title" class="carousel-title">Featured Songs</h3>
+      <div class="d-flex align-center v-col-auto">
+        <v-carousel show-arrows="hover" aria-label="Featured songs carousel">
+          <v-carousel-item
+            v-for="(item, i) in featuredSongs"
+            :key="item"
+            :value="i"
+            :to="item.link">
+              <router-link :key="i" :to="item.link" :aria-label="`Featured song`">
+                <v-img 
+                  :src="item.image || '/images/UnknownSong.png'" 
+                  class="w-100 h-100"
+                  contain 
+                  :alt="`Album cover for featured song`"
+                />
+              </router-link>
+          </v-carousel-item>
+        </v-carousel>
+      </div>
+    </article>
+      <br>
+      <br>
 
-    <h3 class="carousel-title">Popular Artists</h3>
-    <div class="d-flex align-center v-col-auto">
-      <v-carousel show-arrows="hover">
-        <v-carousel-item
-          v-for="(item, i) in popularArtists"
-          :key="item"
-          :value="i"
-          :to="item.link">
-            <router-link :key="i" :to="item.link">
-              <v-img 
-                :src="item.image || '/images/UnknownPerson.png'" 
-                class="w-100 h-100"
-                contain 
-              />
-            </router-link>
-        </v-carousel-item>
-      </v-carousel>
-    </div>
+      <article role = "region" aria-labelledby="popular-artists-title">
+      <h3 id="popular-artists-title" class="carousel-title">Popular Artists</h3>
+      <div class="d-flex align-center v-col-auto">
+        <v-carousel show-arrows="hover" aria-label="Popular artists carousel">
+          <v-carousel-item
+            v-for="(item, i) in popularArtists"
+            :key="item"
+            :value="i"
+            :to="item.link">
+              <router-link :key="i" :to="item.link" :aria-label="`Popular artist`">
+                <v-img 
+                  :src="item.image || '/images/UnknownPerson.png'" 
+                  class="w-100 h-100"
+                  contain
+                  :alt="`Photo of popular artist`"
+                />
+              </router-link>
+          </v-carousel-item>
+        </v-carousel>
+      </div>
+      </article>
 
-    <br>
-    <br>
+      <br>
+      <br>
 
-    <h3 class="carousel-title">Trending Now</h3>
-    <div class="d-flex align-center v-col-auto">
-      <v-carousel show-arrows="hover">
-        <v-carousel-item
-          v-for="(item, i) in trendingNow"
-          :key="item"
-          :value="i"
-          :to="item.link">
-            <router-link :key="i" :to="item.link">
-              <v-img 
-                :src="item.image || '/images/UnknownSong.png'" 
-                class="w-100 h-100"
-                contain 
-              />
-            </router-link>
-        </v-carousel-item>
-      </v-carousel>
-    </div>
-  </div>
+      <article role = "region" aria-labelledby="trending-now-title">
+      <h3 id="trending-now-title" class="carousel-title">Trending Now</h3>
+      <div class="d-flex align-center v-col-auto">
+        <v-carousel show-arrows="hover" aria-label="Trending songs carousel">
+          <v-carousel-item
+            v-for="(item, i) in trendingNow"
+            :key="item"
+            :value="i"
+            :to="item.link">
+              <router-link :key="i" :to="item.link" :aria-label="`Trending song`" >
+                <v-img 
+                  :src="item.image || '/images/UnknownSong.png'" 
+                  class="w-100 h-100"
+                  contain 
+                  :alt="`Album cover for trending song`"
+                />
+              </router-link>
+          </v-carousel-item>
+        </v-carousel>
+      </div>
+    </article>
+  </section>
+</main>
 </template>
 
 <script>
@@ -446,4 +469,16 @@ export default {
   border-radius: 15px;
 }
 
+/* For screen readers only - visually hidden but accessible to screen readers */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
 </style>
