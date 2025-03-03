@@ -6,8 +6,24 @@
       <ul class="navbar-links">
         <li><router-link to="/">Home</router-link></li>
         <li><router-link to="/countdown">Releases</router-link></li>
-        <li><router-link to="/" @click.prevent="logout">Log Out</router-link></li>
-        <li><router-link to="/user"><v-icon>mdi-account</v-icon></router-link></li>
+        <li>
+          <v-menu open-on-hover>
+            <template v-slot:activator="{ props }">
+              <v-icon v-bind="props">mdi-account</v-icon>
+            </template>
+            <v-list>
+              <v-list-item to="/user">
+                <v-list-item-title>Profile</v-list-item-title>
+              </v-list-item>
+              <v-list-item to="/user-settings">
+                <v-list-item-title>Settings</v-list-item-title>
+              </v-list-item>
+              <v-list-item @click="logout" class="logout-item">
+                <v-list-item-title>Log Out</v-list-item-title>
+              </v-list-item>
+            </v-list>
+          </v-menu>
+        </li>
       </ul>
     </div>
     <div v-else>

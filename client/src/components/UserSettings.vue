@@ -31,7 +31,7 @@
 import Navbar from "./Navbar.vue";
 
 export default {
-  name: "UserProfile",
+  name: "userSettings",
   components: { Navbar },
   data() {
     return {
