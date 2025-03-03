@@ -41,9 +41,50 @@
           <v-divider></v-divider>
           <v-list>
             <v-list-item v-for="(song, index) in userSongs" :key="'user-' + index">
-              <v-list-item-content>
-                <v-list-item-title>{{ song }}</v-list-item-title>
-              </v-list-item-content>
+              <v-row align="center" class="w-100">
+                <!-- Song Title Column -->
+                <v-col cols="6">
+                  <v-list-item-title>{{ song.title }}</v-list-item-title>
+                </v-col>
+
+                <!-- Rating Column -->
+                <v-col cols="1">
+                  <v-list-item-subtitle>{{ song.rating }}/10</v-list-item-subtitle>
+                </v-col>
+
+                <!-- Date Column -->
+                <v-col cols="2">
+                  <v-list-item-subtitle>{{ song.date }}</v-list-item-subtitle>
+                </v-col>
+
+                <!-- Action Buttons Column -->
+                <v-col cols="3" class="d-flex justify-end">
+                  <!-- Edit Button -->
+                  <v-btn variant="plain" @click="editSong(song)">
+                    <v-icon>mdi-pencil</v-icon>
+                  </v-btn>
+
+                  <!-- Delete Button -->
+                  <v-btn variant="plain" @click="deleteSong(song)">
+                    <v-icon>mdi-delete</v-icon>
+                  </v-btn>
+
+                  <!-- Share Button -->
+                  <v-btn variant="plain" @click="shareSong(song)">
+                    <v-icon>mdi-share-variant</v-icon>
+                  </v-btn>
+
+                  <!-- Link Button (Opens External URL) -->
+                  <v-btn variant="plain" :href="song.link" target="_blank">
+                    <v-icon>mdi-link</v-icon>
+                  </v-btn>
+
+                  <!-- Spotify Button (or WiFi) -->
+                  <v-btn variant="plain" @click="spotifyAction(song)">
+                    <v-icon>mdi-spotify</v-icon> <!-- Use mdi-wifi if preferred -->
+                  </v-btn>
+                </v-col>
+              </v-row>
             </v-list-item>
           </v-list>
         </v-card>
@@ -90,7 +131,11 @@ export default {
   data() {
     return {
       username: this.$route.params.username || '',
-      userSongs: ["Song A", "Song B", "Song C"], // User's personal music
+      userSongs: [
+        { title: "Song A", rating: 8, date: "2025-03-01" },
+        { title: "Song B", rating: 9, date: "2025-02-28" },
+        { title: "Song C", rating: 7, date: "2025-02-25" }
+      ],
       playlists: [
         { name: "Playlist 1", songs: ["Song 1", "Song 2", "Song 3"] },
         { name: "Playlist 2", songs: ["Track A", "Track B"] },
