@@ -1,8 +1,14 @@
 <!-- This file was written by Jax Hendrickson -->
+<!--ARIA Landmarks added by Chantelle Cabanilla-->
 
 <template>
-	<div class="rating-system">
-		<div class="stars" @mouseleave="resetTempRating">
+	<section class="rating-system" role="region" aria-label="Rating system">
+		<div
+			class="stars"
+			@mouseleave="resetTempRating"
+			role="group"
+			aria-label="Rate from 1 to 10 stars"
+		>
 			<span
 				v-for="star in 10"
 				:key="star"
@@ -13,30 +19,58 @@
 				}"
 				@mouseover="setTempRating(star)"
 				@click="rateItem(star)"
+				tabindex="0"
+				role="button"
+				:aria-label="`${star} star${star === 1 ? '' : 's'}`"
+				:aria-pressed="star <= userRating"
+				@keydown.enter="rateItem(star)"
+				@keydown.space.prevent="rateItem(star)"
 			>
 				★
 			</span>
 		</div>
-		<div class="rating-info">
+		<div class="rating-info" aria-live="polite">
 			<span v-if="averageRating">{{ averageRating.toFixed(1) }} / 10</span>
 			<span v-if="totalRatings">({{ totalRatings }} ratings)</span>
 		</div>
 		<transition name="fade">
-			<div class="login-prompt-overlay" v-if="showLoginPrompt">
+			<div
+				class="login-prompt-overlay"
+				v-if="showLoginPrompt"
+				role="dialog"
+				aria-labelledby="login-prompt-title"
+				aria-modal="true"
+			>
 				<div class="login-prompt-modal">
-					<h3>Please Log In</h3>
+					<h3 id="login-prompt-title">Please Log In</h3>
 					<p>You need to be logged in to rate items.</p>
-					<div class="buttons">
-						<button class="cancel-btn" @click="showLoginPrompt = false">
+					<div class="buttons" role="group" aria-label="Login options">
+						<button
+							class="cancel-btn"
+							@click="showLoginPrompt = false"
+							aria-label="Cancel and return to page"
+						>
 							Cancel
 						</button>
-						<button class="login-btn" @click="goToLogin">Log In</button>
-						<button class="signup-btn" @click="goToSignup">Sign Up</button>
+						<button
+							class="login-btn"
+							@click="goToLogin"
+							aria-label="Go to login page"
+						>
+							Log In
+						</button>
+						<button
+							class="signup-btn"
+							@click="goToSignup"
+							aria-label="Go to signup page"
+						>
+							Sign Up
+						</button>
 					</div>
 				</div>
 			</div>
 		</transition>
-	</div>
+	</section>
 </template>
 
 <script>
