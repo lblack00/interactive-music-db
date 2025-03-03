@@ -14,6 +14,10 @@
             <!-- Profile Picture Section -->
             <h2 class="text-h5 font-weight-bold mt-4">Profile Picture</h2>
             
+            <!-- 
+            TODO: Fix this so the size changes dynammically when window size is changed, as 
+            it currentyly is permanantly 200x200
+            -->
             <v-row justify="center">
               <!-- Current Profile Image -->
               <v-col cols="5" class="text-center">
@@ -21,7 +25,8 @@
                 <img 
                   :src="user.profileImage" 
                   height="200" 
-                  width="200" 
+                  width="200"
+                   
                   class="mt-2 mx-auto"
                   style="object-fit: fill; display: block;"
                 />
@@ -39,7 +44,7 @@
                 />
               </v-col>
             </v-row>
-
+            
             <v-file-input 
               label="Upload New Profile Picture (No larger than 1MB)" 
               accept="image/*" 
