@@ -14,6 +14,7 @@ import Forum from "../components/Forum.vue";
 import ForumThread from "../components/ForumThread.vue";
 import UserProfile from "../components/UserProfile.vue";
 import UserSettings from "@/components/UserSettings.vue";
+import MusicList from "@/components/MusicList.vue";
 import AdminDashboard from "../components/AdminDashboard.vue";
 
 // Release, Master, NotFound, SignUp, Login, and SearchResults were written by Lucas Black
@@ -78,7 +79,7 @@ const router = createRouter({
 			component: Forum,
 		},
 		{
-			path: "/forum-thread",
+			path: "/forum/thread/:thread_num",
 			name: "ForumThread",
 			component: ForumThread,
 		},
@@ -96,6 +97,11 @@ const router = createRouter({
 			path: "/admin",
 			name: "AdminDashboard",
 			component: AdminDashboard,
+		},
+    {
+			path: "/musiclist/:username",
+			name: "MusicList",
+			component: MusicList,
 		},
 		{
 			path: "/search/:query",

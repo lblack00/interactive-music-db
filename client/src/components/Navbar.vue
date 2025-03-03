@@ -5,6 +5,7 @@
     <div v-if="loggedIn">
       <ul class="navbar-links">
         <li><router-link to="/">Home</router-link></li>
+        <li><router-link :to="`/musiclist/${user.username}`">My Music</router-link></li>
         <li><router-link to="/countdown">Releases</router-link></li>
         <li><router-link to="/forum">Forum</router-link></li>
         <li>
@@ -31,6 +32,7 @@
       <ul class="navbar-links">
         <li><router-link to="/">Home</router-link></li>
         <li><router-link to="/countdown">Releases</router-link></li>
+        <li><router-link to="/forum">Forum</router-link></li>
         <li><router-link to="/signup">Sign Up</router-link></li>
         <li><router-link to="/login">Log In</router-link></li>
       </ul>
