@@ -50,23 +50,32 @@
 
             <v-divider class="my-4"></v-divider>
 
-            <h2 class="text-h5 font-weight-bold mb-2">Spotify Integration</h2>
-            <p v-if="user.spotifyConnected" style="color: green">Connected to Spotify</p>
-            <p v-else style="color: red">Not connected</p>
-            
-            <v-btn v-if="!user.spotifyConnected" color="green" @click="initiateSpotifyAuth">Connect Spotify</v-btn>
-            <v-btn v-else color="red" @click="disconnectSpotify">Disconnect Spotify</v-btn>
-            <v-divider class="my-4"></v-divider>
-            <v-btn type="submit" color="primary">Save Changes</v-btn>
-          </v-form>
-        </v-card>
-      </v-col>
-    </v-row>
-  </v-container>
+						<h2 class="text-h5 font-weight-bold mb-2">Spotify Integration</h2>
+						<p v-if="user.spotifyConnected" style="color: green">
+							Connected to Spotify
+						</p>
+						<p v-else style="color: red">Not connected</p>
+
+						<v-btn
+							v-if="!user.spotifyConnected"
+							color="green"
+							@click="initiateSpotifyAuth"
+							>Connect Spotify</v-btn
+						>
+						<v-btn v-else color="red" @click="disconnectSpotify"
+							>Disconnect Spotify</v-btn
+						>
+						<v-divider class="my-4"></v-divider>
+						<v-btn type="submit" color="primary">Save Changes</v-btn>
+					</v-form>
+				</v-card>
+			</v-col>
+		</v-row>
+	</v-container>
 </template>
 
 <script>
-import Navbar from "./Navbar.vue";
+	import Navbar from "./Navbar.vue";
 
 export default {
   name: "userSettings",
@@ -119,125 +128,132 @@ export default {
         const codeVerifier = this.generateCodeVerifier();
         const codeChallenge = await this.generateCodeChallenge(codeVerifier);
 
-        localStorage.setItem("spotify_auth_state", state);
-        localStorage.setItem("code_verifier", codeVerifier);
+					localStorage.setItem("spotify_auth_state", state);
+					localStorage.setItem("code_verifier", codeVerifier);
 
-        const scope = "user-read-private user-read-email";
-        const authUrl = new URL("https://accounts.spotify.com/authorize");
-        authUrl.searchParams.append("client_id", this.clientId);
-        authUrl.searchParams.append("response_type", "code");
-        authUrl.searchParams.append("redirect_uri", this.redirectUri);
-        authUrl.searchParams.append("scope", scope);
-        authUrl.searchParams.append("state", state);
-        authUrl.searchParams.append("code_challenge_method", "S256");
-        authUrl.searchParams.append("code_challenge", codeChallenge);
+					const scope = "user-read-private user-read-email";
+					const authUrl = new URL("https://accounts.spotify.com/authorize");
+					authUrl.searchParams.append("client_id", this.clientId);
+					authUrl.searchParams.append("response_type", "code");
+					authUrl.searchParams.append("redirect_uri", this.redirectUri);
+					authUrl.searchParams.append("scope", scope);
+					authUrl.searchParams.append("state", state);
+					authUrl.searchParams.append("code_challenge_method", "S256");
+					authUrl.searchParams.append("code_challenge", codeChallenge);
 
-        window.location.href = authUrl.toString();
-      } catch (error) {
-        console.error("Error initiating Spotify auth:", error);
-      }
-    },
-    async handleSpotifyCallback() {
-      const urlParams = new URLSearchParams(window.location.search);
-      const code = urlParams.get('code');
-      const state = urlParams.get('state');
-      const storedState = localStorage.getItem('spotify_auth_state');
-    
-      if (!code || state !== storedState) {
-        alert('Authorization failed. Try again.');
-        return;
-      }
-      
-      localStorage.removeItem('spotify_auth_state');
-    
-      try {
-        const response = await fetch('https://accounts.spotify.com/api/token', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-          body: new URLSearchParams({
-            client_id: this.clientId,
-            grant_type: 'authorization_code',
-            code: code,
-            redirect_uri: this.redirectUri,
-            code_verifier: localStorage.getItem('code_verifier')
-          })
-        });
-    
-        const data = await response.json();
-        if (data.access_token) {
-          this.accessToken = data.access_token;
-          localStorage.setItem('spotify_access_token', data.access_token);
-          localStorage.setItem('spotify_refresh_token', data.refresh_token);
-          this.user.spotifyConnected = true;
-          alert('Spotify connected successfully!');
-        } else {
-          alert('Failed to retrieve access token');
-        }
-      } catch (error) {
-        console.error('Error during token exchange:', error);
-      }
-    },
-    async refreshAccessToken() {
-      const refreshToken = localStorage.getItem("spotify_refresh_token");
-      if (!refreshToken) return;
-      try {
-        const response = await fetch("https://accounts.spotify.com/api/token", {
-          method: "POST",
-          headers: { "Content-Type": "application/x-www-form-urlencoded" },
-          body: new URLSearchParams({
-            client_id: this.clientId,
-            grant_type: "refresh_token",
-            refresh_token: refreshToken,
-          }),
-        });
-        const data = await response.json();
-        if (data.access_token) {
-          this.accessToken = data.access_token;
-          localStorage.setItem("spotify_access_token", data.access_token);
-        }
-      } catch (error) {
-        console.error("Error refreshing access token:", error);
-      }
-    },
-    generateRandomString(length) {
-      const possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-      return Array.from(crypto.getRandomValues(new Uint8Array(length)))
-        .map((x) => possible[x % possible.length])
-        .join("");
-    },
-    generateCodeVerifier() {
-      return this.generateRandomString(128);
-    },
-    async generateCodeChallenge(codeVerifier) {
-      const encoder = new TextEncoder();
-      const data = encoder.encode(codeVerifier);
-      const digest = await crypto.subtle.digest("SHA-256", data);
-      return this.base64UrlEncode(digest);
-    },
-    base64UrlEncode(buffer) {
-      let binary = '';
-      const bytes = new Uint8Array(buffer);
-      for (let i = 0; i < bytes.byteLength; i++) {
-        binary += String.fromCharCode(bytes[i]);
-      }
-      return btoa(binary)
-        .replace(/\+/g, '-')
-        .replace(/\//g, '_')
-        .replace(/=+$/, '');
-    },
-    disconnectSpotify() {
-      this.user.spotifyConnected = false;
-      this.accessToken = "";
-      localStorage.removeItem("spotify_access_token");
-      localStorage.removeItem("spotify_refresh_token");
-      alert("Spotify account disconnected.");
-    },
-  },
-  mounted() {
-    if (window.location.search.includes("code")) {
-      this.handleSpotifyCallback();
-    }
-    setInterval(this.refreshAccessToken, 50 * 60 * 1000);
-  },
-};
+					window.location.href = authUrl.toString();
+				} catch (error) {
+					console.error("Error initiating Spotify auth:", error);
+				}
+			},
+			async handleSpotifyCallback() {
+				const urlParams = new URLSearchParams(window.location.search);
+				const code = urlParams.get("code");
+				const state = urlParams.get("state");
+				const storedState = localStorage.getItem("spotify_auth_state");
+
+				if (!code || state !== storedState) {
+					alert("Authorization failed. Try again.");
+					return;
+				}
+
+				localStorage.removeItem("spotify_auth_state");
+
+				try {
+					const response = await fetch(
+						"https://accounts.spotify.com/api/token",
+						{
+							method: "POST",
+							headers: { "Content-Type": "application/x-www-form-urlencoded" },
+							body: new URLSearchParams({
+								client_id: this.clientId,
+								grant_type: "authorization_code",
+								code: code,
+								redirect_uri: this.redirectUri,
+								code_verifier: localStorage.getItem("code_verifier"),
+							}),
+						}
+					);
+
+					const data = await response.json();
+					if (data.access_token) {
+						this.accessToken = data.access_token;
+						localStorage.setItem("spotify_access_token", data.access_token);
+						localStorage.setItem("spotify_refresh_token", data.refresh_token);
+						this.user.spotifyConnected = true;
+						alert("Spotify connected successfully!");
+					} else {
+						alert("Failed to retrieve access token");
+					}
+				} catch (error) {
+					console.error("Error during token exchange:", error);
+				}
+			},
+			async refreshAccessToken() {
+				const refreshToken = localStorage.getItem("spotify_refresh_token");
+				if (!refreshToken) return;
+				try {
+					const response = await fetch(
+						"https://accounts.spotify.com/api/token",
+						{
+							method: "POST",
+							headers: { "Content-Type": "application/x-www-form-urlencoded" },
+							body: new URLSearchParams({
+								client_id: this.clientId,
+								grant_type: "refresh_token",
+								refresh_token: refreshToken,
+							}),
+						}
+					);
+					const data = await response.json();
+					if (data.access_token) {
+						this.accessToken = data.access_token;
+						localStorage.setItem("spotify_access_token", data.access_token);
+					}
+				} catch (error) {
+					console.error("Error refreshing access token:", error);
+				}
+			},
+			generateRandomString(length) {
+				const possible =
+					"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+				return Array.from(crypto.getRandomValues(new Uint8Array(length)))
+					.map((x) => possible[x % possible.length])
+					.join("");
+			},
+			generateCodeVerifier() {
+				return this.generateRandomString(128);
+			},
+			async generateCodeChallenge(codeVerifier) {
+				const encoder = new TextEncoder();
+				const data = encoder.encode(codeVerifier);
+				const digest = await crypto.subtle.digest("SHA-256", data);
+				return this.base64UrlEncode(digest);
+			},
+			base64UrlEncode(buffer) {
+				let binary = "";
+				const bytes = new Uint8Array(buffer);
+				for (let i = 0; i < bytes.byteLength; i++) {
+					binary += String.fromCharCode(bytes[i]);
+				}
+				return btoa(binary)
+					.replace(/\+/g, "-")
+					.replace(/\//g, "_")
+					.replace(/=+$/, "");
+			},
+			disconnectSpotify() {
+				this.user.spotifyConnected = false;
+				this.accessToken = "";
+				localStorage.removeItem("spotify_access_token");
+				localStorage.removeItem("spotify_refresh_token");
+				alert("Spotify account disconnected.");
+			},
+		},
+		mounted() {
+			if (window.location.search.includes("code")) {
+				this.handleSpotifyCallback();
+			}
+			setInterval(this.refreshAccessToken, 50 * 60 * 1000);
+		},
+	};
 </script>
