@@ -12,7 +12,7 @@
               <v-icon v-bind="props">mdi-account</v-icon>
             </template>
             <v-list>
-              <v-list-item to="/user">
+              <v-list-item :to="`/user/${user.username}`">
                 <v-list-item-title>Profile</v-list-item-title>
               </v-list-item>
               <v-list-item to="/user-settings">
