@@ -94,8 +94,12 @@
 		<section class="container" aria-label="Music collections">
 			<article role="region" aria-labelledby="featured-songs-title">
 				<h3 id="featured-songs-title" class="carousel-title">Featured Songs</h3>
-				<div class="d-flex align-center v-col-auto">
-					<v-carousel show-arrows="hover" aria-label="Featured songs carousel">
+				<div>
+					<AccessibilityCarousel
+						ariaLabel="Featured songs carousel"
+						:items="featuredSongs"
+						showArrows="hover"
+					>
 						<v-carousel-item
 							v-for="(item, i) in featuredSongs"
 							:key="item"
@@ -115,7 +119,7 @@
 								/>
 							</router-link>
 						</v-carousel-item>
-					</v-carousel>
+					</AccessibilityCarousel>
 				</div>
 			</article>
 			<br />
@@ -125,8 +129,12 @@
 				<h3 id="popular-artists-title" class="carousel-title">
 					Popular Artists
 				</h3>
-				<div class="d-flex align-center v-col-auto">
-					<v-carousel show-arrows="hover" aria-label="Popular artists carousel">
+				<div>
+					<AccessibilityCarousel
+						ariaLabel="Popular Artists carousel"
+						:items="popularArtists"
+						showArrows="hover"
+					>
 						<v-carousel-item
 							v-for="(item, i) in popularArtists"
 							:key="item"
@@ -146,7 +154,7 @@
 								/>
 							</router-link>
 						</v-carousel-item>
-					</v-carousel>
+					</AccessibilityCarousel>
 				</div>
 			</article>
 
@@ -155,8 +163,12 @@
 
 			<article role="region" aria-labelledby="trending-now-title">
 				<h3 id="trending-now-title" class="carousel-title">Trending Now</h3>
-				<div class="d-flex align-center v-col-auto">
-					<v-carousel show-arrows="hover" aria-label="Trending songs carousel">
+				<div>
+					<AccessibilityCarousel
+						ariaLabel="Trending songs carousel"
+						:items="trendingNow"
+						showArrows="hover"
+					>
 						<v-carousel-item
 							v-for="(item, i) in trendingNow"
 							:key="item"
@@ -176,7 +188,7 @@
 								/>
 							</router-link>
 						</v-carousel-item>
-					</v-carousel>
+					</AccessibilityCarousel>
 				</div>
 			</article>
 		</section>
@@ -186,11 +198,13 @@
 <script>
 	import Navbar from "./Navbar.vue";
 	import axios from "axios";
+	import AccessibilityCarousel from "./AccessibilityCarousel.vue";
 
 	export default {
 		name: "Home",
 		components: {
 			Navbar,
+			AccessibilityCarousel,
 		},
 		data() {
 			return {
