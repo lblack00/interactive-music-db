@@ -13,6 +13,7 @@ import PlaylistSystem from "../components/PlaylistSystem.vue";
 import Forum from "../components/Forum.vue";
 import ForumThread from "../components/ForumThread.vue";
 import UserProfile from "../components/UserProfile.vue";
+import UserSettings from "@/components/UserSettings.vue";
 import AdminDashboard from "../components/AdminDashboard.vue";
 
 // Release, Master, NotFound, SignUp, Login, and SearchResults were written by Lucas Black
@@ -82,9 +83,14 @@ const router = createRouter({
 			component: ForumThread,
 		},
 		{
-			path: "/user",
+			path: "/user/:username",
 			name: "UserProfile",
 			component: UserProfile,
+		},
+    {
+			path: "/user-settings",
+			name: "UserSettings",
+			component: UserSettings,
 		},
 		{
 			path: "/admin",
