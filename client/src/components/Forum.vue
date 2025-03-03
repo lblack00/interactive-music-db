@@ -52,9 +52,11 @@
 								>
 									<v-list-item-content>
 										<v-list-item-title>
-											<router-link :to="thread.link">{{
-												thread.title
-											}}</router-link>
+											<router-link
+												:to="thread.link"
+												:aria-label="`${thread.title} in ${thread.category} with ${thread.replies} replies`"
+												>{{ thread.title }}</router-link
+											>
 										</v-list-item-title>
 										<v-list-item-subtitle>
 											{{ thread.category }} - {{ thread.replies }} replies
