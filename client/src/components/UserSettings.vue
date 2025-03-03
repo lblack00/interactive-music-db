@@ -10,6 +10,44 @@
             <v-text-field v-model="user.username" label="Username" outlined required></v-text-field>
             <v-text-field v-model="user.email" label="Email" outlined required></v-text-field>
             <v-textarea v-model="user.bio" label="Bio" outlined rows="3"></v-textarea>
+
+            <!-- Profile Picture Section -->
+            <h2 class="text-h5 font-weight-bold mt-4">Profile Picture</h2>
+            
+            <v-row justify="center">
+              <!-- Current Profile Image -->
+              <v-col cols="5" class="text-center">
+                <p class="font-weight-bold">Current</p>
+                <img 
+                  :src="user.profileImage" 
+                  height="200" 
+                  width="200" 
+                  class="mt-2 mx-auto"
+                  style="object-fit: fill; display: block;"
+                />
+              </v-col>
+
+              <!-- New Profile Image Preview -->
+              <v-col cols="5" class="text-center" v-if="newProfileImage">
+                <p class="font-weight-bold">New</p>
+                <img 
+                  :src="newProfileImage" 
+                  height="200" 
+                  width="200" 
+                  class="mt-2 mx-auto"
+                  style="object-fit: fill; display: block;"
+                />
+              </v-col>
+            </v-row>
+
+            <v-file-input 
+              label="Upload New Profile Picture (No larger than 1MB)" 
+              accept="image/*" 
+              @change="handleFileUpload"
+              class="mt-4"
+            />
+            <p v-if="profileFileError" style="color: red;">{{ profileFileError }}</p>
+
             <v-divider class="my-4"></v-divider>
 
             <h2 class="text-h5 font-weight-bold mb-2">Spotify Integration</h2>
@@ -39,8 +77,11 @@ export default {
         username: "Username",
         email: "username@example.com",
         bio: "This is my bio!",
+        profileImage: '/images/UnknownPerson.png',
         spotifyConnected: false,
       },
+      newProfileImage: null,  // To store the preview of the new image
+      profileFileError: "",
       clientId: import.meta.env.VITE_SPOTIFY_CLIENT_ID,
       redirectUri: "http://localhost:5173/",
       accessToken: "",
@@ -49,7 +90,29 @@ export default {
   methods: {
     saveProfile() {
       alert("Profile updated successfully!");
+      // Needs to be implemented
     },
+    handleFileUpload(event) {
+      const file = event.target.files[0]; // Get the selected file
+      
+      if (!file) return; // If no file is selected, do nothing
+      
+      if (file.size > 1024 * 1024) { // Check if file is larger than 1MB
+        this.profileFileError = "File size must be less than 1MB.";
+        return;
+      }
+
+      this.profileFileError = ""; // Clear any previous errors
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        this.newProfileImage = e.target.result;  // Update new profile image preview
+      };
+      reader.readAsDataURL(file);
+    },
+
+    // For Spotify
+
     async initiateSpotifyAuth() {
       try {
         const state = this.generateRandomString(16);

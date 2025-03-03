@@ -6,6 +6,7 @@
       <ul class="navbar-links">
         <li><router-link to="/">Home</router-link></li>
         <li><router-link to="/countdown">Releases</router-link></li>
+        <li><router-link to="/forum">Forum</router-link></li>
         <li>
           <v-menu open-on-hover>
             <template v-slot:activator="{ props }">
