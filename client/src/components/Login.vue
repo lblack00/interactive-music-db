@@ -1,20 +1,46 @@
 <!-- This file was written by Lucas Black -->
+<!--ARIA Landmarks added by Chantelle Cabanilla-->
 <template>
-  <Navbar />
+  <header role="navigation">
+    <Navbar />
+  </header>
+
+<main role = "main">
   <div class='container mt-5'>
-    <h2>Login</h2>
-    <form @submit.prevent='login'>
-      <div class='row'>
-        <label for='username'>Username:</label>
-        <input type='username' id='username' v-model='username' required>
+    <h2 id="login-heading">Login</h2>
+
+    <section role="region" aria-labelledby="login-heading">
+    <form @submit.prevent='login' aria-label="Login form">
+
+
+      <div class='row' role = 'form' aria-labelledby="username-label">
+        <label id="username-label" for='username'>Username</label>
+        <input 
+          type='username' 
+          id='username' 
+          v-model='username' 
+          required 
+          aria-required="true"
+          autocomplete="username"
+        >
       </div>
-      <div class='row'>
-        <label for='password'>Password:</label>
-        <input type='password' id='password' v-model='password' required>
+
+      <div class='row' role = 'form' aria-labelledby="password-label">
+        <label id="password-label" for='password'>Password</label>
+        <input 
+          type='password' 
+          id='password' 
+          v-model='password' 
+          required
+          aria-required="true"
+          autocomplete="current-password"
+        >
       </div>
       <button type='submit'>Login</button>
     </form>
+  </section>
   </div>
+  </main>
 </template>
 
 <script>
