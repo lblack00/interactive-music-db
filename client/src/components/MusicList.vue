@@ -1,6 +1,6 @@
 <!-- This file was written by Matthew Stenvold -->
 <template>
-  <Navbar />
+  
   <v-container>
     <v-row>
       <!-- Left Sidebar (Skinny Scrollable Vertical Card) -->

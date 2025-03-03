@@ -1,6 +1,6 @@
 <!-- This file was written by Lucas Black -->
 <template>
-  <Navbar />
+  
   <div class="container mt-5">
     <h2>Search Results for "{{ query }}"</h2>
     <div v-if="loading" class="loading-spinner">Loading...</div>

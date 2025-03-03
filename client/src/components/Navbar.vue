@@ -1,6 +1,6 @@
 <!-- This file was written by Lucas Black -->
 <template>
-  <nav class="navbar">
+  <nav class="navbar"  style="position: fixed; z-index: 1000;">
     <div class="navbar-title">Pass the Aux</div>
     <div v-if="loggedIn">
       <ul class="navbar-links">

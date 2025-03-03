@@ -2,7 +2,7 @@
 <template>
   <div class="frame" v-if="data">
     <div class="div">
-      <Navbar />
+      
       <!-- Song picture/name -->
       <div class="SongBlock">
         <div class="SongPicture" :style="{ backgroundImage: 'url(' + (SongPicture) + ')' }"></div>

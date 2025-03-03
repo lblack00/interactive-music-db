@@ -2,7 +2,7 @@
 <!--ARIA Landmakes added by Chantelle Cabanilla-->
 <template>
 	<header role="navigation">
-		<Navbar />
+		
 	</header>
 
 	<main role="main">

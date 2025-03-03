@@ -1,5 +1,5 @@
 <template>
-	<Navbar />
+	
 	<!-- Todo: this is a mock user profile edit page which requires a user logged in -->
 	<v-container>
 		<v-row justify="center">
