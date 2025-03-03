@@ -1,4 +1,4 @@
-<!--ARIA Landmakes added by Chantelle Cabanilla-->
+<!--ARIA Landmarks added by Chantelle Cabanilla-->
 <template>
   <header role="navigation">
     <Navbar />
