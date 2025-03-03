@@ -12,7 +12,7 @@ import Countdown from "../components/Countdown.vue";
 import PlaylistSystem from "../components/PlaylistSystem.vue";
 import Forum from "../components/Forum.vue";
 import ForumThread from "../components/ForumThread.vue";
-import userSettings from "../components/UserSettings.vue";
+import UserProfile from "../components/UserProfile.vue";
 import AdminDashboard from "../components/AdminDashboard.vue";
 
 // Release, Master, NotFound, SignUp, Login, and SearchResults were written by Lucas Black
@@ -82,9 +82,9 @@ const router = createRouter({
 			component: ForumThread,
 		},
 		{
-			path: "/user-settings",
-			name: "userSettings",
-			component: userSettings,
+			path: "/user",
+			name: "UserProfile",
+			component: UserProfile,
 		},
 		{
 			path: "/admin",
