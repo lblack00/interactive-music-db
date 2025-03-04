@@ -46,7 +46,7 @@
 						<v-list-item v-for="(song, index) in userSongs" :key="'user-' + index">
 							<v-row align="center" class="w-100">
 								<!-- Song Title Column -->
-								<v-col cols="6">
+								<v-col cols="4">
 									<v-list-item-title>{{ song.title }}</v-list-item-title>
 								</v-col>
 
@@ -130,7 +130,6 @@
 <script>
   import Navbar from './Navbar.vue';
   import axios from "axios";
-	import Navbar from './Navbar.vue';
 
   export default {
     name: 'MusicList',
@@ -179,34 +178,4 @@
       }
     }
   };
-export default {
-	name: 'MusicList',
-	components: {
-		Navbar,
-	},
-	data() {
-		return {
-			username: this.$route.params.username || '',
-			userSongs: [
-				{ title: "Song A", rating: 8, date: "2025-03-01" },
-				{ title: "Song B", rating: 9, date: "2025-02-28" },
-				{ title: "Song C", rating: 7, date: "2025-02-25" }
-			],
-			playlists: [
-				{ name: "Playlist 1", songs: ["Song 1", "Song 2", "Song 3"] },
-				{ name: "Playlist 2", songs: ["Track A", "Track B"] },
-				{ name: "Playlist 3", songs: ["Melody X", "Tune Y", "Harmony Z"] }
-			]
-		};
-	},
-	watch: {
-		'$route.params.username'(newUsername) {
-			this.username = newUsername;
-		}
-	},
-	props: {},
-	methods: {
-
-	}
-};
 </script>
