@@ -54,7 +54,7 @@
 
                 <!-- Date Column -->
                 <v-col cols="2">
-                  <v-list-item-subtitle>{{ song.date }}</v-list-item-subtitle>
+                  <v-list-item-subtitle>{{ new Date(song.created_at).toLocaleDateString() }}</v-list-item-subtitle>
                 </v-col>
 
                 <!-- Action Buttons Column -->
@@ -122,35 +122,53 @@
 
 <script>
   import Navbar from './Navbar.vue';
+  import axios from "axios";
 
-export default {
-  name: 'MusicList',
-  components: {
-    Navbar,
-  },
-  data() {
-    return {
-      username: this.$route.params.username || '',
-      userSongs: [
-        { title: "Song A", rating: 8, date: "2025-03-01" },
-        { title: "Song B", rating: 9, date: "2025-02-28" },
-        { title: "Song C", rating: 7, date: "2025-02-25" }
-      ],
-      playlists: [
+  export default {
+    name: 'MusicList',
+    components: {
+      Navbar,
+    },
+    data() {
+      return {
+        username: this.$route.params.username || '',
+        userSongs: [],
+        playlists: []
+      };
+    },
+    props: {
+    
+    playlists: {
+      type: Array,
+      default: () => [
         { name: "Playlist 1", songs: ["Song 1", "Song 2", "Song 3"] },
         { name: "Playlist 2", songs: ["Track A", "Track B"] },
         { name: "Playlist 3", songs: ["Melody X", "Tune Y", "Harmony Z"] }
       ]
-    };
-  },
-  watch: {
-    '$route.params.username'(newUsername) {
-      this.username = newUsername;
     }
-  },
-  props: {},
-  methods: {
+    },
+    watch: {
+      '$route.params.username'(newUsername) {
+        this.username = newUsername;
+      }
+    },
+    async created() {
+      await this.fetchMusicList();
+    },
+    methods: {
+      async fetchMusicList() {
+        try {
+          const username = this.username;  // Get username from data
+          const itemType = "master";  // Can be changed dynamically if needed
 
-  }
-};
+          const response = await axios.get(`http://localhost:5001/api/musiclist/${username}/${itemType}`);
+
+          // Store the fetched songs into userSongs
+          this.userSongs = response.data;
+        } catch (error) {
+          console.error('Error fetching music list:', error);
+        }
+      }
+    }
+  };
 </script>

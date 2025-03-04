@@ -597,5 +597,59 @@ def get_upcoming_releases():
         print(f"Error fetching releases: {e}")
         return jsonify({'error': str(e)}), 500
 
+# Written by Matthew Stenvold
+@app.route('/api/musiclist/<string:username>/<string:item_type>', methods=['GET'])
+def get_user_music_list(username, item_type):
+    """Fetches music ratings for a specific user and item type, then retrieves song details from discogs_db."""
+    try:
+        user_db = db_utils(dbname='users_db', user='postgres')
+        discogs_db = db_utils(dbname='discogs_db', user='postgres')
+
+        # Get user_id based on username
+        user_query = "SELECT id FROM users WHERE username = %s;"
+        user_result = user_db.read_data(user_query, (username,))
+        
+        if not user_result:
+            return jsonify({'error': 'User not found'}), 404
+
+        user_id = user_result[0]['id']
+
+        # Fetch ratings for the given user and item type
+        ratings_query = """
+            SELECT item_id, rating, created_at 
+            FROM ratings 
+            WHERE user_id = %s AND item_type = %s
+            ORDER BY created_at DESC;
+        """
+        user_ratings = user_db.read_data(ratings_query, (user_id, item_type))
+
+        if not user_ratings:
+            return jsonify([]), 200  # Return empty list if no ratings found
+
+        # Get song details from discogs_db.master using the item_id (which is the master_id)
+        music_list = []
+        for rating_entry in user_ratings:
+            master_id = rating_entry["item_id"]
+
+            print(1)
+            # Fetch song details
+            song_query = "SELECT title, year FROM master WHERE id = %s;"
+            song_details = discogs_db.read_data(song_query, (master_id,))
+
+            if song_details:
+                song_data = song_details[0]
+                music_list.append({
+                    "title": song_data["title"],
+                    "year": song_data["year"],
+                    "rating": rating_entry["rating"],
+                    "created_at": rating_entry["created_at"]
+                })
+
+        return jsonify(music_list), 200
+
+    except Exception as e:
+        print(f"Error fetching music list: {e}")
+        return jsonify({'error': 'Server error'}), 500
+    
 if __name__ == "__main__":
     app.run(port=5001, debug=True)
