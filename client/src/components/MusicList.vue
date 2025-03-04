@@ -140,7 +140,7 @@
 									</v-btn>
 
 									<!-- Link Button (Opens External URL) -->
-									<v-btn variant="plain" :href="song.link" target="_blank">
+									<v-btn variant="plain" :href="artist.link" target="_blank">
 										<v-icon>mdi-link</v-icon>
 									</v-btn>
 
@@ -167,6 +167,8 @@
 				</v-list>
 			</v-card>
 
+      
+
 			</v-col>
 		</v-row>
 	</v-container>
@@ -191,14 +193,14 @@
     },
     props: {
     
-    playlists: {
-      type: Array,
-      default: () => [
-        { name: "Playlist 1", songs: ["Song 1", "Song 2", "Song 3"] },
-        { name: "Playlist 2", songs: ["Track A", "Track B"] },
-        { name: "Playlist 3", songs: ["Melody X", "Tune Y", "Harmony Z"] }
-      ]
-    }
+      playlists: {
+        type: Array,
+        default: () => [
+          { name: "Playlist 1", songs: ["Song 1", "Song 2", "Song 3"] },
+          { name: "Playlist 2", songs: ["Track A", "Track B"] },
+          { name: "Playlist 3", songs: ["Melody X", "Tune Y", "Harmony Z"] }
+        ]
+      }
     },
     watch: {
       '$route.params.username'(newUsername) {
@@ -221,8 +223,9 @@
           // TODO: Implement this so it grabs the artists from the user
           const response2 = await axios.get(`http://localhost:5001/api/musiclist/${username}/artist`);
 
-          // Store the fetched songs into userSongs
+          // Store the fetched artists into user artists
           this.userArtists = response2.data;
+          console.log(this.userArtists);
         } catch (error) {
           console.error('Error fetching music list:', error);
         }

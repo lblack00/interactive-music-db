@@ -214,16 +214,18 @@ class artist:
     @staticmethod
     def get_artist(artist_id):
         query = """
-            SELECT a.*, ai.uri as image_uri 
-            FROM artist a
-            LEFT JOIN artist_image ai ON a.id = ai.artist_id
-            WHERE a.id=%s;
+        SELECT a.* 
+        FROM artist a
+        WHERE a.id = %s;
         """
 
         # I changed this quere so that it would work and no other function seemed to use this. I put the
-        # previous query down below. AFAICT artist_image has basically nothing there
+        # previous query down below. AFAICT artist_image has basically nothing there - Matthew Stenvold
         #
-        #    
+        #    SELECT a.*, ai.uri as image_uri 
+        #    FROM artist a
+        #    LEFT JOIN artist_image ai ON a.id = ai.artist_id
+        #    WHERE a.id=%s;
         
 
         return artist.db.read_data(query, (artist_id))
@@ -646,6 +648,16 @@ def get_user_music_list(username, item_type):
 
         # Get additional data for each rated item
         detailed_results = []
+
+        # Different types of data have different names for "name"
+        nameAlias = ""
+        if item_type == "master":
+            nameAlias = "title"
+        elif item_type == "artist":
+            nameAlias = "name"
+
+        # TODO Change created at to updated at
+
         for rating in user_ratings:
             item_id = rating["item_id"]
             created_at = rating["created_at"]  # Format date without year
@@ -657,15 +669,15 @@ def get_user_music_list(username, item_type):
             else:
                 continue  # Skip unknown item types
 
-            print(item_info[0].get("artist", "Unknown"))
+            print(item_info[0].get(nameAlias, "Unknown"))
             if item_info:
                 detailed_results.append({
                     "id": item_id,
-                    "name": item_info[0].get("title", "Unknown"),  # Handle missing names
+                    "name": item_info[0].get(nameAlias, "Unknown"),  # Handle missing names
                     "rating": rating["rating"],
                     "created_at": created_at,  # Date without year
                 })
-
+        print(detailed_results)
         return jsonify(detailed_results), 200
 
     except Exception as e:
