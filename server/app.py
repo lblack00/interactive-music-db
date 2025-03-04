@@ -220,6 +220,12 @@ class artist:
             WHERE a.id=%s;
         """
 
+        # I changed this quere so that it would work and no other function seemed to use this. I put the
+        # previous query down below. AFAICT artist_image has basically nothing there
+        #
+        #    
+        
+
         return artist.db.read_data(query, (artist_id))
 
     @staticmethod
@@ -613,52 +619,54 @@ def get_upcoming_releases():
 # Written by Matthew Stenvold
 @app.route('/api/musiclist/<string:username>/<string:item_type>', methods=['GET'])
 def get_user_music_list(username, item_type):
-    """Fetches music ratings for a specific user and item type, then retrieves song details from discogs_db."""
+    """Fetches music ratings for a specific user and item type (master or artist)."""
     try:
-        user_db = db_utils(dbname='users_db', user='postgres')
-        discogs_db = db_utils(dbname='discogs_db', user='postgres')
+        db = db_utils(dbname='users_db', user='postgres')
 
         # Get user_id based on username
         user_query = "SELECT id FROM users WHERE username = %s;"
-        user_result = user_db.read_data(user_query, (username,))
-        
+        user_result = db.read_data(user_query, (username,))
+
         if not user_result:
             return jsonify({'error': 'User not found'}), 404
 
         user_id = user_result[0]['id']
 
-        # Fetch ratings for the given user and item type
-        ratings_query = """
-            SELECT item_id, rating, created_at 
-            FROM ratings 
+        # Fetch rated items based on item_type
+        query = """
+            SELECT item_id, rating, created_at
+            FROM ratings
             WHERE user_id = %s AND item_type = %s
             ORDER BY created_at DESC;
         """
-        user_ratings = user_db.read_data(ratings_query, (user_id, item_type))
+        user_ratings = db.read_data(query, (user_id, item_type))
 
         if not user_ratings:
-            return jsonify([]), 200  # Return empty list if no ratings found
+            return jsonify([]), 200  # Return empty list if no ratings exist
 
-        # Get song details from discogs_db.master using the item_id (which is the master_id)
-        music_list = []
-        for rating_entry in user_ratings:
-            master_id = rating_entry["item_id"]
+        # Get additional data for each rated item
+        detailed_results = []
+        for rating in user_ratings:
+            item_id = rating["item_id"]
+            created_at = rating["created_at"]  # Format date without year
 
-            print(1)
-            # Fetch song details
-            song_query = "SELECT title, year FROM master WHERE id = %s;"
-            song_details = discogs_db.read_data(song_query, (master_id,))
+            if item_type == "master":
+                item_info = master.get_master(item_id)
+            elif item_type == "artist":
+                item_info = artist.get_artist(item_id)
+            else:
+                continue  # Skip unknown item types
 
-            if song_details:
-                song_data = song_details[0]
-                music_list.append({
-                    "title": song_data["title"],
-                    "year": song_data["year"],
-                    "rating": rating_entry["rating"],
-                    "created_at": rating_entry["created_at"]
+            print(item_info[0].get("artist", "Unknown"))
+            if item_info:
+                detailed_results.append({
+                    "id": item_id,
+                    "name": item_info[0].get("title", "Unknown"),  # Handle missing names
+                    "rating": rating["rating"],
+                    "created_at": created_at,  # Date without year
                 })
 
-        return jsonify(music_list), 200
+        return jsonify(detailed_results), 200
 
     except Exception as e:
         print(f"Error fetching music list: {e}")

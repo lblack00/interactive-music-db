@@ -47,7 +47,7 @@
 							<v-row align="center" class="w-100">
 								<!-- Song Title Column -->
 								<v-col cols="4">
-									<v-list-item-title>{{ song.title }}</v-list-item-title>
+									<v-list-item-title>{{ song.name }}</v-list-item-title>
 								</v-col>
 
 								<!-- Rating Column -->
@@ -96,15 +96,60 @@
 					</v-list>
 				</v-card>
 
-				<!-- User's Astist Card -->
+				<!-- User's Artist Card -->
 				<v-card class="pa-4 mb-4">
 					<v-card-title>{{ username }}'s Artists</v-card-title>
 					<v-divider></v-divider>
 					<v-list>
-						<v-list-item v-for="(song, index) in userSongs" :key="'user-' + index">
-							<v-list-item-content>
-								<v-list-item-title>{{ song }}</v-list-item-title>
-							</v-list-item-content>
+						<v-list-item v-for="(artist, index) in userArtists" :key="'user-' + index">
+							<v-row align="center" class="w-100">
+								<!-- Song Title Column -->
+								<v-col cols="4">
+									<v-list-item-title>{{ artist.name }}</v-list-item-title>
+								</v-col>
+
+								<!-- Rating Column -->
+								<v-col cols="1">
+									<v-list-item-subtitle>{{ artist.rating }}/10</v-list-item-subtitle>
+								</v-col>
+
+                <!-- Date Column -->
+                <v-col cols="2">
+                  <v-list-item-subtitle>{{ new Date(artist.created_at).toLocaleDateString() }}</v-list-item-subtitle>
+                </v-col>
+								<!-- Date Column -->
+								<v-col cols="2">
+									<v-list-item-subtitle>{{ artist.date }}</v-list-item-subtitle>
+								</v-col>
+
+								<!-- Action Buttons Column -->
+								<v-col cols="3" class="d-flex justify-end">
+									<!-- Edit Button -->
+									<v-btn variant="plain" @click="editSong(artist)">
+										<v-icon>mdi-pencil</v-icon>
+									</v-btn>
+
+									<!-- Delete Button -->
+									<v-btn variant="plain" @click="deleteSong(artist)">
+										<v-icon>mdi-delete</v-icon>
+									</v-btn>
+
+									<!-- Share Button -->
+									<v-btn variant="plain" @click="shareSong(artist)">
+										<v-icon>mdi-share-variant</v-icon>
+									</v-btn>
+
+									<!-- Link Button (Opens External URL) -->
+									<v-btn variant="plain" :href="song.link" target="_blank">
+										<v-icon>mdi-link</v-icon>
+									</v-btn>
+
+									<!-- Spotify Button (or WiFi) -->
+									<v-btn variant="plain" @click="spotifyAction(artist)">
+										<v-icon>mdi-spotify</v-icon> <!-- Use mdi-wifi if preferred -->
+									</v-btn>
+								</v-col>
+							</v-row>
 						</v-list-item>
 					</v-list>
 				</v-card>
@@ -140,6 +185,7 @@
       return {
         username: this.$route.params.username || '',
         userSongs: [],
+        userArtists: [],
         playlists: []
       };
     },
@@ -166,12 +212,17 @@
       async fetchMusicList() {
         try {
           const username = this.username;  // Get username from data
-          const itemType = "master";  // Can be changed dynamically if needed
 
-          const response = await axios.get(`http://localhost:5001/api/musiclist/${username}/${itemType}`);
+          const response = await axios.get(`http://localhost:5001/api/musiclist/${username}/master`);
 
           // Store the fetched songs into userSongs
           this.userSongs = response.data;
+
+          // TODO: Implement this so it grabs the artists from the user
+          const response2 = await axios.get(`http://localhost:5001/api/musiclist/${username}/artist`);
+
+          // Store the fetched songs into userSongs
+          this.userArtists = response2.data;
         } catch (error) {
           console.error('Error fetching music list:', error);
         }
