@@ -6,7 +6,6 @@ import SignUp from "../components/SignUp.vue";
 import Login from "../components/Login.vue";
 import Home from "../components/Home.vue";
 import ArtistPage from "../components/ArtistPage.vue";
-import SongPage from "@/components/SongPage.vue";
 import SearchResults from "../components/SearchResults.vue";
 import Countdown from "../components/Countdown.vue";
 import PlaylistSystem from "../components/PlaylistSystem.vue";
@@ -57,11 +56,6 @@ const router = createRouter({
 			path: "/artist/:artist_id",
 			name: "ArtistPage",
 			component: ArtistPage,
-		},
-		{
-			path: "/song/songPage",
-			name: "SongPage",
-			component: SongPage,
 		},
 		{
 			path: "/countdown",

@@ -2,7 +2,7 @@
 
 <template>
 	<header role="navigation">
-		
+		<Navbar />
 	</header>
 
 	<main role="main">

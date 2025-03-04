@@ -2,7 +2,7 @@
 <!--ARIA Landmakes added by Chantelle Cabanilla-->
 <template>
 	<header role="navigation">
-		
+		<Navbar />
 	</header>
 
 	<main role="main">
@@ -85,7 +85,7 @@
 										:key="i"
 										:to="`/master/${release.master_id}`"
 										:aria-label="`View details for album`"
-									></router-link>
+									>{{ release.title }}</router-link>
 								</v-card-title>
 							</v-card>
 						</article>
