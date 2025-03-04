@@ -1,4 +1,7 @@
 <template>
+	<header role="navigation">
+		<Navbar />
+	</header>
 	
 	<!-- Todo: this is a mock user profile edit page which requires a user logged in -->
 	<v-container>
@@ -6,47 +9,28 @@
 			<v-col cols="12" md="6">
 				<v-card class="pa-4">
 					<h1 class="text-h4 font-weight-bold mb-4">User Profile</h1>
-					<v-form @submit.prevent="saveProfile">
-						<v-text-field
-							v-model="user.username"
-							label="Username"
-							outlined
-							required
-						></v-text-field>
-						<v-text-field
-							v-model="user.email"
-							label="Email"
-							outlined
-							required
-						></v-text-field>
-						<v-textarea
-							v-model="user.bio"
-							label="Bio"
-							outlined
-							rows="3"
-						></v-textarea>
-						<v-divider class="my-4"></v-divider>
+					<p><strong>Username:</strong> {{ user.username }}</p>
+					<p><strong>Email:</strong> {{ user.email }}</p>
+					<p><strong>Bio:</strong> {{ user.bio }}</p>
 
-						<h2 class="text-h5 font-weight-bold mb-2">Spotify Integration</h2>
-						<p v-if="user.spotifyConnected" style="color: green">
-							Connected to Spotify
-						</p>
-						<p v-else style="color: red">Not connected</p>
+					<v-divider class="my-4"></v-divider>
 
-						<v-btn
-							v-if="!user.spotifyConnected"
-							color="green"
-							@click="initiateSpotifyAuth"
-						>
-							Connect Spotify
-						</v-btn>
-						<v-btn v-else color="red" @click="disconnectSpotify">
-							Disconnect Spotify
-						</v-btn>
+					<h2 class="text-h5 font-weight-bold mb-2">Spotify OAuth</h2>
+					<p v-if="user.spotifyConnected" style="color: green">
+						Connected to Spotify
+					</p>
+					<p v-else style="color: red">Not connected</p>
 
-						<v-divider class="my-4"></v-divider>
-						<v-btn type="submit" color="primary">Save Changes</v-btn>
-					</v-form>
+					<v-btn
+						v-if="!user.spotifyConnected"
+						color="green"
+						@click="initiateSpotifyAuth"
+					>
+						Connect Spotify
+					</v-btn>
+					<v-btn v-else color="red" @click="disconnectSpotify">
+						Disconnect Spotify
+					</v-btn>
 				</v-card>
 			</v-col>
 		</v-row>

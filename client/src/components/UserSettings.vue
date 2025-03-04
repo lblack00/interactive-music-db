@@ -1,61 +1,64 @@
 <template>
-  
-  <!-- Todo: this is a mock user profile edit page which requires a user logged in -->
-  <v-container>
-    <v-row justify="center">
-      <v-col cols="12" md="6">
-        <v-card class="pa-4">
-          <h1 class="text-h4 font-weight-bold mb-4">User Profile</h1>
-          <v-form @submit.prevent="saveProfile">
-            <v-text-field v-model="user.username" label="Username" outlined required></v-text-field>
-            <v-text-field v-model="user.email" label="Email" outlined required></v-text-field>
-            <v-textarea v-model="user.bio" label="Bio" outlined rows="3"></v-textarea>
+	<header role="navigation">
+		<Navbar />
+	</header>
+	
+	<!-- Todo: this is a mock user profile edit page which requires a user logged in -->
+	<v-container>
+		<v-row justify="center">
+			<v-col cols="12" md="6">
+				<v-card class="pa-4">
+					<h1 class="text-h4 font-weight-bold mb-4">User Settings</h1>
+					<v-form @submit.prevent="saveProfile">
+						<v-text-field v-model="user.username" label="Username" outlined required></v-text-field>
+						<v-text-field v-model="user.email" label="Email" outlined required></v-text-field>
+						<v-textarea v-model="user.bio" label="Bio" outlined rows="3"></v-textarea>
 
-            <!-- Profile Picture Section -->
-            <h2 class="text-h5 font-weight-bold mt-4">Profile Picture</h2>
-            
-            <!-- 
-            TODO: Fix this so the size changes dynammically when window size is changed, as 
-            it currentyly is permanantly 200x200
-            -->
-            <v-row justify="center">
-              <!-- Current Profile Image -->
-              <v-col cols="5" class="text-center">
-                <p class="font-weight-bold">Current</p>
-                <img 
-                  :src="user.profileImage" 
-                  height="200" 
-                  width="200"
-                   
-                  class="mt-2 mx-auto"
-                  style="object-fit: fill; display: block;"
-                />
-              </v-col>
+						<!-- Profile Picture Section -->
+						<h2 class="text-h5 font-weight-bold mt-4">Profile Picture</h2>
+						
+						<!-- 
+						TODO: Fix this so the size changes dynammically when window size is changed, as 
+						it currentyly is permanantly 200x200
+						-->
+						<v-row justify="center">
+							<!-- Current Profile Image -->
+							<v-col cols="5" class="text-center">
+								<p class="font-weight-bold">Current</p>
+								<img 
+									:src="user.profileImage" 
+									height="200" 
+									width="200"
+									 
+									class="mt-2 mx-auto"
+									style="object-fit: fill; display: block;"
+								/>
+							</v-col>
 
-              <!-- New Profile Image Preview -->
-              <v-col cols="5" class="text-center" v-if="newProfileImage">
-                <p class="font-weight-bold">New</p>
-                <img 
-                  :src="newProfileImage" 
-                  height="200" 
-                  width="200" 
-                  class="mt-2 mx-auto"
-                  style="object-fit: fill; display: block;"
-                />
-              </v-col>
-            </v-row>
-            
-            <v-file-input 
-              label="Upload New Profile Picture (No larger than 1MB)" 
-              accept="image/*" 
-              @change="handleFileUpload"
-              class="mt-4"
-            />
-            <p v-if="profileFileError" style="color: red;">{{ profileFileError }}</p>
+							<!-- New Profile Image Preview -->
+							<v-col cols="5" class="text-center" v-if="newProfileImage">
+								<p class="font-weight-bold">New</p>
+								<img 
+									:src="newProfileImage" 
+									height="200" 
+									width="200" 
+									class="mt-2 mx-auto"
+									style="object-fit: fill; display: block;"
+								/>
+							</v-col>
+						</v-row>
+						
+						<v-file-input 
+							label="Upload New Profile Picture (No larger than 1MB)" 
+							accept="image/*" 
+							@change="handleFileUpload"
+							class="mt-4"
+						/>
+						<p v-if="profileFileError" style="color: red;">{{ profileFileError }}</p>
 
-            <v-divider class="my-4"></v-divider>
+						<v-divider class="my-4"></v-divider>
 
-						<h2 class="text-h5 font-weight-bold mb-2">Spotify Integration</h2>
+						<h2 class="text-h5 font-weight-bold mb-2">Spotify OAuth</h2>
 						<p v-if="user.spotifyConnected" style="color: green">
 							Connected to Spotify
 						</p>
@@ -80,58 +83,58 @@
 </template>
 
 <script>
-	import Navbar from "./Navbar.vue";
+import Navbar from "./Navbar.vue";
 
 export default {
-  name: "userSettings",
-  components: { Navbar },
-  data() {
-    return {
-      user: {
-        username: "Username",
-        email: "username@example.com",
-        bio: "This is my bio!",
-        profileImage: '/images/UnknownPerson.png',
-        spotifyConnected: false,
-      },
-      newProfileImage: null,  // To store the preview of the new image
-      profileFileError: "",
-      clientId: import.meta.env.VITE_SPOTIFY_CLIENT_ID,
-      redirectUri: "http://localhost:5173/",
-      accessToken: "",
-    };
-  },
-  methods: {
-    saveProfile() {
-      alert("Profile updated successfully!");
-      // Needs to be implemented
-    },
-    handleFileUpload(event) {
-      const file = event.target.files[0]; // Get the selected file
-      
-      if (!file) return; // If no file is selected, do nothing
-      
-      if (file.size > 1024 * 1024) { // Check if file is larger than 1MB
-        this.profileFileError = "File size must be less than 1MB.";
-        return;
-      }
+	name: "userSettings",
+	components: { Navbar },
+	data() {
+		return {
+			user: {
+				username: "Username",
+				email: "username@example.com",
+				bio: "This is my bio!",
+				profileImage: '/images/UnknownPerson.png',
+				spotifyConnected: false,
+			},
+			newProfileImage: null,  // To store the preview of the new image
+			profileFileError: "",
+			clientId: import.meta.env.VITE_SPOTIFY_CLIENT_ID,
+			redirectUri: "http://localhost:5173/",
+			accessToken: "",
+		};
+	},
+	methods: {
+		saveProfile() {
+			alert("Profile updated successfully!");
+			// Needs to be implemented
+		},
+		handleFileUpload(event) {
+			const file = event.target.files[0]; // Get the selected file
+			
+			if (!file) return; // If no file is selected, do nothing
+			
+			if (file.size > 1024 * 1024) { // Check if file is larger than 1MB
+				this.profileFileError = "File size must be less than 1MB.";
+				return;
+			}
 
-      this.profileFileError = ""; // Clear any previous errors
+			this.profileFileError = ""; // Clear any previous errors
 
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        this.newProfileImage = e.target.result;  // Update new profile image preview
-      };
-      reader.readAsDataURL(file);
-    },
+			const reader = new FileReader();
+			reader.onload = (e) => {
+				this.newProfileImage = e.target.result;  // Update new profile image preview
+			};
+			reader.readAsDataURL(file);
+		},
 
-    // For Spotify
+		// For Spotify
 
-    async initiateSpotifyAuth() {
-      try {
-        const state = this.generateRandomString(16);
-        const codeVerifier = this.generateCodeVerifier();
-        const codeChallenge = await this.generateCodeChallenge(codeVerifier);
+		async initiateSpotifyAuth() {
+			try {
+				const state = this.generateRandomString(16);
+				const codeVerifier = this.generateCodeVerifier();
+				const codeChallenge = await this.generateCodeChallenge(codeVerifier);
 
 					localStorage.setItem("spotify_auth_state", state);
 					localStorage.setItem("code_verifier", codeVerifier);
@@ -151,7 +154,7 @@ export default {
 					console.error("Error initiating Spotify auth:", error);
 				}
 			},
-			async handleSpotifyCallback() {
+		async handleSpotifyCallback() {
 				const urlParams = new URLSearchParams(window.location.search);
 				const code = urlParams.get("code");
 				const state = urlParams.get("state");
@@ -194,7 +197,7 @@ export default {
 					console.error("Error during token exchange:", error);
 				}
 			},
-			async refreshAccessToken() {
+		async refreshAccessToken() {
 				const refreshToken = localStorage.getItem("spotify_refresh_token");
 				if (!refreshToken) return;
 				try {
@@ -218,47 +221,47 @@ export default {
 				} catch (error) {
 					console.error("Error refreshing access token:", error);
 				}
-			},
-			generateRandomString(length) {
-				const possible =
-					"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-				return Array.from(crypto.getRandomValues(new Uint8Array(length)))
-					.map((x) => possible[x % possible.length])
-					.join("");
-			},
-			generateCodeVerifier() {
-				return this.generateRandomString(128);
-			},
-			async generateCodeChallenge(codeVerifier) {
-				const encoder = new TextEncoder();
-				const data = encoder.encode(codeVerifier);
-				const digest = await crypto.subtle.digest("SHA-256", data);
-				return this.base64UrlEncode(digest);
-			},
-			base64UrlEncode(buffer) {
-				let binary = "";
-				const bytes = new Uint8Array(buffer);
-				for (let i = 0; i < bytes.byteLength; i++) {
-					binary += String.fromCharCode(bytes[i]);
-				}
-				return btoa(binary)
-					.replace(/\+/g, "-")
-					.replace(/\//g, "_")
-					.replace(/=+$/, "");
-			},
-			disconnectSpotify() {
-				this.user.spotifyConnected = false;
-				this.accessToken = "";
-				localStorage.removeItem("spotify_access_token");
-				localStorage.removeItem("spotify_refresh_token");
-				alert("Spotify account disconnected.");
-			},
 		},
-		mounted() {
-			if (window.location.search.includes("code")) {
-				this.handleSpotifyCallback();
+		generateRandomString(length) {
+			const possible =
+				"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+			return Array.from(crypto.getRandomValues(new Uint8Array(length)))
+				.map((x) => possible[x % possible.length])
+				.join("");
+		},
+		generateCodeVerifier() {
+			return this.generateRandomString(128);
+		},
+		async generateCodeChallenge(codeVerifier) {
+			const encoder = new TextEncoder();
+			const data = encoder.encode(codeVerifier);
+			const digest = await crypto.subtle.digest("SHA-256", data);
+			return this.base64UrlEncode(digest);
+		},
+		base64UrlEncode(buffer) {
+			let binary = "";
+			const bytes = new Uint8Array(buffer);
+			for (let i = 0; i < bytes.byteLength; i++) {
+				binary += String.fromCharCode(bytes[i]);
 			}
-			setInterval(this.refreshAccessToken, 50 * 60 * 1000);
+			return btoa(binary)
+				.replace(/\+/g, "-")
+				.replace(/\//g, "_")
+				.replace(/=+$/, "");
 		},
-	};
+		disconnectSpotify() {
+			this.user.spotifyConnected = false;
+			this.accessToken = "";
+			localStorage.removeItem("spotify_access_token");
+			localStorage.removeItem("spotify_refresh_token");
+			alert("Spotify account disconnected.");
+		},
+	},
+	mounted() {
+		if (window.location.search.includes("code")) {
+			this.handleSpotifyCallback();
+		}
+		setInterval(this.refreshAccessToken, 50 * 60 * 1000);
+	},
+};
 </script>

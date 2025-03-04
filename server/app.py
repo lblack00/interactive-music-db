@@ -308,13 +308,23 @@ class users:
 
 @app.route('/release/', methods=['GET'])
 def get_release():
-    if request.method == 'GET':
-        # convert parameter to integer
-        release_id = int(request.args.get('release_id'))
+    try:
+        release_id = request.args.get('release_id')
+        if not release_id:
+            return jsonify({"error": "Missing release_id parameter"}), 400
+
+        try:
+            release_id = int(release_id)
+        except ValueError:
+            return jsonify({"error": "Invalid release_id format"}), 400
+
+        release_data = release.get_release(release_id)
+        if not release_data:
+            return jsonify({"error": "Release not found"}), 404
 
         data = {
             'payload': {
-                'release': release.get_release(release_id),
+                'release': release_data,
                 'tracks': release.get_release_tracklist(release_id),
                 'genre': release.get_release_genre(release_id),
                 'style': release.get_release_style(release_id),
@@ -322,13 +332,16 @@ def get_release():
                 'artist': release.get_release_artist(release_id),
                 'track_artist': release.get_release_track_artist(release_id),
                 'format': release.get_release_format(release_id),
-                'identifer': release.get_release_identifier(release_id),
+                'identifier': release.get_release_identifier(release_id),
                 'video': release.get_release_video(release_id),
                 'company': release.get_release_company(release_id)
             }
         }
 
-        return jsonify(data)
+        return jsonify(data), 200
+
+    except Exception as e:
+        return jsonify({"error": "Internal server error", "message": str(e)}), 500
 
 @app.route('/master/', methods=['GET'])
 def get_master():

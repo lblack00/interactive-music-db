@@ -1,44 +1,44 @@
 <!-- This file was written by Lucas Black -->
 <template>
-  <nav class="navbar"  style="position: fixed; z-index: 1000;">
-    <div class="navbar-title">Pass the Aux</div>
-    <div v-if="loggedIn">
-      <ul class="navbar-links">
-        <li><router-link to="/">Home</router-link></li>
-        <li><router-link :to="`/musiclist/${user.username}`">My Music</router-link></li>
-        <li><router-link to="/countdown">Releases</router-link></li>
-        <li><router-link to="/forum">Forum</router-link></li>
-        <li>
-          <v-menu open-on-hover>
-            <template v-slot:activator="{ props }">
-              <v-icon v-bind="props">mdi-account</v-icon>
-            </template>
-            <v-list>
-              <v-list-item :to="`/user/${user.username}`">
-                <v-list-item-title>Profile</v-list-item-title>
-              </v-list-item>
-              <v-list-item to="/user-settings">
-                <v-list-item-title>Settings</v-list-item-title>
-              </v-list-item>
-              <v-list-item @click="logout" class="logout-item">
-                <v-list-item-title>Log Out</v-list-item-title>
-              </v-list-item>
-            </v-list>
-          </v-menu>
-        </li>
-      </ul>
-    </div>
-    <div v-else>
-      <ul class="navbar-links">
-        <li><router-link to="/">Home</router-link></li>
-        <li><router-link to="/countdown">Releases</router-link></li>
-        <li><router-link to="/forum">Forum</router-link></li>
-        <li><router-link to="/signup">Sign Up</router-link></li>
-        <li><router-link to="/login">Log In</router-link></li>
-      </ul>
-    </div>
-  </nav>
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+	<nav class="navbar">
+		<div class="navbar-title">Pass the Aux</div>
+		<div v-if="loggedIn">
+			<ul class="navbar-links">
+				<li><router-link to="/">Home</router-link></li>
+				<li><router-link :to="`/musiclist/${user.username}`">My Music</router-link></li>
+				<li><router-link to="/countdown">Releases</router-link></li>
+				<li><router-link to="/forum">Forum</router-link></li>
+				<li>
+					<v-menu open-on-hover>
+						<template v-slot:activator="{ props }">
+							<v-icon v-bind="props" style="color:white;">mdi-account</v-icon>
+						</template>
+						<v-list>
+							<v-list-item :to="`/user/${user.username}`">
+								<v-list-item-title>Profile</v-list-item-title>
+							</v-list-item>
+							<v-list-item to="/user-settings">
+								<v-list-item-title>Settings</v-list-item-title>
+							</v-list-item>
+							<v-list-item @click="logout" class="logout-item">
+								<v-list-item-title>Log Out</v-list-item-title>
+							</v-list-item>
+						</v-list>
+					</v-menu>
+				</li>
+			</ul>
+		</div>
+		<div v-else>
+			<ul class="navbar-links">
+				<li><router-link to="/">Home</router-link></li>
+				<li><router-link to="/countdown">Releases</router-link></li>
+				<li><router-link to="/forum">Forum</router-link></li>
+				<li><router-link to="/signup">Sign Up</router-link></li>
+				<li><router-link to="/login">Log In</router-link></li>
+			</ul>
+		</div>
+	</nav>
+	<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
 </template>
 
 <script>
