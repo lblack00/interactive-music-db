@@ -39,6 +39,7 @@
 		</div>
 	</nav>
 	<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+	<div class = "filler"></div>
 </template>
 
 <script>
@@ -101,6 +102,10 @@
 </script>
 
 <style scoped>
+	.filler {
+		height: 4rem;
+	}
+
 	.navbar {
 		background-color: #1abc9c;
 		padding: 1rem 2rem;
@@ -108,6 +113,8 @@
 		justify-content: space-between;
 		align-items: center;
 		width: 100%;
+		position: fixed;
+		z-index: 1000;
 	}
 
 	.navbar-title {
