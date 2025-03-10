@@ -1,17 +1,23 @@
 <!-- This file was written by Lucas Black -->
 <template>
 	<nav class="navbar">
-		<div class="navbar-title">Pass the Aux</div>
+		<div class="navbar-title">
+			<img src="../assets/PTAlogo.svg" alt="Pass the Aux Logo" class="logo" />
+		</div>
 		<div v-if="loggedIn">
 			<ul class="navbar-links">
 				<li><router-link to="/">Home</router-link></li>
-				<li><router-link :to="`/musiclist/${user.username}`">My Music</router-link></li>
+				<li>
+					<router-link :to="`/musiclist/${user.username}`"
+						>My Music</router-link
+					>
+				</li>
 				<li><router-link to="/countdown">Releases</router-link></li>
 				<li><router-link to="/forum">Forum</router-link></li>
 				<li>
 					<v-menu open-on-hover>
 						<template v-slot:activator="{ props }">
-							<v-icon v-bind="props" style="color:white;">mdi-account</v-icon>
+							<v-icon v-bind="props" style="color: white">mdi-account</v-icon>
 						</template>
 						<v-list>
 							<v-list-item :to="`/user/${user.username}`">
@@ -38,7 +44,10 @@
 			</ul>
 		</div>
 	</nav>
-	<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+	<link
+		href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
+		rel="stylesheet"
+	/>
 </template>
 
 <script>
@@ -102,7 +111,7 @@
 
 <style scoped>
 	.navbar {
-		background-color: #1abc9c;
+		background-color: transparent;
 		padding: 1rem 2rem;
 		display: flex;
 		justify-content: space-between;

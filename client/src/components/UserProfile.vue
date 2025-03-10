@@ -1,40 +1,44 @@
 <template>
-	<header role="navigation">
-		<Navbar />
-	</header>
-	
-	<!-- Todo: this is a mock user profile edit page which requires a user logged in -->
-	<v-container>
-		<v-row justify="center">
-			<v-col cols="12" md="6">
-				<v-card class="pa-4">
-					<h1 class="text-h4 font-weight-bold mb-4">User Profile</h1>
-					<p><strong>Username:</strong> {{ user.username }}</p>
-					<p><strong>Email:</strong> {{ user.email }}</p>
-					<p><strong>Bio:</strong> {{ user.bio }}</p>
+	<div class="grid-container">
+		<div class="content">
+			<header role="navigation">
+				<Navbar />
+			</header>
 
-					<v-divider class="my-4"></v-divider>
+			<!-- Todo: this is a mock user profile edit page which requires a user logged in -->
+			<v-container>
+				<v-row justify="center">
+					<v-col cols="12" md="6">
+						<v-card class="pa-4">
+							<h1 class="text-h4 font-weight-bold mb-4">User Profile</h1>
+							<p><strong>Username:</strong> {{ user.username }}</p>
+							<p><strong>Email:</strong> {{ user.email }}</p>
+							<p><strong>Bio:</strong> {{ user.bio }}</p>
 
-					<h2 class="text-h5 font-weight-bold mb-2">Spotify OAuth</h2>
-					<p v-if="user.spotifyConnected" style="color: green">
-						Connected to Spotify
-					</p>
-					<p v-else style="color: red">Not connected</p>
+							<v-divider class="my-4"></v-divider>
 
-					<v-btn
-						v-if="!user.spotifyConnected"
-						color="green"
-						@click="initiateSpotifyAuth"
-					>
-						Connect Spotify
-					</v-btn>
-					<v-btn v-else color="red" @click="disconnectSpotify">
-						Disconnect Spotify
-					</v-btn>
-				</v-card>
-			</v-col>
-		</v-row>
-	</v-container>
+							<h2 class="text-h5 font-weight-bold mb-2">Spotify OAuth</h2>
+							<p v-if="user.spotifyConnected" style="color: green">
+								Connected to Spotify
+							</p>
+							<p v-else style="color: red">Not connected</p>
+
+							<v-btn
+								v-if="!user.spotifyConnected"
+								color="green"
+								@click="initiateSpotifyAuth"
+							>
+								Connect Spotify
+							</v-btn>
+							<v-btn v-else color="red" @click="disconnectSpotify">
+								Disconnect Spotify
+							</v-btn>
+						</v-card>
+					</v-col>
+				</v-row>
+			</v-container>
+		</div>
+	</div>
 </template>
 
 <script>
@@ -117,3 +121,6 @@
 		},
 	};
 </script>
+<style scoped>
+	@import "../../src/assets/background.css";
+</style>

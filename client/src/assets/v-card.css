@@ -1,0 +1,12 @@
+.v-card {
+	transition: transform 0.2s;
+}
+
+.v-card:hover {
+	transform: translateY(-4px);
+}
+
+.v-card-title {
+	font-size: 0.9rem;
+	font-weight: bold;
+}

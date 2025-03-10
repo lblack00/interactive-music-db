@@ -1,104 +1,110 @@
 <!--ARIA Landmarks added by Chantelle Cabanilla-->
 <template>
-	<header role="navigation">
-		<Navbar />
-	</header>
+	<div class="grid-container">
+		<div class="content">
+			<header role="navigation">
+				<Navbar />
+			</header>
 
-	<div role="alert" v-if="error">
-		<v-alert v-if="error" type="error" class="ma-4">
-			{{ error }}
-		</v-alert>
-	</div>
-
-	<main>
-		<v-container>
-			<h1 id="page-title" class="text-h4 font-weight-bold mb-4">
-				Upcoming Album Releases
-			</h1>
-
-			<div
-				v-if="loading"
-				class="d-flex justify-center align-center"
-				style="height: 400px"
-				role="status"
-				aria-label="Loading content"
-			>
-				<v-progress-circular
-					indeterminate
-					color="primary"
-					size="64"
-					aria-hidden="true"
-				></v-progress-circular>
-				<span class="sr-only">Loading upcoming releases</span>
+			<div role="alert" v-if="error">
+				<v-alert v-if="error" type="error" class="ma-4">
+					{{ error }}
+				</v-alert>
 			</div>
 
-			<div v-else>
-				<div v-if="Object.keys(groupedAlbums).length > 0">
-					<section
-						v-for="(albums, date) in groupedAlbums"
-						:key="date"
-						class="mb-6"
-						role="region"
-						:aria-labelledby="`release-date`"
+			<main>
+				<v-container>
+					<h1 id="page-title" class="text-h4 font-weight-bold mb-4">
+						Upcoming Album Releases
+					</h1>
+
+					<div
+						v-if="loading"
+						class="d-flex justify-center align-center"
+						style="height: 400px"
+						role="status"
+						aria-label="Loading content"
 					>
-						<h2 :id="`release-date`" class="text-h5 font-weight-bold mb-3">
-							{{ formatDate(date) }}
-							<span class="text-subtitle-1 font-weight-regular">
-								({{ calculateCountdown(date) }})
-							</span>
-						</h2>
+						<v-progress-circular
+							indeterminate
+							color="primary"
+							size="64"
+							aria-hidden="true"
+						></v-progress-circular>
+						<span class="sr-only">Loading upcoming releases</span>
+					</div>
 
-						<v-row>
-							<v-col
-								v-for="album in albums"
-								:key="album.id"
-								cols="12"
-								sm="6"
-								md="4"
+					<div v-else>
+						<div v-if="Object.keys(groupedAlbums).length > 0">
+							<section
+								v-for="(albums, date) in groupedAlbums"
+								:key="date"
+								class="mb-6"
+								role="region"
+								:aria-labelledby="`release-date`"
 							>
-								<v-card>
-									<v-img
-										:src="album.cover_url || 'default-album-cover.jpg'"
-										height="200"
-										cover
-										class="bg-grey-lighten-2"
-										:alt="`Album cover`"
-									/>
+								<h2 :id="`release-date`" class="text-h5 font-weight-bold mb-3">
+									{{ formatDate(date) }}
+									<span class="text-subtitle-1 font-weight-regular">
+										({{ calculateCountdown(date) }})
+									</span>
+								</h2>
 
-									<v-card-title>{{ album.title }}</v-card-title>
-									<v-card-subtitle>{{ album.artist }}</v-card-subtitle>
+								<v-row>
+									<v-col
+										v-for="album in albums"
+										:key="album.id"
+										cols="12"
+										sm="6"
+										md="4"
+									>
+										<v-card>
+											<v-img
+												:src="album.cover_url || 'default-album-cover.jpg'"
+												height="200"
+												cover
+												class="bg-grey-lighten-2"
+												:alt="`Album cover`"
+											/>
 
-									<v-card-actions>
-										<v-btn
-											prepend-icon="mdi-bell-ring-outline"
-											variant="text"
-											@click="notifyUser(album)"
-											:aria-label="`Get notified when released`"
-										>
-											Notify Me
-										</v-btn>
-										<v-spacer></v-spacer>
-										<v-btn
-											icon="mdi-heart-outline"
-											variant="text"
-											@click="toggleFavorite(album)"
-											:aria-label="`Add to favorites`"
-											aria-pressed="false"
-										></v-btn>
-									</v-card-actions>
-								</v-card>
-							</v-col>
-						</v-row>
-					</section>
-				</div>
+											<v-card-title>{{ album.title }}</v-card-title>
+											<v-card-subtitle>{{ album.artist }}</v-card-subtitle>
 
-				<div v-else class="text-center pa-4" role="status">
-					<v-icon size="64" class="mb-4" aria-hidden="true">mdi-album</v-icon>
-					<div class="text-h6">No upcoming releases found</div>
-				</div>
-			</div>
-		</v-container>
-	</main>
+											<v-card-actions>
+												<v-btn
+													prepend-icon="mdi-bell-ring-outline"
+													variant="text"
+													@click="notifyUser(album)"
+													:aria-label="`Get notified when released`"
+												>
+													Notify Me
+												</v-btn>
+												<v-spacer></v-spacer>
+												<v-btn
+													icon="mdi-heart-outline"
+													variant="text"
+													@click="toggleFavorite(album)"
+													:aria-label="`Add to favorites`"
+													aria-pressed="false"
+												></v-btn>
+											</v-card-actions>
+										</v-card>
+									</v-col>
+								</v-row>
+							</section>
+						</div>
+
+						<div v-else class="text-center pa-4" role="status">
+							<v-icon size="64" class="mb-4" aria-hidden="true"
+								>mdi-album</v-icon
+							>
+							<div class="text-h6">No upcoming releases found</div>
+						</div>
+					</div>
+				</v-container>
+			</main>
+		</div>
+	</div>
 </template>
 
 <script>
@@ -178,24 +184,7 @@
 </script>
 
 <style scoped>
-	.v-card {
-		transition: transform 0.2s;
-	}
-
-	.v-card:hover {
-		transform: translateY(-4px);
-	}
-
-	/* Screen reader only - visually hidden but accessible to screen readers */
-	.sr-only {
-		position: absolute;
-		width: 1px;
-		height: 1px;
-		padding: 0;
-		margin: -1px;
-		overflow: hidden;
-		clip: rect(0, 0, 0, 0);
-		white-space: nowrap;
-		border-width: 0;
-	}
+	@import "../../src/assets/background.css";
+	@import "../../src/assets/accessibility.css";
+	@import "../../src/assets/v-card.css";
 </style>

@@ -1,16 +1,20 @@
 <!-- This file was written by Lucas Black -->
 <!--ARIA Landmarks added by Chantelle Cabanilla-->
 <template>
-	<header role="navigation">
-		<Navbar />
-	</header>
+	<div class="grid-container">
+		<div class="content">
+			<header role="navigation">
+				<Navbar />
+			</header>
 
-	<main role="main">
-		<div class="error-container" aria-labelledby="error-heading">
-			<h1 id="error-heading">404 - Page Not Found</h1>
-			<p>The page you are looking for does not exist.</p>
+			<main role="main">
+				<div class="error-container" aria-labelledby="error-heading">
+					<h1 id="error-heading">404 - Page Not Found</h1>
+					<p>The page you are looking for does not exist.</p>
+				</div>
+			</main>
 		</div>
-	</main>
+	</div>
 </template>
 
 <script>
@@ -25,6 +29,7 @@
 </script>
 
 <style scoped>
+	@import "../assets/background.css";
 	body {
 		font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
 		background-color: #ecf0f1;
@@ -38,7 +43,7 @@
 	.error-container {
 		text-align: center;
 		padding: 40px;
-		background-color: #ffffff;
+		background-color: transparent;
 		width: 100%;
 	}
 

@@ -1,86 +1,104 @@
 <!--ARIA Landmarks added by Chantelle Cabanilla-->
 
 <template>
-	<header role="navigation">
-		<Navbar />
-	</header>
+	<div class="grid-container">
+		<div class="content">
+			<header role="navigation">
+				<Navbar />
+			</header>
 
-	<main role="main">
-		<v-container>
-			<v-row justify="center">
-				<v-col cols="12" md="10">
-					<v-card class="pa-4">
-						<h1 class="text-h4 font-weight-bold mb-4" id="dashboard-title">
-							Admin Dashboard
-						</h1>
+			<main role="main">
+				<v-container>
+					<v-row justify="center">
+						<v-col cols="12" md="10">
+							<v-card class="pa-4">
+								<h1 class="text-h4 font-weight-bold mb-4" id="dashboard-title">
+									Admin Dashboard
+								</h1>
 
-						<section role="region" aria-labelledby="pending-changes-title">
-							<h2
-								class="text-h5 font-weight-bold mb-4"
-								id="pending-changes-title"
-							>
-								Pending User Edits
-							</h2>
-							<v-list dense aria-label="List of pending edits">
-								<v-list-item v-for="change in pendingChanges" :key="change.id">
-									<v-list-item-content>
-										<v-list-item-title class="font-weight-bold">{{
-											change.postTitle
-										}}</v-list-item-title>
-										<v-list-item-subtitle class="text-caption text--secondary">
-											Edited by: {{ change.author.name }} on {{ change.date }}
-										</v-list-item-subtitle>
-										<v-list-item-text>
-											<strong>Suggested Edit:</strong>
-											{{ change.suggestedEdit }}
-										</v-list-item-text>
-									</v-list-item-content>
-									<v-list-item-action>
-										<v-btn color="success" @click="approveChange(change.id)">
-											Approve
-										</v-btn>
-										<v-btn
-											color="error"
-											class="ml-2"
-											@click="rejectChange(change.id)"
+								<section role="region" aria-labelledby="pending-changes-title">
+									<h2
+										class="text-h5 font-weight-bold mb-4"
+										id="pending-changes-title"
+									>
+										Pending User Edits
+									</h2>
+									<v-list dense aria-label="List of pending edits">
+										<v-list-item
+											v-for="change in pendingChanges"
+											:key="change.id"
 										>
-											Reject
-										</v-btn>
-									</v-list-item-action>
-								</v-list-item>
-							</v-list>
-						</section>
+											<v-list-item-content>
+												<v-list-item-title class="font-weight-bold">{{
+													change.postTitle
+												}}</v-list-item-title>
+												<v-list-item-subtitle
+													class="text-caption text--secondary"
+												>
+													Edited by: {{ change.author.name }} on
+													{{ change.date }}
+												</v-list-item-subtitle>
+												<v-list-item-text>
+													<strong>Suggested Edit:</strong>
+													{{ change.suggestedEdit }}
+												</v-list-item-text>
+											</v-list-item-content>
+											<v-list-item-action>
+												<v-btn
+													color="success"
+													@click="approveChange(change.id)"
+												>
+													Approve
+												</v-btn>
+												<v-btn
+													color="error"
+													class="ml-2"
+													@click="rejectChange(change.id)"
+												>
+													Reject
+												</v-btn>
+											</v-list-item-action>
+										</v-list-item>
+									</v-list>
+								</section>
 
-						<v-divider class="my-4" aria-hidden="true"></v-divider>
+								<v-divider class="my-4" aria-hidden="true"></v-divider>
 
-						<section role="region" aria-labelledby="manage-posts-title">
-							<h2 class="text-h5 font-weight-bold mb-4" id="manage-posts-title">
-								Manage User Posts
-							</h2>
-							<v-list dense aria-label="List of user posts">
-								<v-list-item v-for="post in userPosts" :key="post.id">
-									<v-list-item-content>
-										<v-list-item-title class="font-weight-bold">{{
-											post.title
-										}}</v-list-item-title>
-										<v-list-item-subtitle class="text-caption text--secondary">
-											Posted by: {{ post.author.name }} on {{ post.date }}
-										</v-list-item-subtitle>
-										<v-list-item-text>{{ post.content }}</v-list-item-text>
-									</v-list-item-content>
-									<v-list-item-action>
-										<v-btn color="error" @click="deletePost(post.id)"
-											>Delete</v-btn
-										>
-									</v-list-item-action>
-								</v-list-item>
-							</v-list>
-						</section>
-					</v-card>
-				</v-col>
-			</v-row>
-		</v-container>
-	</main>
+								<section role="region" aria-labelledby="manage-posts-title">
+									<h2
+										class="text-h5 font-weight-bold mb-4"
+										id="manage-posts-title"
+									>
+										Manage User Posts
+									</h2>
+									<v-list dense aria-label="List of user posts">
+										<v-list-item v-for="post in userPosts" :key="post.id">
+											<v-list-item-content>
+												<v-list-item-title class="font-weight-bold">{{
+													post.title
+												}}</v-list-item-title>
+												<v-list-item-subtitle
+													class="text-caption text--secondary"
+												>
+													Posted by: {{ post.author.name }} on {{ post.date }}
+												</v-list-item-subtitle>
+												<v-list-item-text>{{ post.content }}</v-list-item-text>
+											</v-list-item-content>
+											<v-list-item-action>
+												<v-btn color="error" @click="deletePost(post.id)"
+													>Delete</v-btn
+												>
+											</v-list-item-action>
+										</v-list-item>
+									</v-list>
+								</section>
+							</v-card>
+						</v-col>
+					</v-row>
+				</v-container>
+			</main>
+		</div>
+	</div>
 </template>
 
 <script>
@@ -130,3 +148,7 @@
 		},
 	};
 </script>
+
+<style scoped>
+	@import "../../src/assets/background.css";
+</style>
