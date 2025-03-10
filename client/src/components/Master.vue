@@ -2,11 +2,10 @@
 <!--ARIA Landmarks added by Chantelle Cabanilla-->
 <template>
 	<div class="grid-container">
+		<header role="navigation">
+			<Navbar />
+		</header>
 		<div class="content">
-			<header role="navigation">
-				<Navbar />
-			</header>
-
 			<main role="main">
 				<div class="container mt-2" v-if="data && data.master">
 					<section role="region" aria-labelledby="album-title">

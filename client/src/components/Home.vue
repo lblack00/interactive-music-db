@@ -3,11 +3,10 @@
 
 <template>
 	<div class="grid-container">
+		<header role="navigation">
+			<Navbar />
+		</header>
 		<div class="content">
-			<header role="navigation">
-				<Navbar />
-			</header>
-
 			<main>
 				<div class="welcome-message" aria-label="Welcome message">
 					Welcome to Pass the Aux! Explore what's trending, or use the filters

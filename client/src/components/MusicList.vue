@@ -1,11 +1,10 @@
 <!-- This file was written by Matthew Stenvold -->
 <template>
 	<div class="grid-container">
+		<header role="navigation">
+			<Navbar />
+		</header>
 		<div class="content">
-			<header role="navigation">
-				<Navbar />
-			</header>
-
 			<v-container>
 				<v-row>
 					<!-- Left Sidebar (Skinny Scrollable Vertical Card) -->

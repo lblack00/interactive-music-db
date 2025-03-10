@@ -1,11 +1,10 @@
 <!--ARIA Landmarks added by Chantelle Cabanilla-->
 <template>
 	<div class="grid-container">
+		<header role="navigation">
+			<Navbar />
+		</header>
 		<div class="content">
-			<header role="navigation">
-				<Navbar />
-			</header>
-
 			<main role="main">
 				<v-container>
 					<h1 id="page-title" class="text-h4 font-weight-bold mb-4">

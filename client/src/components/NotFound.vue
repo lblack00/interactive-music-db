@@ -2,11 +2,10 @@
 <!--ARIA Landmarks added by Chantelle Cabanilla-->
 <template>
 	<div class="grid-container">
+		<header role="navigation">
+			<Navbar />
+		</header>
 		<div class="content">
-			<header role="navigation">
-				<Navbar />
-			</header>
-
 			<main role="main">
 				<div class="error-container" aria-labelledby="error-heading">
 					<h1 id="error-heading">404 - Page Not Found</h1>

@@ -2,11 +2,10 @@
 <!--ARIA Landmakes added by Chantelle Cabanilla-->
 <template>
 	<div class="grid-container">
+		<header role="navigation">
+			<Navbar />
+		</header>
 		<div class="content">
-			<header role="navigation">
-				<Navbar />
-			</header>
-
 			<main role="main">
 				<v-container v-if="data">
 					<v-row>
