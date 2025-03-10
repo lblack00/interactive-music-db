@@ -114,6 +114,7 @@
 	.filler {
 		height: 4rem;
 	}
+
 	.navbar {
 		background-color: transparent;
 		padding: 1rem 2rem;
