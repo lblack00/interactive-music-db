@@ -8,6 +8,7 @@
 		</header>
 		<div class="content">
 			<main>
+				<p class="record"><img src="../assets/record.svg" alt="Record" /></p>
 				<div class="welcome-message" aria-label="Welcome message">
 					<strong
 						>MUSIC
@@ -17,6 +18,7 @@
 						REIMAGINED</strong
 					>
 				</div>
+
 				<p class="description">
 					The world's most comprehensive music database and community. Rate,
 					review, and discover your next favorite track.
