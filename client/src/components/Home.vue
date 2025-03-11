@@ -9,10 +9,18 @@
 		<div class="content">
 			<main>
 				<div class="welcome-message" aria-label="Welcome message">
-					Welcome to Pass the Aux! Explore what's trending, or use the filters
-					to search for your favorite songs, artists, or playlists!
+					<strong
+						>MUSIC
+						<br />
+						DISCOVERY
+						<br />
+						REIMAGINED</strong
+					>
 				</div>
-
+				<p class="description">
+					The world's most comprehensive music database and community. Rate,
+					review, and discover your next favorite track.
+				</p>
 				<div
 					class="search-container"
 					role="search"
