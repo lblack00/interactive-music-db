@@ -23,6 +23,28 @@
 	right: 130px;
 	top: 100px;
 }
+.note {
+	opacity: 0.8;
+	transform-origin: center;
+	animation-duration: 10s;
+	animation-iteration-count: infinite;
+	animation-timing-function: ease-in-out;
+	position: absolute;
+	pointer-events: none;
+	transform: scale(0.3);
+}
+.note1 {
+	top: -125px;
+	right: -100px;
+	animation-name: float1;
+	animation-delay: 1.5s;
+}
+
+.note0 {
+	top: 350px;
+	right: 380px;
+	animation-name: float1;
+}
 
 .search-container {
 	background-color: rgba(60, 70, 90, 0.3);
@@ -195,4 +217,20 @@
 	border-radius: 15px;
 	min-height: 300px;
 	margin-bottom: 50px;
+}
+
+@keyframes float1 {
+	0%,
+	100% {
+		transform: translate(0, 0) rotate(0deg) scale(0.3);
+	}
+	25% {
+		transform: translate(10px, -15px) rotate(5deg) scale(0.3);
+	}
+	50% {
+		transform: translate(20px, 0px) rotate(0deg) scale(0.3);
+	}
+	75% {
+		transform: translate(10px, 15px) rotate(-5deg) scale(0.3);
+	}
 }

@@ -8,7 +8,13 @@
 		</header>
 		<div class="content">
 			<main>
+				<p class="note note1">
+					<img src="../assets/dblnote.svg" alt="double note" />
+				</p>
 				<p class="record"><img src="../assets/record.svg" alt="Record" /></p>
+				<p class="note note0">
+					<img src="../assets/snglnote.svg" alt="single note" />
+				</p>
 				<div class="welcome-message" aria-label="Welcome message">
 					<strong
 						>MUSIC
