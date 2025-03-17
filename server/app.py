@@ -6,7 +6,7 @@ from flask import Flask, jsonify, request, session, make_response
 from flask_cors import CORS
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_jwt_extended import JWTManager, jwt_required, get_jwt_identity, create_access_token
-from datetime import timedelta
+from datetime import timedelta, datetime
 from flask_cors import cross_origin
 
 app = Flask(__name__)
@@ -313,6 +313,104 @@ class users:
         query = "SELECT * FROM users WHERE username=%s;"
 
         return users.db.read_data(query, (username,))
+
+class forum:
+    db = db_utils(dbname='users_db', user='postgres')
+    
+    @staticmethod
+    def get_thread(thread_id):
+        query = """
+            SELECT 
+                t.id, 
+                t.title, 
+                t.content, 
+                t.created_at, 
+                t.updated_at,
+                t.is_deleted,
+                u.id as author_id, 
+                u.username as author_name
+            FROM forum_threads t
+            JOIN users u ON t.user_id = u.id
+            WHERE t.id = %s AND t.is_deleted = FALSE;
+        """
+        return forum.db.read_data(query, (thread_id,))
+    
+    @staticmethod
+    def get_thread_replies(thread_id):
+        query = """
+            SELECT 
+                r.id, 
+                r.content, 
+                r.created_at, 
+                r.updated_at,
+                r.parent_id,
+                r.is_edited,
+                u.id as author_id, 
+                u.username as author_name
+            FROM forum_replies r
+            JOIN users u ON r.user_id = u.id
+            WHERE r.thread_id = %s AND r.is_deleted = FALSE
+            ORDER BY r.created_at ASC;
+        """
+        return forum.db.read_data(query, (thread_id,))
+    
+    @staticmethod
+    def add_reply(user_id, thread_id, content, parent_id=None):
+        query = """
+            INSERT INTO forum_replies (user_id, thread_id, content, parent_id, created_at)
+            VALUES (%s, %s, %s, %s, CURRENT_TIMESTAMP)
+            RETURNING id;
+        """
+        return forum.db.mutate_data(query, (user_id, thread_id, content, parent_id))
+    
+    @staticmethod
+    def update_reply(reply_id, content, user_id):
+        query = """
+            UPDATE forum_replies
+            SET content = %s, updated_at = CURRENT_TIMESTAMP, is_edited = TRUE
+            WHERE id = %s AND user_id = %s
+            RETURNING id;
+        """
+        return forum.db.mutate_data(query, (content, reply_id, user_id))
+    
+    @staticmethod
+    def delete_reply(reply_id, user_id):
+        query = """
+            UPDATE forum_replies
+            SET is_deleted = TRUE, updated_at = CURRENT_TIMESTAMP
+            WHERE id = %s AND user_id = %s
+            RETURNING id;
+        """
+        return forum.db.mutate_data(query, (reply_id, user_id))
+    
+    @staticmethod
+    def update_thread(thread_id, content, user_id):
+        query = """
+            UPDATE forum_threads
+            SET content = %s, updated_at = CURRENT_TIMESTAMP, is_edited = TRUE
+            WHERE id = %s AND user_id = %s
+            RETURNING id;
+        """
+        return forum.db.mutate_data(query, (content, thread_id, user_id))
+    
+    @staticmethod
+    def delete_thread(thread_id, user_id):
+        query = """
+            UPDATE forum_threads
+            SET is_deleted = TRUE, updated_at = CURRENT_TIMESTAMP
+            WHERE id = %s AND user_id = %s
+            RETURNING id;
+        """
+        return forum.db.mutate_data(query, (thread_id, user_id))
+    
+    @staticmethod
+    def report_item(user_id, item_type, item_id, reason):
+        query = """
+            INSERT INTO forum_reports (user_id, item_type, item_id, reason, created_at)
+            VALUES (%s, %s, %s, %s, CURRENT_TIMESTAMP)
+            RETURNING id;
+        """
+        return forum.db.mutate_data(query, (user_id, item_type, item_id, reason))
 
 @app.route('/release/', methods=['GET'])
 def get_release():
@@ -683,6 +781,183 @@ def get_user_music_list(username, item_type):
     except Exception as e:
         print(f"Error fetching music list: {e}")
         return jsonify({'error': 'Server error'}), 500
+
+@app.route('/forum/thread/<int:thread_id>', methods=['GET'])
+def get_forum_thread(thread_id):
+    try:
+        thread_data = forum.get_thread(thread_id)
+        if not thread_data:
+            return jsonify({"error": "Thread not found"}), 404
+            
+        replies = forum.get_thread_replies(thread_id)
+        
+        # Format the thread data
+        formatted_thread = {
+            "id": thread_data[0]['id'],
+            "title": thread_data[0]['title'],
+            "content": thread_data[0]['content'],
+            "date": thread_data[0]['created_at'].strftime("%B %d, %Y") if isinstance(thread_data[0]['created_at'], datetime) else thread_data[0]['created_at'],
+            "isEdited": thread_data[0].get('is_edited', False),
+            "author": {
+                "id": thread_data[0]['author_id'],
+                "name": thread_data[0]['author_name']
+            },
+            "replies": []
+        }
+        
+        # Format the replies
+        for reply in replies:
+            formatted_reply = {
+                "id": reply['id'],
+                "content": reply['content'],
+                "date": reply['created_at'].strftime("%B %d, %Y") if isinstance(reply['created_at'], datetime) else reply['created_at'],
+                "isEdited": reply.get('is_edited', False),
+                "parentId": reply['parent_id'],
+                "author": {
+                    "id": reply['author_id'],
+                    "name": reply['author_name']
+                }
+            }
+            formatted_thread["replies"].append(formatted_reply)
+        
+        return jsonify(formatted_thread), 200
+        
+    except Exception as e:
+        print(f"Error fetching thread: {e}")
+        return jsonify({"error": "Internal server error", "message": str(e)}), 500
+
+@app.route('/forum/thread/<int:thread_id>/reply', methods=['POST'])
+def add_thread_reply(thread_id):
+    if 'user' not in session:
+        return jsonify({"error": "Not logged in"}), 401
+        
+    data = request.get_json()
+    user_id = session['user']['id']
+    content = data.get('content')
+    parent_id = data.get('parentId')
+    
+    if not content:
+        return jsonify({"error": "Reply content cannot be empty"}), 400
+        
+    try:
+        result = forum.add_reply(user_id, thread_id, content, parent_id)
+        
+        if result:
+            # Get the newly created reply to return
+            reply_id = result[0][0]  # Extract ID from result
+            
+            # This would be better to fetch just the one new reply, but for simplicity reusing existing method
+            replies = forum.get_thread_replies(thread_id)
+            new_reply = next((r for r in replies if r['id'] == reply_id), None)
+            
+            if new_reply:
+                formatted_reply = {
+                    "id": new_reply['id'],
+                    "content": new_reply['content'],
+                    "date": new_reply['created_at'].strftime("%B %d, %Y") if isinstance(new_reply['created_at'], datetime) else new_reply['created_at'],
+                    "isEdited": new_reply.get('is_edited', False),
+                    "parentId": new_reply['parent_id'],
+                    "author": {
+                        "id": new_reply['author_id'],
+                        "name": new_reply['author_name']
+                    }
+                }
+                return jsonify(formatted_reply), 201
+                
+        return jsonify({"error": "Failed to add reply"}), 500
+        
+    except Exception as e:
+        print(f"Error adding reply: {e}")
+        return jsonify({"error": "Internal server error", "message": str(e)}), 500
+
+@app.route('/forum/reply/<int:reply_id>', methods=['PUT', 'DELETE'])
+def update_delete_reply(reply_id):
+    if 'user' not in session:
+        return jsonify({"error": "Not logged in"}), 401
+        
+    user_id = session['user']['id']
+    
+    try:
+        if request.method == 'PUT':
+            data = request.get_json()
+            content = data.get('content')
+            
+            if not content:
+                return jsonify({"error": "Reply content cannot be empty"}), 400
+                
+            result = forum.update_reply(reply_id, content, user_id)
+            
+            if result:
+                return jsonify({"message": "Reply updated successfully"}), 200
+            return jsonify({"error": "Failed to update reply or not authorized"}), 403
+            
+        elif request.method == 'DELETE':
+            result = forum.delete_reply(reply_id, user_id)
+            
+            if result:
+                return jsonify({"message": "Reply deleted successfully"}), 200
+            return jsonify({"error": "Failed to delete reply or not authorized"}), 403
+            
+    except Exception as e:
+        print(f"Error updating/deleting reply: {e}")
+        return jsonify({"error": "Internal server error", "message": str(e)}), 500
+
+@app.route('/forum/thread/<int:thread_id>', methods=['PUT', 'DELETE'])
+def update_delete_thread(thread_id):
+    if 'user' not in session:
+        return jsonify({"error": "Not logged in"}), 401
+        
+    user_id = session['user']['id']
+    
+    try:
+        if request.method == 'PUT':
+            data = request.get_json()
+            content = data.get('content')
+            
+            if not content:
+                return jsonify({"error": "Thread content cannot be empty"}), 400
+                
+            result = forum.update_thread(thread_id, content, user_id)
+            
+            if result:
+                return jsonify({"message": "Thread updated successfully"}), 200
+            return jsonify({"error": "Failed to update thread or not authorized"}), 403
+            
+        elif request.method == 'DELETE':
+            result = forum.delete_thread(thread_id, user_id)
+            
+            if result:
+                return jsonify({"message": "Thread deleted successfully"}), 200
+            return jsonify({"error": "Failed to delete thread or not authorized"}), 403
+            
+    except Exception as e:
+        print(f"Error updating/deleting thread: {e}")
+        return jsonify({"error": "Internal server error", "message": str(e)}), 500
+
+@app.route('/forum/report', methods=['POST'])
+def report_forum_item():
+    if 'user' not in session:
+        return jsonify({"error": "Not logged in"}), 401
+        
+    data = request.get_json()
+    user_id = session['user']['id']
+    item_type = data.get('type')
+    item_id = data.get('itemId')
+    reason = data.get('reason')
+    
+    if not item_type or not item_id or not reason:
+        return jsonify({"error": "Missing required fields"}), 400
+        
+    try:
+        result = forum.report_item(user_id, item_type, item_id, reason)
+        
+        if result:
+            return jsonify({"message": "Report submitted successfully"}), 201
+        return jsonify({"error": "Failed to submit report"}), 500
+        
+    except Exception as e:
+        print(f"Error submitting report: {e}")
+        return jsonify({"error": "Internal server error", "message": str(e)}), 500
     
 if __name__ == "__main__":
     app.run(port=5001, debug=True)

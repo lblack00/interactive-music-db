@@ -123,7 +123,7 @@
 		align-items: center;
 		width: 100%;
 		position: fixed;
-		z-index: 1000;
+		z-index: 50;
 	}
 
 	.navbar-title {
