@@ -253,7 +253,7 @@
 			>
 				<div class="login-prompt-modal">
 					<h3 id="login-prompt-title">Please Log In</h3>
-					<p>You need to be logged in to rate items.</p>
+					<p>You need to be logged in to report, edit, delete, or reply.</p>
 					<div class="buttons" role="group" aria-label="Login options">
 						<button
 							class="cancel-btn"
