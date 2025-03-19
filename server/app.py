@@ -316,15 +316,79 @@ class users:
 
 class forum:
     db = db_utils(dbname='users_db', user='postgres')
+
+    @staticmethod
+    def get_all_threads(category=None, limit=20, offset=0):
+        if category:
+            query = """
+                SELECT 
+                    t.id, 
+                    t.title, 
+                    t.category,
+                    t.created_at, 
+                    t.updated_at,
+                    t.is_edited,
+                    u.id as author_id, 
+                    u.username as author_name,
+                        (SELECT COUNT(*)
+                         FROM forum_replies r
+                         WHERE r.thread_id = t.id AND r.is_deleted = FALSE) as reply_count
+                FROM forum_threads t
+                JOIN users u ON t.user_id = u.id
+                WHERE t.is_deleted = FALSE AND t.category = %s
+                ORDER BY t.created_at DESC
+                LIMIT %s OFFSET %s;
+            """
+            return forum.db.read_data(query, (category, limit, offset))
+        else:
+            query = """
+                SELECT 
+                    t.id, 
+                    t.title,
+                    t.category,
+                    t.created_at, 
+                    t.updated_at,
+                    t.is_edited,
+                    u.id as author_id, 
+                    u.username as author_name,
+                        (SELECT COUNT(*)
+                         FROM forum_replies r
+                         WHERE r.thread_id = t.id AND r.is_deleted = FALSE) as reply_count
+                FROM forum_threads t
+                JOIN users u ON t.user_id = u.id
+                WHERE t.is_deleted = FALSE
+                ORDER BY t.created_at DESC
+                LIMIT %s OFFSET %s;
+            """
+            return forum.db.read_data(query, (limit, offset))
+    
+    @staticmethod
+    def get_categories():
+        query = """
+            SELECT DISTINCT category FROM forum_threads
+            WHERE is_deleted = FALSE
+            ORDER BY category;
+        """
+        return forum.db.read_data(query)
+    
+    @staticmethod
+    def create_thread(user_id, title, content, category):
+        query = """
+            INSERT INTO forum_threads (user_id, title, content, category, created_at)
+            VALUES (%s, %s, %s, %s, CURRENT_TIMESTAMP)
+            RETURNING id;
+        """
+        return forum.db.mutate_data(query, (user_id, title, content, category))
     
     @staticmethod
     def get_thread(thread_id):
         query = """
             SELECT 
-                t.id, 
-                t.title, 
-                t.content, 
-                t.created_at, 
+                t.id,
+                t.title,
+                t.content,
+                t.category,
+                t.created_at,
                 t.updated_at,
                 t.is_deleted,
                 u.id as author_id, 
@@ -782,6 +846,99 @@ def get_user_music_list(username, item_type):
         print(f"Error fetching music list: {e}")
         return jsonify({'error': 'Server error'}), 500
 
+# Written by Lucas Black
+@app.route('/forum/threads', methods=['GET'])
+def get_all_threads():
+    try:
+        category = request.args.get('category')
+        limit = int(request.args.get('limit', 20))
+        offset = int(request.args.get('offset', 0))
+        
+        threads = forum.get_all_threads(category, limit, offset)
+        
+        formatted_threads = []
+        for thread in threads:
+            formatted_thread = {
+                "id": thread['id'],
+                "title": thread['title'],
+                "category": thread['category'],
+                "date": thread['created_at'].strftime("%B %d, %Y") \
+                        if isinstance(thread['created_at'], datetime) else thread['created_at'],
+                "isEdited": thread.get('is_edited', False),
+                "author": {
+                    "id": thread['author_id'],
+                    "name": thread['author_name']
+                },
+                "replies": thread['reply_count']
+            }
+            formatted_threads.append(formatted_thread)
+        
+        return jsonify(formatted_threads), 200
+        
+    except Exception as e:
+        print(f"Error fetching threads: {e}")
+        return jsonify({"error": "Internal server error", "message": str(e)}), 500
+
+# Written by Lucas Black
+@app.route('/forum/categories', methods=['GET'])
+def get_forum_categories():
+    try:
+        categories = forum.get_categories()
+        category_list = [cat['category'] for cat in categories]
+        return jsonify(category_list), 200
+
+    except Exception as e:
+        print(f"Error fetching categories: {e}")
+        return jsonify({"error": "Internal server error", "message": str(e)}), 500
+
+# Written by Lucas Black
+@app.route('/forum/thread', methods=['POST'])
+def create_forum_thread():
+    if 'user' not in session:
+        return jsonify({"error": "Not logged in"}), 401
+
+    data = request.get_json()
+    user_id = session['user']['id']
+    title = data.get('title')
+    content = data.get('content')
+    category = data.get('category')
+
+    if not title or not content or not category:
+        return jsonify({"error": "Missing required fields"}), 400
+
+    if len(title) > 100:
+        return jsonify({"error": "Title must be less than 100 characters"}), 400
+
+    try:
+        result = forum.create_thread(user_id, title, content, category)
+        
+        if result:
+            thread_id = result[0][0]
+
+            thread_data = forum.get_thread(thread_id)
+
+            if thread_data:
+                formatted_thread = {
+                    "id": thread_data[0]['id'],
+                    "title": thread_data[0]['title'],
+                    "category": thread_data[0]['category'],
+                    "content": thread_data[0]['content'],
+                    "date": thread_data[0]['created_at'].strftime("%B %d, %Y") if isinstance(thread_data[0]['created_at'], datetime) else thread_data[0]['created_at'],
+                    "author": {
+                        "id": thread_data[0]['author_id'],
+                        "name": thread_data[0]['author_name']
+                    },
+                    "replies": 0
+                }
+                return jsonify(formatted_thread), 201
+        else:
+            return jsonify({"error": "Failed to create thread"}), 500
+
+    except Exception as e:
+        print(f"Error creating thread: {e}")
+        return jsonify({"error": "Internal server error", "message": str(e)}), 500
+
+# Written by Lucas Black
 @app.route('/forum/thread/<int:thread_id>', methods=['GET'])
 def get_forum_thread(thread_id):
     try:
@@ -826,6 +983,7 @@ def get_forum_thread(thread_id):
         print(f"Error fetching thread: {e}")
         return jsonify({"error": "Internal server error", "message": str(e)}), 500
 
+# Written by Lucas Black
 @app.route('/forum/thread/<int:thread_id>/reply', methods=['POST'])
 def add_thread_reply(thread_id):
     if 'user' not in session:
@@ -843,10 +1001,8 @@ def add_thread_reply(thread_id):
         result = forum.add_reply(user_id, thread_id, content, parent_id)
         
         if result:
-            # Get the newly created reply to return
             reply_id = result[0][0]  # Extract ID from result
-            
-            # This would be better to fetch just the one new reply, but for simplicity reusing existing method
+
             replies = forum.get_thread_replies(thread_id)
             new_reply = next((r for r in replies if r['id'] == reply_id), None)
             
@@ -870,6 +1026,7 @@ def add_thread_reply(thread_id):
         print(f"Error adding reply: {e}")
         return jsonify({"error": "Internal server error", "message": str(e)}), 500
 
+# Written by Lucas Black
 @app.route('/forum/reply/<int:reply_id>', methods=['PUT', 'DELETE'])
 def update_delete_reply(reply_id):
     if 'user' not in session:
@@ -902,6 +1059,7 @@ def update_delete_reply(reply_id):
         print(f"Error updating/deleting reply: {e}")
         return jsonify({"error": "Internal server error", "message": str(e)}), 500
 
+# Written by Lucas Black
 @app.route('/forum/thread/<int:thread_id>', methods=['PUT', 'DELETE'])
 def update_delete_thread(thread_id):
     if 'user' not in session:
@@ -934,6 +1092,7 @@ def update_delete_thread(thread_id):
         print(f"Error updating/deleting thread: {e}")
         return jsonify({"error": "Internal server error", "message": str(e)}), 500
 
+# Written by Lucas Black
 @app.route('/forum/report', methods=['POST'])
 def report_forum_item():
     if 'user' not in session:
