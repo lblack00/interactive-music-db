@@ -74,6 +74,40 @@
 								</p>
 
 								<v-divider class="my-4"></v-divider>
+								<h2 class="text-h5 font-weight-bold mb-2">Accessibility</h2>
+								<v-card class="mb-4 pa-3">
+									<v-select
+										label="Color Vision Mode"
+										:items="[
+											'Default',
+											'Red-Blind (Protanopia)',
+											'Green-Blind (Deuteranopia)',
+											'Blue-Blind (Tritanopia)',
+											'Grayscale (achromatopsia)',
+											'High Contrast',
+										]"
+										variant="outlined"
+										@change="applyColorblindMode"
+									></v-select>
+
+									<v-switch
+										label="Enable Patterns on UI Elements"
+										hint="Adds textures to buttons to make them more distinguishable"
+										persistent-hint
+										@change="applyAccessibilitySettings"
+									></v-switch>
+
+									<v-switch
+										label="Show Text Labels on Icons"
+										hint="Displays text labels alongside icons for better clarity"
+										persistent-hint
+										@change="applyAccessibilitySettings"
+									></v-switch>
+
+									<div class="mt-3">
+										<v-btn> Preview Accessibility Changes </v-btn>
+									</div>
+								</v-card>
 
 								<h2 class="text-h5 font-weight-bold mb-2">Spotify OAuth</h2>
 								<p v-if="user.spotifyConnected" style="color: green">
