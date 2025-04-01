@@ -2,6 +2,8 @@
 import json
 import os
 import psycopg
+import time
+import redis
 from flask import Flask, jsonify, request, session, make_response
 from flask_cors import CORS
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -23,6 +25,13 @@ app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=7)  # Session lasts 7 
 # JWT Configuration
 app.config["JWT_SECRET_KEY"] = "your-secret-key"  # Change this to a secure secret key
 jwt = JWTManager(app)
+
+# Redis for tracking logon attempts
+redis_client = redis.Redis(host="localhost", port=6379, db=0, decode_responses=True)
+
+# Login limitting
+ALLOWED_LOGIN_ATTEMPTS = 3
+LOCKOUT_DURATION = 60 * 1  # One minute time out
 
 # Enable CORS so our frontend application can access backend end-points
 CORS(app, 
@@ -556,6 +565,64 @@ def get_artist():
 
         return jsonify(data)
 
+# Login limitting methods
+def get_client_identifier():
+    return request.remote_addr
+
+def get_login_attempt_key(identifier, username=None):
+    if username:
+        return f"login_attempts:{identifier}:{username}"
+    return f"login_attempts:{identifier}"
+
+def record_failed_login(identifier, username=None):
+    ip_key = get_login_attempt_key(identifier)
+    redis_client.incr(ip_key)
+    redis_client.expire(ip_key, LOCKOUT_DURATION)
+
+    if username:
+        user_key = get_login_attempt_key(identifier, username)
+        redis_client.incr(user_key)
+        redis_client.expire(user_key, LOCKOUT_DURATION)
+
+def is_login_blocked(identifier, username=None):
+    # Prevents rapid attempts from same IP
+    ip_key = get_login_attempt_key(identifier)
+    ip_attempts = int(redis_client.get(ip_key) or 0)
+    
+    if ip_attempts >= ALLOWED_LOGIN_ATTEMPTS * 2:
+        return True, get_remaining_lockout_time(ip_key)
+    
+    # Check redis key w/ username for throttling
+    if username:
+        user_key = get_login_attempt_key(identifier, username)
+        user_attempts = int(redis_client.get(user_key) or 0)
+        
+        if user_attempts >= ALLOWED_LOGIN_ATTEMPTS:
+            return True, get_remaining_lockout_time(user_key)
+    
+    return False, 0
+
+def reset_login_attempts(identifier, username=None):
+    if username:
+        user_key = get_login_attempt_key(identifier, username)
+        redis_client.delete(user_key)
+
+def get_remaining_lockout_time(key):
+    return redis_client.ttl(key)
+
+def log_security_event(event_type, username, ip_address, details=None):
+    event = {
+        'timestamp': datetime.now().isoformat(),
+        'event_type': event_type,
+        'username': username,
+        'ip_address': ip_address,
+        'details': details or {}
+    }
+    # Justs prints to console but for real production systems:
+    # ** Store logs into database
+    # ** Send alerts to some monitoring system and alert adminstrators
+    print(f"SECURITY EVENT: {json.dumps(event)}")
+
 @app.route('/signup', methods=['GET', 'POST', 'OPTIONS'])
 def user_signup():
     if request.method == 'POST':
@@ -567,6 +634,9 @@ def user_signup():
 
         if not username or not email or not password:
             return jsonify({'error': 'Missing fields'}), 400
+
+        if users.check_username_exists(username):
+            return jsonify({'error': 'Username already exists'}), 409
 
         hashed_pass = generate_password_hash(password)
 
@@ -584,6 +654,8 @@ def user_signup():
                 'email': results[0]['email']
             }
 
+            log_security_event('user_signup', username, get_client_identifier())
+
             return jsonify({'message': 'User created successfully'}), 201
         except Exception as e:
             print(e)
@@ -596,11 +668,33 @@ def user_login():
     data = request.get_json()
     username = data.get('username')
     password = data.get('password')
+
+    client_ip = get_client_identifier()
+
+    is_blocked, remaining_time = is_login_blocked(client_ip, username)
+    if is_blocked:
+        log_security_event('login_blocked', username, client_ip, {
+            'reason': 'too_many_attempts',
+            'remaining_lockout_time': remaining_time
+        })
+
+        return jsonify({
+            'error': 'Too many failed login attempts',
+            'lockout_remaining': remaining_time
+        }), 429
     
     try:
         results = users.get_user(username)
         
-        if results and check_password_hash(results[0]['password'], password):
+        # User doesn't exist but still a failed login attempt
+        if not results:
+            record_failed_login(client_ip, username)
+            log_security_event('login_failure', username, client_ip, {'reason': 'user_not_found'})
+            return jsonify({'error': 'Invalid credentials'}), 401
+
+        # Check password
+        if check_password_hash(results[0]['password'], password):
+            # Clear session and reset login attempts
             session.clear()
             session.permanent = True  # Make the session permanent
             session['user'] = {
@@ -608,11 +702,38 @@ def user_login():
                 'username': results[0]['username'],
                 'email': results[0]['email']
             }
+
+            reset_login_attempts(client_ip, username)
+
+            log_security_event('login_success', username, client_ip)
             
             response = jsonify({'message': 'Login successful'})
             return response, 200
         else:
-            return jsonify({'error': 'Invalid credentials'}), 401
+            # Invalid password
+            record_failed_login(client_ip, username)
+
+            # Get attempts made and attempts left
+            user_key = get_login_attempt_key(client_ip, username)
+            attempts = int(redis_client.get(user_key) or 0)
+            attempts_remaining = max(0, ALLOWED_LOGIN_ATTEMPTS - attempts)
+
+            log_security_event('login_failure', username, client_ip, {
+                'reason': 'invalid_password',
+                'attempts': attempts,
+                'attempts_remaining': attempts_remaining
+            })
+            
+            if attempts_remaining > 0:
+                return jsonify({
+                    'error': 'Invalid credentials',
+                    'attempts_remaining': attempts_remaining
+                }), 401
+            else:
+                return jsonify({
+                    'error': 'Account temporarily locked',
+                    'lockout_remaining': get_remaining_lockout_time(user_key)
+                }), 429
             
     except Exception as e:
         print(f"Login error: {e}")
@@ -620,9 +741,16 @@ def user_login():
 
 @app.route('/logout', methods=['POST'])
 def user_logout():
+    username = session.get('user', {}).get('username')
+    client_ip = get_client_identifier()
+
     session.clear()
     response = jsonify({'message': 'Logged out successfully'})
     response.delete_cookie('session')
+
+    if username:
+        log_security_event('logout', username, client_ip)
+
     return response, 200
 
 @app.route('/check-session', methods=['GET'])
