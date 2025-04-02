@@ -3,7 +3,6 @@
 @import '~@mdi/font/css/materialdesignicons.css';
 
 #app {
-  width: 1920px;
   min-height: 1080px;
   height: auto;
   margin: 0 auto;

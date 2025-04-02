@@ -1,9 +1,12 @@
 # This file was written by Lucas Black
+import discogs_client
 import json
 import os
 import psycopg
 import time
 import redis
+import requests
+import sys
 from flask import Flask, jsonify, request, session, make_response
 from flask_cors import CORS
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -38,7 +41,63 @@ CORS(app,
     resources={r'/*': {'origins': 'http://localhost:5173'}},
     supports_credentials=True,
     expose_headers=['Set-Cookie'],
-    allow_headers=['Content-Type', 'Authorization', 'Access-Control-Allow-Credentials'])
+    allow_headers=['Content-Type', 'Authorization', 'Access-Control-Allow-Credentials', 'Access-Control-Allow-Origin'])
+
+# Discogs API
+consumer_key = "JJCOegYnRLCLRejtcZbo"
+consumer_secret = "UFlGrCViqSkoBNfRTGZyUfmpTGNbFbMM"
+user_agent = "PassTheAux/1.0"
+token_file = "discogs_auth.json"
+
+authenticate_discogs_API = True
+discogs_client_instance = None
+
+def save_tokens(token, secret):
+    """Save access token and secret to a file"""
+    with open(token_file, "w") as f:
+        json.dump({"token": token, "secret": secret}, f)
+
+def load_tokens():
+    """Load stored OAuth tokens if available"""
+    if os.path.exists(token_file):
+        with open(token_file, "r") as f:
+            return json.load(f)
+    return None
+
+def authenticate_discogs():
+    """Handles OAuth authentication and reuses stored tokens."""
+    global discogs_client_instance  # Use the global variable
+
+    client = discogs_client.Client(user_agent)
+    client.set_consumer_key(consumer_key, consumer_secret)
+    
+    tokens = load_tokens()
+    if tokens:
+        print("Using stored OAuth tokens.")
+        try:
+            client.set_token(tokens["token"], tokens["secret"])
+            user = client.identity()  # Verify the token works
+            print(f"Authenticated as: {user.username}")
+            discogs_client_instance = client
+            return client
+        except HTTPError:
+            print("Stored tokens are invalid. Re-authenticating...")
+
+    # Perform full OAuth authentication
+    token, secret, url = client.get_authorize_url()
+
+    print(f"Please visit the following URL to authorize: {url}")
+    oauth_verifier = input("Enter the verification code: ").strip()
+
+    try:
+        access_token, access_secret = client.get_access_token(oauth_verifier)
+        save_tokens(access_token, access_secret)
+        print("Authentication successful and tokens saved!")
+        discogs_client_instance = client
+        return client
+    except HTTPError:
+        print("Unable to authenticate.")
+        sys.exit(1)
 
 # Class for handling DB connections and operations with psycopg
 class db_utils:
@@ -88,6 +147,20 @@ class db_utils:
 # Class for building SQL release queries and handing them to database connection
 class release:
     db = db_utils(dbname='discogs_db', user='postgres')
+
+    @staticmethod
+    def get_discogs_api_release(release_id):
+        if discogs_client_instance is None:
+            print("Discogs client not initialized!")
+            return None
+
+        try:
+            release = discogs_client_instance.release(release_id)
+            images = [{'uri': img['uri']} for img in release.images] if release.images else []
+            return {"images": images}
+        except Exception as e:
+            print(f"Error retrieving release: {e}")
+            return None
 
     # def get_track_credits(track_id):
     @staticmethod
@@ -174,6 +247,20 @@ class master:
     db = db_utils(dbname='discogs_db', user='postgres')
 
     @staticmethod
+    def get_discogs_api_master(master_id):
+        if discogs_client_instance is None:
+            print("Discogs client not initialized!")
+            return None
+
+        try:
+            master = discogs_client_instance.master(master_id)
+            images = [{'uri': img['uri']} for img in master.images] if master.images else []
+            return {"images": images}
+        except Exception as e:
+            print(f"Error retrieving master: {e}")
+            return None
+
+    @staticmethod
     def get_all_master_releases_from_artist(artist_name):
         query = """SELECT * FROM master_artist
                    JOIN master ON master.id=master_artist.master_id
@@ -219,6 +306,20 @@ class master:
 
 class artist:
     db = db_utils(dbname='discogs_db', user='postgres')
+
+    @staticmethod
+    def get_discogs_api_artist(artist_id):
+        if discogs_client_instance is None:
+            print("Discogs client not initialized!")
+            return None
+
+        try:
+            artist = discogs_client_instance.artist(artist_id)
+            images = [{'uri': img['uri']} for img in artist.images] if artist.images else []
+            return {"images": images}
+        except Exception as e:
+            print(f"Error retrieving artist: {e}")
+            return None
 
     @staticmethod
     def get_artist(artist_id):
@@ -513,7 +614,8 @@ def get_release():
                 'format': release.get_release_format(release_id),
                 'identifier': release.get_release_identifier(release_id),
                 'video': release.get_release_video(release_id),
-                'company': release.get_release_company(release_id)
+                'company': release.get_release_company(release_id),
+                'api_data': release.get_discogs_api_release(release_id),
             }
         }
 
@@ -544,7 +646,8 @@ def get_master():
                 'format': release.get_release_format(main_release_id),
                 'identifer': release.get_release_identifier(main_release_id),
                 'company': release.get_release_company(main_release_id),
-                'release': release.get_release(main_release_id)
+                'release': release.get_release(main_release_id),
+                'api_data': master.get_discogs_api_master(master_id),
             }
         }
 
@@ -559,8 +662,32 @@ def get_artist():
         data = {
             'payload': {
                 'artist': artist.get_artist(artist_id),
-                'discography': artist.get_discography(artist_id)
+                'discography': artist.get_discography(artist_id),
+                'api_data': artist.get_discogs_api_artist(artist_id)
             }
+        }
+
+        return jsonify(data)
+
+@app.route('/artist-discography-images', methods=['GET'])
+def get_artist_discography_images():
+    if request.method == 'GET':
+        artist_id = int(request.args.get('artist_id'))
+
+        discography = artist.get_discography(artist_id)
+        discography_image_uris = {}
+        for m in discography:
+            image_uris = None
+            discogs_response = master.get_discogs_api_master(m["id"])
+
+            if discogs_response and 'images' in discogs_response:
+                image_uris = discogs_response['images']
+
+            if image_uris and len(image_uris) > 0:
+                discography_image_uris[m["id"]] = image_uris[0]["uri"]
+
+        data = {
+            'payload': discography_image_uris
         }
 
         return jsonify(data)
@@ -1247,4 +1374,6 @@ def report_forum_item():
         return jsonify({"error": "Internal server error", "message": str(e)}), 500
     
 if __name__ == "__main__":
+    if authenticate_discogs_API:
+        authenticate_discogs()
     app.run(port=5001, debug=True)
