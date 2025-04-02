@@ -52,6 +52,7 @@ token_file = "discogs_auth.json"
 authenticate_discogs_API = True
 discogs_client_instance = None
 
+# source: https://github.com/jesseward/discogs-oauth-example
 def save_tokens(token, secret):
     """Save access token and secret to a file"""
     with open(token_file, "w") as f:
