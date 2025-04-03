@@ -1,3 +1,41 @@
+/* Protanopia (Red-Blind) */
+body.protanopia {
+	filter: url("#protanopia-filter") !important;
+}
+
+/* Deuteranopia (Green-Blind) */
+body.deuteranopia {
+	filter: url("#deuteranopia-filter") !important;
+}
+
+/* Tritanopia (Blue-Blind) */
+body.tritanopia {
+	filter: url("#tritanopia-filter") !important;
+}
+
+/* Achromatopsia (Monochromacy) */
+body.achromatopsia {
+	filter: grayscale(100%) !important;
+}
+
+/* High Contrast Mode */
+body.high-contrast {
+	filter: contrast(150%);
+	background-color: #000 !important;
+	color: #fff !important;
+}
+
+/* Additional high contrast styles for Vuetify components */
+body.high-contrast .v-card {
+	background-color: #222 !important;
+	color: #fff !important;
+}
+
+body.high-contrast .v-btn:not(.v-btn--text):not(.v-btn--outlined) {
+	background-color: #fff !important;
+	color: #000 !important;
+	border: 2px solid #fff !important;
+}
 /* For screen readers only - visually hidden but accessible to screen readers */
 .sr-only {
 	position: absolute;
