@@ -236,6 +236,22 @@
 			AccessibilityCarousel,
 		},
 		data() {
+			const createMaster = (id, name) => ({
+				id,
+				image: "/images/UnknownSong.png",
+				link: `/master/${id}`,
+				loading: false,
+				name				
+			});
+
+			const createArtist = (id, name) => ({
+				id,
+				image: "/images/UnknownPerson.png",
+				link: `/artist/${id}`,
+				loading: false,
+				name
+			});
+
 			return {
 				searchQuery: "",
 				filterOption: "Artists",
@@ -248,31 +264,25 @@
 				//so it could look like flipping through vinyls or albums in a store.
 
 				featuredSongs: [
-					{ image: "/images/UnknownSong.png", link: "/master/763819" }, // Ed Sheeran - A Team
-					{ image: "/images/UnknownSong.png", link: "/master/483665" }, // Taylor Swift - We Are Never...
-					{ image: "/images/UnknownSong.png", link: "/master/74524" }, // Linkin Park - Papercut
-					{ image: "/images/UnknownSong.png", link: "/master/267064" }, // Metallica - Evil Never Dies
-					{ image: "/images/UnknownSong.png", link: "/master/1293228" }, // Frank Ocean - Chanel
-					{ image: "/images/UnknownSong.png", link: "/master/763819" }, // Repeat Ed Sheeran
-					{ image: "/images/UnknownSong.png", link: "/master/483665" }, // Repeat Taylor Swift
+					createMaster(763819, "Ed Sheeran - A Team"),
+					createMaster(483665, "Taylor Swift - We Are Never..."),
+					createMaster(74524, "Linkin Park - Papercut"),
+					createMaster(267064, "Metallica - Evil Never Dies"),
+					createMaster(1293228, "Frank Ocean - Chanel"),
 				],
 				popularArtists: [
-					{ image: "/images/UnknownPerson.png", link: "/artist/1124645" }, // Taylor Swift
-					{ image: "/images/UnknownPerson.png", link: "/artist/18839" }, // Metallica
-					{ image: "/images/UnknownPerson.png", link: "/artist/40029" }, // Linkin Park
-					{ image: "/images/UnknownPerson.png", link: "/artist/2184482" }, // Ed Sheeran
-					{ image: "/images/UnknownPerson.png", link: "/artist/2013868" }, // Frank Ocean
-					{ image: "/images/UnknownPerson.png", link: "/artist/1124645" }, // Repeat Taylor Swift
-					{ image: "/images/UnknownPerson.png", link: "/artist/18839" }, // Repeat Metallica
+					createArtist(1124645, "Taylor Swift"),
+					createArtist(18839, "Metallica"),
+					createArtist(40029, "Linkin Park"),
+					createArtist(2184482, "Ed Sheeran"),
+					createArtist(2013868, "Frank Ocean"),
 				],
 				trendingNow: [
-					{ image: "/images/UnknownSong.png", link: "/master/876374" }, // Blank Space
-					{ image: "/images/UnknownSong.png", link: "/master/308202" }, // Master of Puppets
-					{ image: "/images/UnknownSong.png", link: "/master/1503117" }, // Blackout
-					{ image: "/images/UnknownSong.png", link: "/master/1547600" }, // I Don't Care
-					{ image: "/images/UnknownSong.png", link: "/master/1046042" }, // Blonde
-					{ image: "/images/UnknownSong.png", link: "/master/876374" }, // Repeat Blank Space
-					{ image: "/images/UnknownSong.png", link: "/master/308202" }, // Repeat Master of Puppets
+					createMaster(876374, "Blank Space"),
+					createMaster(308202, "Master of Puppets"),
+					createMaster(1503117, "Blackout"),
+					createMaster(1547600, "I Don't Care"),
+					createMaster(1046042, "Blonde"),
 				],
 				currentIndex: {
 					featured: 0,
@@ -340,7 +350,66 @@
 					});
 				}
 			},
+
+			async loadMasterImage(song) {
+				if (song.loading) return;
+
+				song.loading = true;
+
+				try {
+					const masterId = song.id;
+					const response = await axios.get(`http://localhost:5001/get-master-image`, {
+						params: { master_id: masterId }
+					});
+
+					if (response.status === 200 && response.data.payload) {
+						song.image = response.data.payload;
+					}
+				} catch (error) {
+					console.log(`Error loading image for master ID ${song.id}:`, error);
+				} finally {
+					song.loading = false;
+				}
+			},
+
+			async loadArtistImage(artist) {
+				if (artist.loading) return;
+
+				artist.loading = true;
+
+				try {
+					const artistId = artist.id;
+					const response = await axios.get(`http://localhost:5001/get-artist-image`, {
+						params: { artist_id: artistId }
+					});
+
+					if (response.status === 200 && response.data.payload) {
+						artist.image = response.data.payload;
+					}
+				} catch (error) {
+					console.log(`Error loading image for artist ID ${artist.id}:`, error);
+				} finally {
+					artist.loading = false;
+				}
+			},
+
+			loadImages() {
+				this.featuredSongs.forEach(song => {
+					this.loadMasterImage(song);
+				});
+
+				this.popularArtists.forEach(artist => {
+					this.loadArtistImage(artist);
+				});
+
+				this.trendingNow.forEach(song => {
+					this.loadMasterImage(song);
+				});
+			}
 		},
+		mounted() {
+			this.loadImages();
+		}
 	};
 </script>
 

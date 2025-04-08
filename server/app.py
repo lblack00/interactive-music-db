@@ -693,6 +693,34 @@ def get_artist_discography_images():
 
         return jsonify(data)
 
+@app.route('/get-master-image', methods=['GET'])
+def get_master_image():
+    if request.method == 'GET':
+        master_id = int(request.args.get('master_id'))
+        image_uri = master.get_discogs_api_master(master_id)
+
+        if image_uri and len(image_uri) > 0 and 'images' in image_uri:
+            data = {
+                'payload': image_uri['images'][0]['uri']
+            }
+
+            return jsonify(data)
+        return jsonify({})
+
+@app.route('/get-artist-image', methods=['GET'])
+def get_artist_image():
+    if request.method == 'GET':
+        artist_id = int(request.args.get('artist_id'))
+        image_uri = artist.get_discogs_api_artist(artist_id)
+
+        if image_uri and len(image_uri) > 0 and 'images' in image_uri:
+            data = {
+                'payload': image_uri['images'][0]['uri']
+            }
+
+            return jsonify(data)
+        return jsonify({})
+
 # Login limitting methods
 def get_client_identifier():
     return request.remote_addr
