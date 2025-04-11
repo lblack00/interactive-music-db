@@ -1,11 +1,10 @@
 <!--ARIA Landmarks added by Chantelle Cabanilla-->
 <template>
 	<div class="grid-container">
+		<header role="navigation">
+			<Navbar />
+		</header>
 		<div class="content">
-			<header role="navigation">
-				<Navbar />
-			</header>
-
 			<div role="alert" v-if="error">
 				<v-alert v-if="error" type="error" class="ma-4">
 					{{ error }}

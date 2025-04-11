@@ -1,12 +1,17 @@
 # This file was written by Lucas Black
+import discogs_client
 import json
 import os
 import psycopg
+import time
+import redis
+import requests
+import sys
 from flask import Flask, jsonify, request, session, make_response
 from flask_cors import CORS
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_jwt_extended import JWTManager, jwt_required, get_jwt_identity, create_access_token
-from datetime import timedelta
+from datetime import timedelta, datetime
 from flask_cors import cross_origin
 
 app = Flask(__name__)
@@ -24,12 +29,76 @@ app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=7)  # Session lasts 7 
 app.config["JWT_SECRET_KEY"] = "your-secret-key"  # Change this to a secure secret key
 jwt = JWTManager(app)
 
+# Redis for tracking logon attempts
+redis_client = redis.Redis(host="localhost", port=6379, db=0, decode_responses=True)
+
+# Login limitting
+ALLOWED_LOGIN_ATTEMPTS = 3
+LOCKOUT_DURATION = 60 * 1  # One minute time out
+
 # Enable CORS so our frontend application can access backend end-points
 CORS(app, 
     resources={r'/*': {'origins': 'http://localhost:5173'}},
     supports_credentials=True,
     expose_headers=['Set-Cookie'],
-    allow_headers=['Content-Type', 'Authorization', 'Access-Control-Allow-Credentials'])
+    allow_headers=['Content-Type', 'Authorization', 'Access-Control-Allow-Credentials', 'Access-Control-Allow-Origin'])
+
+# Discogs API
+consumer_key = "JJCOegYnRLCLRejtcZbo"
+consumer_secret = "UFlGrCViqSkoBNfRTGZyUfmpTGNbFbMM"
+user_agent = "PassTheAux/1.0"
+token_file = "discogs_auth.json"
+
+authenticate_discogs_API = True
+discogs_client_instance = None
+
+# source: https://github.com/jesseward/discogs-oauth-example
+def save_tokens(token, secret):
+    """Save access token and secret to a file"""
+    with open(token_file, "w") as f:
+        json.dump({"token": token, "secret": secret}, f)
+
+def load_tokens():
+    """Load stored OAuth tokens if available"""
+    if os.path.exists(token_file):
+        with open(token_file, "r") as f:
+            return json.load(f)
+    return None
+
+def authenticate_discogs():
+    """Handles OAuth authentication and reuses stored tokens."""
+    global discogs_client_instance  # Use the global variable
+
+    client = discogs_client.Client(user_agent)
+    client.set_consumer_key(consumer_key, consumer_secret)
+    
+    tokens = load_tokens()
+    if tokens:
+        print("Using stored OAuth tokens.")
+        try:
+            client.set_token(tokens["token"], tokens["secret"])
+            user = client.identity()  # Verify the token works
+            print(f"Authenticated as: {user.username}")
+            discogs_client_instance = client
+            return client
+        except HTTPError:
+            print("Stored tokens are invalid. Re-authenticating...")
+
+    # Perform full OAuth authentication
+    token, secret, url = client.get_authorize_url()
+
+    print(f"Please visit the following URL to authorize: {url}")
+    oauth_verifier = input("Enter the verification code: ").strip()
+
+    try:
+        access_token, access_secret = client.get_access_token(oauth_verifier)
+        save_tokens(access_token, access_secret)
+        print("Authentication successful and tokens saved!")
+        discogs_client_instance = client
+        return client
+    except HTTPError:
+        print("Unable to authenticate.")
+        sys.exit(1)
 
 # Class for handling DB connections and operations with psycopg
 class db_utils:
@@ -79,6 +148,20 @@ class db_utils:
 # Class for building SQL release queries and handing them to database connection
 class release:
     db = db_utils(dbname='discogs_db', user='postgres')
+
+    @staticmethod
+    def get_discogs_api_release(release_id):
+        if discogs_client_instance is None:
+            print("Discogs client not initialized!")
+            return None
+
+        try:
+            release = discogs_client_instance.release(release_id)
+            images = [{'uri': img['uri']} for img in release.images] if release.images else []
+            return {"images": images}
+        except Exception as e:
+            print(f"Error retrieving release: {e}")
+            return None
 
     # def get_track_credits(track_id):
     @staticmethod
@@ -165,6 +248,20 @@ class master:
     db = db_utils(dbname='discogs_db', user='postgres')
 
     @staticmethod
+    def get_discogs_api_master(master_id):
+        if discogs_client_instance is None:
+            print("Discogs client not initialized!")
+            return None
+
+        try:
+            master = discogs_client_instance.master(master_id)
+            images = [{'uri': img['uri']} for img in master.images] if master.images else []
+            return {"images": images}
+        except Exception as e:
+            print(f"Error retrieving master: {e}")
+            return None
+
+    @staticmethod
     def get_all_master_releases_from_artist(artist_name):
         query = """SELECT * FROM master_artist
                    JOIN master ON master.id=master_artist.master_id
@@ -210,6 +307,20 @@ class master:
 
 class artist:
     db = db_utils(dbname='discogs_db', user='postgres')
+
+    @staticmethod
+    def get_discogs_api_artist(artist_id):
+        if discogs_client_instance is None:
+            print("Discogs client not initialized!")
+            return None
+
+        try:
+            artist = discogs_client_instance.artist(artist_id)
+            images = [{'uri': img['uri']} for img in artist.images] if artist.images else []
+            return {"images": images}
+        except Exception as e:
+            print(f"Error retrieving artist: {e}")
+            return None
 
     @staticmethod
     def get_artist(artist_id):
@@ -314,6 +425,168 @@ class users:
 
         return users.db.read_data(query, (username,))
 
+class forum:
+    db = db_utils(dbname='users_db', user='postgres')
+
+    @staticmethod
+    def get_all_threads(category=None, limit=20, offset=0):
+        if category:
+            query = """
+                SELECT 
+                    t.id, 
+                    t.title, 
+                    t.category,
+                    t.created_at, 
+                    t.updated_at,
+                    t.is_edited,
+                    u.id as author_id, 
+                    u.username as author_name,
+                        (SELECT COUNT(*)
+                         FROM forum_replies r
+                         WHERE r.thread_id = t.id AND r.is_deleted = FALSE) as reply_count
+                FROM forum_threads t
+                JOIN users u ON t.user_id = u.id
+                WHERE t.is_deleted = FALSE AND t.category = %s
+                ORDER BY t.created_at DESC
+                LIMIT %s OFFSET %s;
+            """
+            return forum.db.read_data(query, (category, limit, offset))
+        else:
+            query = """
+                SELECT 
+                    t.id, 
+                    t.title,
+                    t.category,
+                    t.created_at, 
+                    t.updated_at,
+                    t.is_edited,
+                    u.id as author_id, 
+                    u.username as author_name,
+                        (SELECT COUNT(*)
+                         FROM forum_replies r
+                         WHERE r.thread_id = t.id AND r.is_deleted = FALSE) as reply_count
+                FROM forum_threads t
+                JOIN users u ON t.user_id = u.id
+                WHERE t.is_deleted = FALSE
+                ORDER BY t.created_at DESC
+                LIMIT %s OFFSET %s;
+            """
+            return forum.db.read_data(query, (limit, offset))
+    
+    @staticmethod
+    def get_categories():
+        query = """
+            SELECT DISTINCT category FROM forum_threads
+            WHERE is_deleted = FALSE
+            ORDER BY category;
+        """
+        return forum.db.read_data(query)
+    
+    @staticmethod
+    def create_thread(user_id, title, content, category):
+        query = """
+            INSERT INTO forum_threads (user_id, title, content, category, created_at)
+            VALUES (%s, %s, %s, %s, CURRENT_TIMESTAMP)
+            RETURNING id;
+        """
+        return forum.db.mutate_data(query, (user_id, title, content, category))
+    
+    @staticmethod
+    def get_thread(thread_id):
+        query = """
+            SELECT 
+                t.id,
+                t.title,
+                t.content,
+                t.category,
+                t.created_at,
+                t.updated_at,
+                t.is_deleted,
+                u.id as author_id, 
+                u.username as author_name
+            FROM forum_threads t
+            JOIN users u ON t.user_id = u.id
+            WHERE t.id = %s AND t.is_deleted = FALSE;
+        """
+        return forum.db.read_data(query, (thread_id,))
+    
+    @staticmethod
+    def get_thread_replies(thread_id):
+        query = """
+            SELECT 
+                r.id, 
+                r.content, 
+                r.created_at, 
+                r.updated_at,
+                r.parent_id,
+                r.is_edited,
+                u.id as author_id, 
+                u.username as author_name
+            FROM forum_replies r
+            JOIN users u ON r.user_id = u.id
+            WHERE r.thread_id = %s AND r.is_deleted = FALSE
+            ORDER BY r.created_at ASC;
+        """
+        return forum.db.read_data(query, (thread_id,))
+    
+    @staticmethod
+    def add_reply(user_id, thread_id, content, parent_id=None):
+        query = """
+            INSERT INTO forum_replies (user_id, thread_id, content, parent_id, created_at)
+            VALUES (%s, %s, %s, %s, CURRENT_TIMESTAMP)
+            RETURNING id;
+        """
+        return forum.db.mutate_data(query, (user_id, thread_id, content, parent_id))
+    
+    @staticmethod
+    def update_reply(reply_id, content, user_id):
+        query = """
+            UPDATE forum_replies
+            SET content = %s, updated_at = CURRENT_TIMESTAMP, is_edited = TRUE
+            WHERE id = %s AND user_id = %s
+            RETURNING id;
+        """
+        return forum.db.mutate_data(query, (content, reply_id, user_id))
+    
+    @staticmethod
+    def delete_reply(reply_id, user_id):
+        query = """
+            UPDATE forum_replies
+            SET is_deleted = TRUE, updated_at = CURRENT_TIMESTAMP
+            WHERE id = %s AND user_id = %s
+            RETURNING id;
+        """
+        return forum.db.mutate_data(query, (reply_id, user_id))
+    
+    @staticmethod
+    def update_thread(thread_id, content, user_id):
+        query = """
+            UPDATE forum_threads
+            SET content = %s, updated_at = CURRENT_TIMESTAMP, is_edited = TRUE
+            WHERE id = %s AND user_id = %s
+            RETURNING id;
+        """
+        return forum.db.mutate_data(query, (content, thread_id, user_id))
+    
+    @staticmethod
+    def delete_thread(thread_id, user_id):
+        query = """
+            UPDATE forum_threads
+            SET is_deleted = TRUE, updated_at = CURRENT_TIMESTAMP
+            WHERE id = %s AND user_id = %s
+            RETURNING id;
+        """
+        return forum.db.mutate_data(query, (thread_id, user_id))
+    
+    @staticmethod
+    def report_item(user_id, item_type, item_id, reason):
+        query = """
+            INSERT INTO forum_reports (user_id, item_type, item_id, reason, created_at)
+            VALUES (%s, %s, %s, %s, CURRENT_TIMESTAMP)
+            RETURNING id;
+        """
+        return forum.db.mutate_data(query, (user_id, item_type, item_id, reason))
+
 @app.route('/release/', methods=['GET'])
 def get_release():
     try:
@@ -342,7 +615,8 @@ def get_release():
                 'format': release.get_release_format(release_id),
                 'identifier': release.get_release_identifier(release_id),
                 'video': release.get_release_video(release_id),
-                'company': release.get_release_company(release_id)
+                'company': release.get_release_company(release_id),
+                'api_data': release.get_discogs_api_release(release_id),
             }
         }
 
@@ -373,7 +647,8 @@ def get_master():
                 'format': release.get_release_format(main_release_id),
                 'identifer': release.get_release_identifier(main_release_id),
                 'company': release.get_release_company(main_release_id),
-                'release': release.get_release(main_release_id)
+                'release': release.get_release(main_release_id),
+                'api_data': master.get_discogs_api_master(master_id),
             }
         }
 
@@ -388,11 +663,121 @@ def get_artist():
         data = {
             'payload': {
                 'artist': artist.get_artist(artist_id),
-                'discography': artist.get_discography(artist_id)
+                'discography': artist.get_discography(artist_id),
+                'api_data': artist.get_discogs_api_artist(artist_id)
             }
         }
 
         return jsonify(data)
+
+@app.route('/artist-discography-images', methods=['GET'])
+def get_artist_discography_images():
+    if request.method == 'GET':
+        artist_id = int(request.args.get('artist_id'))
+
+        discography = artist.get_discography(artist_id)
+        discography_image_uris = {}
+        for m in discography:
+            image_uris = None
+            discogs_response = master.get_discogs_api_master(m["id"])
+
+            if discogs_response and 'images' in discogs_response:
+                image_uris = discogs_response['images']
+
+            if image_uris and len(image_uris) > 0:
+                discography_image_uris[m["id"]] = image_uris[0]["uri"]
+
+        data = {
+            'payload': discography_image_uris
+        }
+
+        return jsonify(data)
+
+@app.route('/get-master-image', methods=['GET'])
+def get_master_image():
+    if request.method == 'GET':
+        master_id = int(request.args.get('master_id'))
+        image_uri = master.get_discogs_api_master(master_id)
+
+        if image_uri and len(image_uri) > 0 and 'images' in image_uri:
+            data = {
+                'payload': image_uri['images'][0]['uri']
+            }
+
+            return jsonify(data)
+        return jsonify({})
+
+@app.route('/get-artist-image', methods=['GET'])
+def get_artist_image():
+    if request.method == 'GET':
+        artist_id = int(request.args.get('artist_id'))
+        image_uri = artist.get_discogs_api_artist(artist_id)
+
+        if image_uri and len(image_uri) > 0 and 'images' in image_uri:
+            data = {
+                'payload': image_uri['images'][0]['uri']
+            }
+
+            return jsonify(data)
+        return jsonify({})
+
+# Login limitting methods
+def get_client_identifier():
+    return request.remote_addr
+
+def get_login_attempt_key(identifier, username=None):
+    if username:
+        return f"login_attempts:{identifier}:{username}"
+    return f"login_attempts:{identifier}"
+
+def record_failed_login(identifier, username=None):
+    ip_key = get_login_attempt_key(identifier)
+    redis_client.incr(ip_key)
+    redis_client.expire(ip_key, LOCKOUT_DURATION)
+
+    if username:
+        user_key = get_login_attempt_key(identifier, username)
+        redis_client.incr(user_key)
+        redis_client.expire(user_key, LOCKOUT_DURATION)
+
+def is_login_blocked(identifier, username=None):
+    # Prevents rapid attempts from same IP
+    ip_key = get_login_attempt_key(identifier)
+    ip_attempts = int(redis_client.get(ip_key) or 0)
+    
+    if ip_attempts >= ALLOWED_LOGIN_ATTEMPTS * 2:
+        return True, get_remaining_lockout_time(ip_key)
+    
+    # Check redis key w/ username for throttling
+    if username:
+        user_key = get_login_attempt_key(identifier, username)
+        user_attempts = int(redis_client.get(user_key) or 0)
+        
+        if user_attempts >= ALLOWED_LOGIN_ATTEMPTS:
+            return True, get_remaining_lockout_time(user_key)
+    
+    return False, 0
+
+def reset_login_attempts(identifier, username=None):
+    if username:
+        user_key = get_login_attempt_key(identifier, username)
+        redis_client.delete(user_key)
+
+def get_remaining_lockout_time(key):
+    return redis_client.ttl(key)
+
+def log_security_event(event_type, username, ip_address, details=None):
+    event = {
+        'timestamp': datetime.now().isoformat(),
+        'event_type': event_type,
+        'username': username,
+        'ip_address': ip_address,
+        'details': details or {}
+    }
+    # Justs prints to console but for real production systems:
+    # ** Store logs into database
+    # ** Send alerts to some monitoring system and alert adminstrators
+    print(f"SECURITY EVENT: {json.dumps(event)}")
 
 @app.route('/signup', methods=['GET', 'POST', 'OPTIONS'])
 def user_signup():
@@ -405,6 +790,9 @@ def user_signup():
 
         if not username or not email or not password:
             return jsonify({'error': 'Missing fields'}), 400
+
+        if users.check_username_exists(username):
+            return jsonify({'error': 'Username already exists'}), 409
 
         hashed_pass = generate_password_hash(password)
 
@@ -422,6 +810,8 @@ def user_signup():
                 'email': results[0]['email']
             }
 
+            log_security_event('user_signup', username, get_client_identifier())
+
             return jsonify({'message': 'User created successfully'}), 201
         except Exception as e:
             print(e)
@@ -434,11 +824,33 @@ def user_login():
     data = request.get_json()
     username = data.get('username')
     password = data.get('password')
+
+    client_ip = get_client_identifier()
+
+    is_blocked, remaining_time = is_login_blocked(client_ip, username)
+    if is_blocked:
+        log_security_event('login_blocked', username, client_ip, {
+            'reason': 'too_many_attempts',
+            'remaining_lockout_time': remaining_time
+        })
+
+        return jsonify({
+            'error': 'Too many failed login attempts',
+            'lockout_remaining': remaining_time
+        }), 429
     
     try:
         results = users.get_user(username)
         
-        if results and check_password_hash(results[0]['password'], password):
+        # User doesn't exist but still a failed login attempt
+        if not results:
+            record_failed_login(client_ip, username)
+            log_security_event('login_failure', username, client_ip, {'reason': 'user_not_found'})
+            return jsonify({'error': 'Invalid credentials'}), 401
+
+        # Check password
+        if check_password_hash(results[0]['password'], password):
+            # Clear session and reset login attempts
             session.clear()
             session.permanent = True  # Make the session permanent
             session['user'] = {
@@ -446,11 +858,38 @@ def user_login():
                 'username': results[0]['username'],
                 'email': results[0]['email']
             }
+
+            reset_login_attempts(client_ip, username)
+
+            log_security_event('login_success', username, client_ip)
             
             response = jsonify({'message': 'Login successful'})
             return response, 200
         else:
-            return jsonify({'error': 'Invalid credentials'}), 401
+            # Invalid password
+            record_failed_login(client_ip, username)
+
+            # Get attempts made and attempts left
+            user_key = get_login_attempt_key(client_ip, username)
+            attempts = int(redis_client.get(user_key) or 0)
+            attempts_remaining = max(0, ALLOWED_LOGIN_ATTEMPTS - attempts)
+
+            log_security_event('login_failure', username, client_ip, {
+                'reason': 'invalid_password',
+                'attempts': attempts,
+                'attempts_remaining': attempts_remaining
+            })
+            
+            if attempts_remaining > 0:
+                return jsonify({
+                    'error': 'Invalid credentials',
+                    'attempts_remaining': attempts_remaining
+                }), 401
+            else:
+                return jsonify({
+                    'error': 'Account temporarily locked',
+                    'lockout_remaining': get_remaining_lockout_time(user_key)
+                }), 429
             
     except Exception as e:
         print(f"Login error: {e}")
@@ -458,9 +897,16 @@ def user_login():
 
 @app.route('/logout', methods=['POST'])
 def user_logout():
+    username = session.get('user', {}).get('username')
+    client_ip = get_client_identifier()
+
     session.clear()
     response = jsonify({'message': 'Logged out successfully'})
     response.delete_cookie('session')
+
+    if username:
+        log_security_event('logout', username, client_ip)
+
     return response, 200
 
 @app.route('/check-session', methods=['GET'])
@@ -683,6 +1129,280 @@ def get_user_music_list(username, item_type):
     except Exception as e:
         print(f"Error fetching music list: {e}")
         return jsonify({'error': 'Server error'}), 500
+
+# Written by Lucas Black
+@app.route('/forum/threads', methods=['GET'])
+def get_all_threads():
+    try:
+        category = request.args.get('category')
+        limit = int(request.args.get('limit', 20))
+        offset = int(request.args.get('offset', 0))
+        
+        threads = forum.get_all_threads(category, limit, offset)
+        
+        formatted_threads = []
+        for thread in threads:
+            formatted_thread = {
+                "id": thread['id'],
+                "title": thread['title'],
+                "category": thread['category'],
+                "date": thread['created_at'].strftime("%B %d, %Y") \
+                        if isinstance(thread['created_at'], datetime) else thread['created_at'],
+                "isEdited": thread.get('is_edited', False),
+                "author": {
+                    "id": thread['author_id'],
+                    "name": thread['author_name']
+                },
+                "replies": thread['reply_count']
+            }
+            formatted_threads.append(formatted_thread)
+        
+        return jsonify(formatted_threads), 200
+        
+    except Exception as e:
+        print(f"Error fetching threads: {e}")
+        return jsonify({"error": "Internal server error", "message": str(e)}), 500
+
+# Written by Lucas Black
+@app.route('/forum/categories', methods=['GET'])
+def get_forum_categories():
+    try:
+        categories = forum.get_categories()
+        category_list = [cat['category'] for cat in categories]
+        return jsonify(category_list), 200
+
+    except Exception as e:
+        print(f"Error fetching categories: {e}")
+        return jsonify({"error": "Internal server error", "message": str(e)}), 500
+
+# Written by Lucas Black
+@app.route('/forum/thread', methods=['POST'])
+def create_forum_thread():
+    if 'user' not in session:
+        return jsonify({"error": "Not logged in"}), 401
+
+    data = request.get_json()
+    user_id = session['user']['id']
+    title = data.get('title')
+    content = data.get('content')
+    category = data.get('category')
+
+    if not title or not content or not category:
+        return jsonify({"error": "Missing required fields"}), 400
+
+    if len(title) > 100:
+        return jsonify({"error": "Title must be less than 100 characters"}), 400
+
+    try:
+        result = forum.create_thread(user_id, title, content, category)
+        
+        if result:
+            thread_id = result[0][0]
+
+            thread_data = forum.get_thread(thread_id)
+
+            if thread_data:
+                formatted_thread = {
+                    "id": thread_data[0]['id'],
+                    "title": thread_data[0]['title'],
+                    "category": thread_data[0]['category'],
+                    "content": thread_data[0]['content'],
+                    "date": thread_data[0]['created_at'].strftime("%B %d, %Y") if isinstance(thread_data[0]['created_at'], datetime) else thread_data[0]['created_at'],
+                    "author": {
+                        "id": thread_data[0]['author_id'],
+                        "name": thread_data[0]['author_name']
+                    },
+                    "replies": 0
+                }
+                return jsonify(formatted_thread), 201
+        else:
+            return jsonify({"error": "Failed to create thread"}), 500
+
+    except Exception as e:
+        print(f"Error creating thread: {e}")
+        return jsonify({"error": "Internal server error", "message": str(e)}), 500
+
+# Written by Lucas Black
+@app.route('/forum/thread/<int:thread_id>', methods=['GET'])
+def get_forum_thread(thread_id):
+    try:
+        thread_data = forum.get_thread(thread_id)
+        if not thread_data:
+            return jsonify({"error": "Thread not found"}), 404
+            
+        replies = forum.get_thread_replies(thread_id)
+        
+        # Format the thread data
+        formatted_thread = {
+            "id": thread_data[0]['id'],
+            "title": thread_data[0]['title'],
+            "content": thread_data[0]['content'],
+            "date": thread_data[0]['created_at'].strftime("%B %d, %Y") if isinstance(thread_data[0]['created_at'], datetime) else thread_data[0]['created_at'],
+            "isEdited": thread_data[0].get('is_edited', False),
+            "author": {
+                "id": thread_data[0]['author_id'],
+                "name": thread_data[0]['author_name']
+            },
+            "replies": []
+        }
+        
+        # Format the replies
+        for reply in replies:
+            formatted_reply = {
+                "id": reply['id'],
+                "content": reply['content'],
+                "date": reply['created_at'].strftime("%B %d, %Y") if isinstance(reply['created_at'], datetime) else reply['created_at'],
+                "isEdited": reply.get('is_edited', False),
+                "parentId": reply['parent_id'],
+                "author": {
+                    "id": reply['author_id'],
+                    "name": reply['author_name']
+                }
+            }
+            formatted_thread["replies"].append(formatted_reply)
+        
+        return jsonify(formatted_thread), 200
+        
+    except Exception as e:
+        print(f"Error fetching thread: {e}")
+        return jsonify({"error": "Internal server error", "message": str(e)}), 500
+
+# Written by Lucas Black
+@app.route('/forum/thread/<int:thread_id>/reply', methods=['POST'])
+def add_thread_reply(thread_id):
+    if 'user' not in session:
+        return jsonify({"error": "Not logged in"}), 401
+        
+    data = request.get_json()
+    user_id = session['user']['id']
+    content = data.get('content')
+    parent_id = data.get('parentId')
+    
+    if not content:
+        return jsonify({"error": "Reply content cannot be empty"}), 400
+        
+    try:
+        result = forum.add_reply(user_id, thread_id, content, parent_id)
+        
+        if result:
+            reply_id = result[0][0]  # Extract ID from result
+
+            replies = forum.get_thread_replies(thread_id)
+            new_reply = next((r for r in replies if r['id'] == reply_id), None)
+            
+            if new_reply:
+                formatted_reply = {
+                    "id": new_reply['id'],
+                    "content": new_reply['content'],
+                    "date": new_reply['created_at'].strftime("%B %d, %Y") if isinstance(new_reply['created_at'], datetime) else new_reply['created_at'],
+                    "isEdited": new_reply.get('is_edited', False),
+                    "parentId": new_reply['parent_id'],
+                    "author": {
+                        "id": new_reply['author_id'],
+                        "name": new_reply['author_name']
+                    }
+                }
+                return jsonify(formatted_reply), 201
+                
+        return jsonify({"error": "Failed to add reply"}), 500
+        
+    except Exception as e:
+        print(f"Error adding reply: {e}")
+        return jsonify({"error": "Internal server error", "message": str(e)}), 500
+
+# Written by Lucas Black
+@app.route('/forum/reply/<int:reply_id>', methods=['PUT', 'DELETE'])
+def update_delete_reply(reply_id):
+    if 'user' not in session:
+        return jsonify({"error": "Not logged in"}), 401
+        
+    user_id = session['user']['id']
+    
+    try:
+        if request.method == 'PUT':
+            data = request.get_json()
+            content = data.get('content')
+            
+            if not content:
+                return jsonify({"error": "Reply content cannot be empty"}), 400
+                
+            result = forum.update_reply(reply_id, content, user_id)
+            
+            if result:
+                return jsonify({"message": "Reply updated successfully"}), 200
+            return jsonify({"error": "Failed to update reply or not authorized"}), 403
+            
+        elif request.method == 'DELETE':
+            result = forum.delete_reply(reply_id, user_id)
+            
+            if result:
+                return jsonify({"message": "Reply deleted successfully"}), 200
+            return jsonify({"error": "Failed to delete reply or not authorized"}), 403
+            
+    except Exception as e:
+        print(f"Error updating/deleting reply: {e}")
+        return jsonify({"error": "Internal server error", "message": str(e)}), 500
+
+# Written by Lucas Black
+@app.route('/forum/thread/<int:thread_id>', methods=['PUT', 'DELETE'])
+def update_delete_thread(thread_id):
+    if 'user' not in session:
+        return jsonify({"error": "Not logged in"}), 401
+        
+    user_id = session['user']['id']
+    
+    try:
+        if request.method == 'PUT':
+            data = request.get_json()
+            content = data.get('content')
+            
+            if not content:
+                return jsonify({"error": "Thread content cannot be empty"}), 400
+                
+            result = forum.update_thread(thread_id, content, user_id)
+            
+            if result:
+                return jsonify({"message": "Thread updated successfully"}), 200
+            return jsonify({"error": "Failed to update thread or not authorized"}), 403
+            
+        elif request.method == 'DELETE':
+            result = forum.delete_thread(thread_id, user_id)
+            
+            if result:
+                return jsonify({"message": "Thread deleted successfully"}), 200
+            return jsonify({"error": "Failed to delete thread or not authorized"}), 403
+            
+    except Exception as e:
+        print(f"Error updating/deleting thread: {e}")
+        return jsonify({"error": "Internal server error", "message": str(e)}), 500
+
+# Written by Lucas Black
+@app.route('/forum/report', methods=['POST'])
+def report_forum_item():
+    if 'user' not in session:
+        return jsonify({"error": "Not logged in"}), 401
+        
+    data = request.get_json()
+    user_id = session['user']['id']
+    item_type = data.get('type')
+    item_id = data.get('itemId')
+    reason = data.get('reason')
+    
+    if not item_type or not item_id or not reason:
+        return jsonify({"error": "Missing required fields"}), 400
+        
+    try:
+        result = forum.report_item(user_id, item_type, item_id, reason)
+        
+        if result:
+            return jsonify({"message": "Report submitted successfully"}), 201
+        return jsonify({"error": "Failed to submit report"}), 500
+        
+    except Exception as e:
+        print(f"Error submitting report: {e}")
+        return jsonify({"error": "Internal server error", "message": str(e)}), 500
     
 if __name__ == "__main__":
+    if authenticate_discogs_API:
+        authenticate_discogs()
     app.run(port=5001, debug=True)

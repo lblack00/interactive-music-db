@@ -2,12 +2,19 @@
 <!--ARIA Landmarks added by Chantelle Cabanilla-->
 <template>
 	<div class="grid-container">
+		<header role="navigation">
+			<Navbar />
+		</header>
 		<div class="content">
-			<header role="navigation">
-				<Navbar />
-			</header>
-
 			<main role="main">
+				<v-row no-gutters class="justify-center">
+					<v-col cols="4">
+						<v-alert v-if="loginError" type="error" class="mt-10" >
+							{{ loginError }}
+						</v-alert>
+					</v-col>
+				</v-row>
+
 				<div class="container mt-5">
 					<h2 id="login-heading">Login</h2>
 
@@ -59,6 +66,7 @@
 				username: "",
 				password: "",
 				returnPath: "/",
+				loginError: null
 			};
 		},
 		created() {
@@ -71,6 +79,8 @@
 		},
 		methods: {
 			async login() {
+				this.loginError = null;
+
 				try {
 					const path = "http://localhost:5001/login";
 					const response = await axios.post(
@@ -89,11 +99,11 @@
 						// Use replace instead of push to avoid browser history issues
 						await this.$router.replace(this.returnPath);
 					} else {
-						alert("Login unsuccessful, please try again!");
+						this.loginError = error.response.data.error || "Error logging on";
 					}
 				} catch (error) {
 					console.error("Login error:", error);
-					alert("Login failed. Please check your credentials and try again.");
+					this.loginError = error.response.data.error || "Error logging on";
 				}
 			},
 		},

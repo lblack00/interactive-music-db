@@ -3,6 +3,9 @@ body {
 	margin: 0;
 	padding: 0;
 	font-family: Arial, sans-serif;
+	display: flex;
+	justify-content: center;
+	align-items: center;
 }
 
 .grid-container {
@@ -21,6 +24,26 @@ body {
 	);
 	overflow: hidden;
 }
+
+.grid-container-no-min-height {
+	display: flex;
+	align-items: center; /* Centers items horizontally */
+	justify-content: center;
+	position: relative;
+	width: 100%;
+	background: linear-gradient(
+		160deg,
+		#0a1220 0%,
+		/* Darker blue at the very top */ #0c1626 10%,
+		/* Dark blue */ #121e30 25%,
+		/* Slightly lighter dark blue */ #172642 40%,
+		/* Medium-dark blue */ #1b2d50 60%,
+		/* Medium blue */ #1f3460 80%,
+		/* Medium-deep blue */ #233c6a 100% /* Deep navy */
+	);
+	overflow: hidden;
+}
+
 /* Horizontal grid lines */
 .grid-container::before {
 	content: "";
@@ -34,12 +57,11 @@ body {
 		rgba(60, 80, 115, 0.15) 1px,
 		transparent 1px
 	);
-	background-size: 100% 50px; /* Adjust the 50px to control line spacing */
+	background-size: 100% 75px;
 	background-repeat: repeat;
 	z-index: 1;
 }
 
-/* Vertical grid lines */
 .grid-container::after {
 	content: "";
 	position: absolute;
@@ -52,16 +74,19 @@ body {
 		rgba(60, 80, 115, 0.15) 1px,
 		transparent 1px
 	);
-	background-size: 50px 100%; /* Adjust the 50px to control line spacing */
+	background-size: 75px 100%;
 	z-index: 1;
 	background-repeat: repeat;
 }
 /* Content inside the grid container */
 .content {
 	position: relative;
-	z-index: 2;
+	z-index: 3;
 	padding: 20px;
 	color: white;
+	padding-top: 40px;
+	overflow: visible;
+	padding-bottom: 100px;
 }
 
 h1 {

@@ -1,6 +1,6 @@
 # Pass the Aux
 
-Here’s what to download and stuff:
+Here’s what to download:
 
 So first you’ll need Python3, pip, postgres and nodejs/npm
 
@@ -14,7 +14,7 @@ If you have a Mac, you can use homebrew to install via CLI:
 
 Note: in order for any Postgres database to run (at least on Mac) you have to have the PostgreSQL service running. You can do this by running: `brew services start postgresql@13` and it’ll start a background process that allows the backend to communicate with Postgres databases
 
-If you use Windows, I’m not sure how installation goes but Linux should be fairly similar just with `sudo apt-get install` instead.
+If you use Windows, WSL is recommended and should be fairly similar just with `sudo apt-get install` instead.
 
 You can use `git clone https://github.com/lblack00/interactive-music-db.git` to download the repository via CLI
 

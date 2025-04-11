@@ -2,12 +2,19 @@
 <!--ARIA Landmarks added by Chantelle Cabanilla-->
 <template>
 	<div class="grid-container">
+		<header role="navigation">
+			<Navbar />
+		</header>
 		<div class="content">
-			<header role="navigation">
-				<Navbar />
-			</header>
-
 			<main role="main">
+				<v-row no-gutters class="justify-center">
+					<v-col cols="4">
+						<v-alert v-if="formError" type="error" class="mt-10" >
+							{{ formError }}
+						</v-alert>
+					</v-col>
+				</v-row>
+
 				<div class="container mt-5">
 					<h2 id="signup-heading">Sign Up</h2>
 					<section role="region" aria-labelledby="signup-heading">
@@ -89,6 +96,7 @@
 				password: "",
 				confirmPassword: "",
 				returnPath: "/", // Default to home
+				formError: null,
 			};
 		},
 		created() {
@@ -100,9 +108,11 @@
 		methods: {
 			async signup() {
 				if (this.password !== this.confirmPassword) {
-					alert("Passwords do not match!");
+					this.formError = "Password do not match";
 					return;
 				}
+
+				this.formError = null;
 
 				try {
 					const path = "http://localhost:5001/signup";
@@ -122,13 +132,16 @@
 					if (response.status === 201) {
 						console.log("Signup successful");
 						this.$router.push(this.returnPath || "/");
+					} else {
+						this.formError = error.response.data.error ||
+										 "An error occurred during signup. Please try again.";
 					}
 				} catch (error) {
 					console.error("Signup error:", error);
 					if (error.response?.data?.error) {
-						alert(error.response.data.error);
+						this.formError = error.response.data.error;
 					} else {
-						alert("An error occurred during signup. Please try again.");
+						this.formError = "An error occurred during signup. Please try again.";
 					}
 				}
 			},

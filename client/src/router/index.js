@@ -73,7 +73,7 @@ const router = createRouter({
 			component: Forum,
 		},
 		{
-			path: "/forum/thread/:thread_num",
+			path: "/forum/thread/:thread_id",
 			name: "ForumThread",
 			component: ForumThread,
 		},

@@ -114,6 +114,7 @@
 	.filler {
 		height: 4rem;
 	}
+
 	.navbar {
 		background-color: transparent;
 		padding: 1rem 2rem;
@@ -122,7 +123,7 @@
 		align-items: center;
 		width: 100%;
 		position: fixed;
-		z-index: 1000;
+		z-index: 50;
 	}
 
 	.navbar-title {
@@ -149,12 +150,13 @@
 		font-size: 1.1rem;
 		font-weight: 500;
 		padding: 0.5rem 1rem;
-		border-radius: 5px;
+		border-radius: 50px;
 		transition: background-color 0.3s ease;
 	}
 
 	.navbar-links a:hover {
 		color: #ffffff;
 		background-color: #16a085;
+		border-radius: 50px;
 	}
 </style>

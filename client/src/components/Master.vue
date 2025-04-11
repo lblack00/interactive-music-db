@@ -2,11 +2,10 @@
 <!--ARIA Landmarks added by Chantelle Cabanilla-->
 <template>
 	<div class="grid-container">
+		<header role="navigation">
+			<Navbar />
+		</header>
 		<div class="content">
-			<header role="navigation">
-				<Navbar />
-			</header>
-
 			<main role="main">
 				<div class="container mt-2" v-if="data && data.master">
 					<section role="region" aria-labelledby="album-title">
@@ -22,28 +21,47 @@
 								- {{ data.master?.[0]?.title }}
 							</h1>
 
-							<RatingSystem
-								itemType="master"
-								:itemId="$route.params.master_id"
-							/>
-
-							<div role="region" aria-label="Album details">
-								<p>Country: {{ data.release?.[0]?.country || "Unknown" }}</p>
-								<p>Released: {{ data.master?.[0]?.year || "Unknown" }}</p>
-								<p>
-									Genre:
-									{{
-										data.genre?.map((entry) => entry.genre).join(", ") ||
-										"Unknown"
-									}}
-								</p>
-								<p>
-									Style:
-									{{
-										data.style?.map((entry) => entry.style).join(", ") ||
-										"Unknown"
-									}}
-								</p>
+							<div class="grid-container-no-min-height">
+								<div class="content">
+									<v-row>
+										<v-col cols="12" md="6">
+											<v-img
+												:src="image_uri || '/images/UnknownSong.png'"
+												width="400"
+												height="400"
+												contain
+												alt="Image of master cover"
+												class="justify-center"
+											/>
+										</v-col>
+										<v-col cols="12" md="6">
+											<br class="mt-16">
+											<section role="region" aria-label="Album details">
+												<p>Country: {{ data.release?.[0]?.country || "Unknown" }}</p>
+												<p>Released: {{ data.master?.[0]?.year || "Unknown" }}</p>
+												<p>
+													Genre:
+													{{
+														data.genre?.map((entry) => entry.genre).join(", ") ||
+														"Unknown"
+													}}
+												</p>
+												<p>
+													Style:
+													{{
+														data.style?.map((entry) => entry.style).join(", ") ||
+														"Unknown"
+													}}
+												</p>
+											</section>
+										</v-col>
+									</v-row>
+									<br>
+									<RatingSystem
+										itemType="master"
+										:itemId="$route.params.master_id"
+									/>
+								</div>
 							</div>
 						</div>
 					</section>
@@ -166,6 +184,7 @@
 					},
 					company: [],
 				},
+				image_uri: "",
 				loading: true,
 			};
 		},
@@ -187,6 +206,16 @@
 						params: { master_id: this.$route.params.master_id },
 					});
 					this.data = response.data.payload;
+
+					if (this.data.api_data.images && this.data.api_data.images.length) {
+						this.image_uri = this.data.api_data.images[0].uri;
+						this.image_uri = this.image_uri === "" ? "/images/UnknownSong.png" : this.image_uri;
+
+						console.log(this.image_uri, this.data.api_data);
+					} else {
+						this.image_uri = "/images/UnknownSong.png";
+					}
+
 					this.loading = false;
 				} catch (error) {
 					console.error("Error fetching master:", error);

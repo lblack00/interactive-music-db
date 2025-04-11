@@ -1,12 +1,11 @@
-<!-- This file was written by Matthew Stenvold -->
+<!-- This file was written by Lucas Black -->
 <!--ARIA Landmakes added by Chantelle Cabanilla-->
 <template>
 	<div class="grid-container">
+		<header role="navigation">
+			<Navbar />
+		</header>
 		<div class="content">
-			<header role="navigation">
-				<Navbar />
-			</header>
-
 			<main role="main">
 				<v-container v-if="data">
 					<v-row>
@@ -14,7 +13,7 @@
 							<section role="region" aria-label="Artist photo and basic info">
 								<v-card class="pa-4 d-flex flex-column align-center">
 									<v-img
-										src="/images/UnknownPerson.png"
+										:src="image_uri || '/images/UnknownPerson.png'"
 										width="200"
 										height="200"
 										contain
@@ -79,15 +78,21 @@
 							>
 								<article aria-labelledby="album-title-{{index}}">
 									<v-card class="pa-2" outlined>
-										<v-img
+										<v-img v-if="!loadingImages"
+											:src="getDiscographyImage(release.master_id)"
+											height="120"
+											contain
+											:alt="`Release cover`"
+										/>
+										<v-img v-else
 											src="/images/UnknownSong.png"
 											height="120"
 											contain
-											:alt="`Album cover`"
+											:alt="`Release cover`"
 										/>
 										<v-card-title>
 											<router-link
-												:key="i"
+												:key="index"
 												:to="`/master/${release.master_id}`"
 												:aria-label="`View details for album`"
 												>{{ release.title }}</router-link
@@ -127,6 +132,10 @@
 					aliases: [],
 				},
 				loading: true,
+				loadingImages: true,
+				image_uri: "",
+				discography_images: {},
+				sortBy: "release_date"
 			};
 		},
 		methods: {
@@ -146,6 +155,14 @@
 					});
 					console.log("Raw API response:", response.data); // Debug log
 					this.data = response.data.payload;
+
+					if (this.data.api_data.images && this.data.api_data.images.length) {
+						this.image_uri = this.data.api_data.images[0].uri;
+						this.image_uri = this.image_uri === "" ? "/images/UnknownSong.png" : this.image_uri;
+					} else {
+						this.image_uri = "/images/UnknownSong.png";
+					}
+
 					this.loading = false;
 					console.log("Processed artist data:", this.data); // Debug log
 				} catch (error) {
@@ -154,9 +171,35 @@
 					this.loading = false;
 				}
 			},
+
+			async getDiscographyImages() {
+				try {
+					console.log("Fetching discography images with ID:", this.$route.params.artist_id);
+					const response = await axios.get("http://localhost:5001/artist-discography-images", {
+						params: { artist_id: this.$route.params.artist_id },
+					});
+					console.log("Raw API response:", response.data);
+					this.discography_images = response.data.payload;
+					this.loadingImages = false;
+					console.log("Processed discography image data:", this.discography_images); // Debug log
+				} catch (error) {
+					console.error("Error fetching artist:", error);
+					console.log("Error details:", error.response?.data); // Debug log
+					this.loadingImages = false;
+				}
+			},
+
+			getDiscographyImage(masterId) {
+				const image = this.discography_images[masterId];
+
+				console.log(this.discography_images);
+				console.log(`Looking for image with master ID: ${masterId}, found: ${image ? 'yes' : 'no'}`);
+				return image || "/images/UnknownSong.png";
+			}
 		},
 		created() {
 			this.getArtist();
+			this.getDiscographyImages();
 		},
 	};
 </script>

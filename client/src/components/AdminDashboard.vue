@@ -2,11 +2,10 @@
 
 <template>
 	<div class="grid-container">
+		<header role="navigation">
+			<Navbar />
+		</header>
 		<div class="content">
-			<header role="navigation">
-				<Navbar />
-			</header>
-
 			<main role="main">
 				<v-container>
 					<v-row justify="center">
