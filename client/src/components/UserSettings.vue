@@ -1,5 +1,14 @@
 <template>
-	<div class="grid-container">
+	<div
+		class="grid-container"
+		:class="[
+			colorblindClass,
+			{
+				'enable-patterns': enablePatterns,
+				'show-labels': showLabels,
+			},
+		]"
+	>
 		<div class="content">
 			<header role="navigation">
 				<Navbar />
@@ -76,6 +85,50 @@
 
 								<v-divider class="my-4"></v-divider>
 
+								<h2 class="text-h5 font-weight-bold mb-2">
+									Accessibility Settings
+								</h2>
+
+								<!-- Colorblind Mode Selection -->
+								<v-select
+									v-model="colorblindMode"
+									:items="[
+										'Default',
+										'Red-Blind (Protanopia)',
+										'Green-Blind (Deuteranopia)',
+										'Blue-Blind (Tritanopia)',
+										'Grayscale (achromatopsia)',
+										'High Contrast',
+									]"
+									label="Colorblind Mode"
+									outlined
+									dense
+									@change="applyColorblindMode"
+								></v-select>
+
+								<!-- Additional Accessibility Options -->
+								<v-switch
+									v-model="enablePatterns"
+									label="Enable Patterns for Color Differentiation"
+									@change="applyAccessibilitySettings"
+								></v-switch>
+
+								<v-switch
+									v-model="showLabels"
+									label="Show Additional Labels"
+									@change="applyAccessibilitySettings"
+								></v-switch>
+
+								<v-btn
+									color="primary"
+									@click="previewAccessibilityChanges"
+									class="mb-4"
+								>
+									Preview Changes
+								</v-btn>
+
+								<v-divider class="my-4"></v-divider>
+
 								<h2 class="text-h5 font-weight-bold mb-2">Spotify OAuth</h2>
 								<p v-if="user.spotifyConnected" style="color: green">
 									Connected to Spotify
@@ -121,11 +174,29 @@
 				profileFileError: "",
 				clientId: import.meta.env.VITE_SPOTIFY_CLIENT_ID,
 				redirectUri: "http://localhost:5173/",
-				colorblindMode: "Default",
-				enablePatterns: false,
-				showLabels: false,
+				colorblindMode: localStorage.getItem("colorblindMode") || "Default",
+				enablePatterns: localStorage.getItem("enablePatterns") === "true",
+				showLabels: localStorage.getItem("showLabels") === "true",
 				accessToken: "",
 			};
+		},
+		computed: {
+			colorblindClass() {
+				switch (this.colorblindMode) {
+					case "Red-Blind (Protanopia)":
+						return "protanopia";
+					case "Green-Blind (Deuteranopia)":
+						return "deuteranopia";
+					case "Blue-Blind (Tritanopia)":
+						return "tritanopia";
+					case "Grayscale (achromatopsia)":
+						return "achromatopsia";
+					case "High Contrast":
+						return "high-contrast";
+					default:
+						return "";
+				}
+			},
 		},
 		methods: {
 			saveProfile() {
@@ -152,120 +223,52 @@
 				reader.readAsDataURL(file);
 			},
 
-			//For Colorblind settings
-			injectSVGFilters() {
-				// Skip if filters are already injected
-				if (document.getElementById("colorblind-filters")) {
-					return;
-				}
-
-				// Create SVG filters
-				const svgFilters = `
-					<svg xmlns="http://www.w3.org/2000/svg" style="display: none;" id="colorblind-filters">
-					<!-- Protanopia (Red-Blind) Filter -->
-					<filter id="protanopia-filter">
-						<feColorMatrix type="matrix" 
-						values="0.567, 0.433, 0,     0, 0
-								0.558, 0.442, 0,     0, 0
-								0,     0.242, 0.758, 0, 0
-								0,     0,     0,     1, 0"/>
-					</filter>
-					
-					<!-- Deuteranopia (Green-Blind) Filter -->
-					<filter id="deuteranopia-filter">
-						<feColorMatrix type="matrix" 
-						values="0.625, 0.375, 0,   0, 0
-								0.7,   0.3,   0,   0, 0
-								0,     0.3,   0.7, 0, 0
-								0,     0,     0,   1, 0"/>
-					</filter>
-					
-					<!-- Tritanopia (Blue-Blind) Filter -->
-					<filter id="tritanopia-filter">
-						<feColorMatrix type="matrix" 
-						values="0.95, 0.05,  0,     0, 0
-								0,    0.433, 0.567, 0, 0
-								0,    0.475, 0.525, 0, 0
-								0,    0,     0,     1, 0"/>
-					</filter>
-
-					<!-- Achromatopsia (Grayscale) Filter -->
-					<filter id="achromatopsia-filter">
-					<feColorMatrix 
-						type="matrix" 
-						values="0.299, 0.587, 0.114, 0, 0
-								0.299, 0.587, 0.114, 0, 0
-								0.299, 0.587, 0.114, 0, 0
-								0,     0,     0,     1, 0"/>
-					</filter>
-					</svg>
-				`;
-
-				// Insert SVG filters into the document
-				const div = document.createElement("div");
-				div.innerHTML = svgFilters;
-				document.body.appendChild(div.firstChild);
-			},
 			applyColorblindMode() {
-				//remove any existing colorblind classes
-				document.body.classList.remove(
-					"protanopia",
-					"deuteranopia",
-					"tritanopia",
-					"achromatopsia",
-					"high-contrast"
-				);
+				const appElement = document.getElementById("app");
+				if (appElement) {
+					// Remove existing classes
+					appElement.classList.remove(
+						"protanopia",
+						"deuteranopia",
+						"tritanopia",
+						"achromatopsia",
+						"high-contrast"
+					);
 
-				//apply the correct class based on selection
-				switch (this.colorblindMode) {
-					case "Red-Blind (Protanopia)":
-						document.body.classList.add("protanopia");
-						break;
-					case "Green-Blind (Deuteranopia)":
-						document.body.classList.add("deuteranopia");
-						break;
-					case "Blue-Blind (Tritanopia)":
-						document.body.classList.add("tritanopia");
-						break;
-					case "Grayscale (achromatopsia)":
-						document.body.classList.add("achromatopsia");
-						break;
-					case "High Contrast":
-						document.body.classList.add("high-contrast");
-						break;
-					default:
-						break;
+					// Add new class based on selected mode
+					if (this.colorblindMode !== "Default") {
+						appElement.classList.add(this.colorblindClass);
+					}
 				}
-
 				// Save setting to localStorage for persistence
 				localStorage.setItem("colorblindMode", this.colorblindMode);
 			},
 
 			applyAccessibilitySettings() {
-				// For the enable patterns switch
-				if (this.enablePatterns) {
-					document.body.classList.add("enable-patterns");
-				} else {
-					document.body.classList.remove("enable-patterns");
-				}
+				const appElement = document.getElementById("app");
+				if (appElement) {
+					// Toggle pattern class
+					if (this.enablePatterns) {
+						appElement.classList.add("enable-patterns");
+					} else {
+						appElement.classList.remove("enable-patterns");
+					}
 
-				// For the show labels switch
-				if (this.showLabels) {
-					document.body.classList.add("show-labels");
-				} else {
-					document.body.classList.remove("show-labels");
+					// Toggle labels class
+					if (this.showLabels) {
+						appElement.classList.add("show-labels");
+					} else {
+						appElement.classList.remove("show-labels");
+					}
 				}
-
 				// Save settings to localStorage
 				localStorage.setItem("enablePatterns", this.enablePatterns);
 				localStorage.setItem("showLabels", this.showLabels);
 			},
 
 			previewAccessibilityChanges() {
-				// Apply both color and other accessibility settings
 				this.applyColorblindMode();
 				this.applyAccessibilitySettings();
-
 				// Show a notification that changes are applied
 				alert("Accessibility settings have been applied");
 			},
@@ -404,29 +407,29 @@
 				this.handleSpotifyCallback();
 			}
 			setInterval(this.refreshAccessToken, 50 * 60 * 1000);
-			this.injectSVGFilters();
 
-			// Load saved colorblind mode
-			const savedColorblindMode = localStorage.getItem("colorblindMode");
-			if (savedColorblindMode) {
-				this.colorblindMode = savedColorblindMode;
-				this.applyColorblindMode();
-			}
-
-			// Load saved accessibility settings
-			const savedEnablePatterns =
-				localStorage.getItem("enablePatterns") === "true";
-			const savedShowLabels = localStorage.getItem("showLabels") === "true";
-
-			if (savedEnablePatterns || savedShowLabels) {
-				this.enablePatterns = savedEnablePatterns;
-				this.showLabels = savedShowLabels;
-				this.applyAccessibilitySettings();
+			// Apply saved settings
+			this.applyColorblindMode();
+			this.applyAccessibilitySettings();
+		},
+		beforeDestroy() {
+			// Clean up any applied filters
+			const appElement = document.getElementById("app");
+			if (appElement) {
+				appElement.classList.remove(
+					"protanopia",
+					"deuteranopia",
+					"tritanopia",
+					"achromatopsia",
+					"high-contrast",
+					"enable-patterns",
+					"show-labels"
+				);
 			}
 		},
 	};
 </script>
 <style scoped>
-	@import "../../src/assets/background.css";
+	@import "../assets/background.css";
 	@import "../assets/accessibility.css";
 </style>

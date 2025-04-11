@@ -1,42 +1,140 @@
+/* Base color variables */
+:root {
+	/* Default theme colors */
+	--primary-color: #1976d2;
+	--secondary-color: #424242;
+	--background-color: #ffffff;
+	--text-color: #000000;
+	--link-color: #2196f3;
+}
+
 /* Protanopia (Red-Blind) */
-body.protanopia {
-	filter: url("#protanopia-filter") !important;
+.protanopia {
+	--primary-color: #74a8d2;
+	--secondary-color: #6b6b6b;
+	--link-color: #74a8d2;
+	background-color: var(--background-color);
+	color: var(--text-color);
+}
+
+.protanopia .v-btn.v-btn--elevated {
+	background-color: var(--primary-color) !important;
+	color: white !important;
 }
 
 /* Deuteranopia (Green-Blind) */
-body.deuteranopia {
-	filter: url("#deuteranopia-filter") !important;
+.deuteranopia {
+	--primary-color: #7aa6d9;
+	--secondary-color: #6b6b6b;
+	--link-color: #7aa6d9;
+	background-color: var(--background-color);
+	color: var(--text-color);
+}
+
+.deuteranopia .v-btn.v-btn--elevated {
+	background-color: var(--primary-color) !important;
+	color: white !important;
 }
 
 /* Tritanopia (Blue-Blind) */
-body.tritanopia {
-	filter: url("#tritanopia-filter") !important;
+.tritanopia {
+	--primary-color: #d2741f;
+	--secondary-color: #6b6b6b;
+	--link-color: #d2741f;
+	background-color: var(--background-color);
+	color: var(--text-color);
 }
 
-/* Achromatopsia (Monochromacy) */
-body.achromatopsia {
+.tritanopia .v-btn.v-btn--elevated {
+	background-color: var(--primary-color) !important;
+	color: white !important;
+}
+
+/* Achromatopsia (Grayscale) */
+.achromatopsia {
+	--primary-color: #666666;
+	--secondary-color: #444444;
+	--link-color: #666666;
+	--background-color: #ffffff;
+	--text-color: #000000;
 	filter: grayscale(100%) !important;
 }
 
-/* High Contrast Mode */
-body.high-contrast {
-	filter: contrast(150%);
-	background-color: #000 !important;
-	color: #fff !important;
+/* High Contrast */
+.high-contrast {
+	--primary-color: #ffffff;
+	--secondary-color: #ffffff;
+	--background-color: #000000;
+	--text-color: #ffffff;
+	--link-color: #ffffff;
+	background-color: var(--background-color) !important;
+	color: var(--text-color) !important;
 }
 
-/* Additional high contrast styles for Vuetify components */
-body.high-contrast .v-card {
-	background-color: #222 !important;
-	color: #fff !important;
+.high-contrast .v-card {
+	background-color: #222222 !important;
+	border: 2px solid white !important;
 }
 
-body.high-contrast .v-btn:not(.v-btn--text):not(.v-btn--outlined) {
-	background-color: #fff !important;
-	color: #000 !important;
-	border: 2px solid #fff !important;
+.high-contrast .v-btn.v-btn--elevated {
+	background-color: white !important;
+	color: black !important;
+	border: 2px solid white !important;
 }
-/* For screen readers only - visually hidden but accessible to screen readers */
+
+/* Enable Patterns for Color Differentiation */
+.enable-patterns .v-btn.v-btn--elevated {
+	background-image: repeating-linear-gradient(
+		45deg,
+		transparent,
+		transparent 10px,
+		rgba(255, 255, 255, 0.1) 10px,
+		rgba(255, 255, 255, 0.1) 20px
+	);
+}
+
+.enable-patterns .v-card {
+	background-image: repeating-linear-gradient(
+		45deg,
+		transparent,
+		transparent 10px,
+		rgba(255, 255, 255, 0.05) 10px,
+		rgba(255, 255, 255, 0.05) 20px
+	);
+}
+
+/* Show Additional Labels */
+.show-labels .v-btn {
+	position: relative;
+}
+
+.show-labels .v-btn::after {
+	content: attr(aria-label);
+	position: absolute;
+	bottom: -20px;
+	left: 50%;
+	transform: translateX(-50%);
+	background: rgba(0, 0, 0, 0.8);
+	color: white;
+	padding: 2px 6px;
+	border-radius: 4px;
+	font-size: 12px;
+	white-space: nowrap;
+	z-index: 1000;
+}
+
+/* Apply color variables to Vuetify components */
+.v-btn.v-btn--elevated {
+	background-color: var(--primary-color);
+	color: white;
+}
+
+.v-card {
+	background-color: var(--background-color);
+	color: var(--text-color);
+}
+
+/* For screen readers only */
 .sr-only {
 	position: absolute;
 	width: 1px;
