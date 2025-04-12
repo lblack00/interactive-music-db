@@ -7,7 +7,9 @@ import time
 import redis
 import requests
 import sys
+import secrets
 from flask import Flask, jsonify, request, session, make_response
+from flask_mail import Mail, Message
 from flask_cors import CORS
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_jwt_extended import JWTManager, jwt_required, get_jwt_identity, create_access_token
@@ -24,6 +26,14 @@ app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 app.config['SESSION_COOKIE_DOMAIN'] = 'localhost'
 app.config['SESSION_COOKIE_PATH'] = '/'
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=7)  # Session lasts 7 days
+
+# Mail Configuration
+app.config['MAIL_SERVER'] = 'smtp.gmail.com'  
+app.config['MAIL_PORT'] = 587
+app.config['MAIL_USE_TLS'] = True
+app.config['MAIL_USERNAME'] = 'jax.395629@gmail.com'  
+app.config['MAIL_PASSWORD'] = 'enddzwbchwjiyzev'     # Set by us
+mail = Mail(app)
 
 # JWT Configuration
 app.config["JWT_SECRET_KEY"] = "your-secret-key"  # Change this to a secure secret key
@@ -402,9 +412,11 @@ class users:
     @staticmethod
     def create_new_user(username, email, hashpass):
         query = """INSERT INTO users (username, email, password)
-                          VALUES (%s, %s, %s);"""
+                   VALUES (%s, %s, %s)
+                   RETURNING id;"""
 
-        users.db.mutate_data(query, (username, email, hashpass))
+        result = users.db.mutate_data(query, (username, email, hashpass))
+        return result[0][0] if result else None
 
     @staticmethod
     def check_username_exists(username):
@@ -782,53 +794,100 @@ def log_security_event(event_type, username, ip_address, details=None):
 @app.route('/signup', methods=['GET', 'POST', 'OPTIONS'])
 def user_signup():
     if request.method == 'POST':
+        print("1. Starting signup process...")
         resp = json.loads(request.data)
 
         username = resp['username']
         email = resp['email']
         password = resp['password']
+        print(f"2. Received data - username: {username}, email: {email}")
 
         if not username or not email or not password:
             return jsonify({'error': 'Missing fields'}), 400
 
         if users.check_username_exists(username):
             return jsonify({'error': 'Username already exists'}), 409
+            
+        print("3. Username check passed")
+        
+        # Check for existing email
+        query = "SELECT * FROM users WHERE email = %s;"
+        if len(db_utils(dbname='users_db', user='postgres').read_data(query, (email,))) > 0:
+            return jsonify({'error': 'Email address already registered'}), 409
 
-        hashed_pass = generate_password_hash(password)
+        print("4. Email check passed")
 
         try:
-            users.create_new_user(username, email, hashed_pass)
+            print("5. Starting user creation...")
+            verification_token = secrets.token_urlsafe(32)
+            token_expiry = datetime.now() + timedelta(hours=24)
 
-            results = users.get_user(username)
+            hashed_pass = generate_password_hash(password)
+            print("6. Password hashed")
 
-            session.clear()
-            session.modified = True
-            session.permanent = True  # Make the session permanent
-            session['user'] = {
-                'id': results[0]['id'],
-                'username': results[0]['username'],
-                'email': results[0]['email']
-            }
+            user_id = users.create_new_user(username, email, hashed_pass)
+            print(f"7. User created with ID: {user_id}")
 
-            log_security_event('user_signup', username, get_client_identifier())
+            if not user_id:
+                return jsonify({'error': 'Failed to create user'}), 500
 
-            return jsonify({'message': 'User created successfully'}), 201
+            print("8. Storing verification token...")
+            store_verification_token_query = """
+                INSERT INTO email_verification (user_id, verification_token, token_expiry)
+                VALUES (%s, %s, %s);
+            """
+            db_utils(dbname='users_db', user='postgres').mutate_data(
+                store_verification_token_query, 
+                (user_id, verification_token, token_expiry)
+            )
+            print("9. Verification token stored")
+
+            print("10. Sending verification email...")
+            verification_url = f"http://localhost:5173/verify-email?token={verification_token}"
+            msg = Message(
+                'Verify your email address',
+                sender=app.config['MAIL_USERNAME'],
+                recipients=[email]
+            )
+            msg.body = f"""
+            Welcome to Interactive Music DB!
+            Please click the following link to verify your email address:
+            {verification_url}
+            
+            This link will expire in 24 hours.
+            """
+            mail.send(msg)
+            print("11. Verification email sent")
+
+            return jsonify({
+                'message': 'User created successfully. Please check your email to verify your account.',
+                'requiresVerification': True
+            }), 201
+
         except Exception as e:
-            print(e)
-            return jsonify({'error': 'User signup failed'}), 500
+            print(f"ERROR at step: {str(e)}")
+            import traceback
+            traceback.print_exc()
+            return jsonify({'error': f'User signup failed: {str(e)}'}), 500
 
     return jsonify({}), 200
 
 @app.route('/login', methods=['POST'])
 def user_login():
+    print("1. Login attempt started")
     data = request.get_json()
     username = data.get('username')
     password = data.get('password')
+    print(f"2. Received login attempt for username: {username}")
 
     client_ip = get_client_identifier()
+    print(f"3. Client IP: {client_ip}")
 
     is_blocked, remaining_time = is_login_blocked(client_ip, username)
+    print(f"4. Login blocked status: {is_blocked}")
+    
     if is_blocked:
+        print("5. Login blocked due to too many attempts")
         log_security_event('login_blocked', username, client_ip, {
             'reason': 'too_many_attempts',
             'remaining_lockout_time': remaining_time
@@ -840,16 +899,33 @@ def user_login():
         }), 429
     
     try:
+        print("6. Checking user credentials")
         results = users.get_user(username)
         
-        # User doesn't exist but still a failed login attempt
         if not results:
+            print("7. User not found")
             record_failed_login(client_ip, username)
             log_security_event('login_failure', username, client_ip, {'reason': 'user_not_found'})
             return jsonify({'error': 'Invalid credentials'}), 401
 
+        print("8. Checking email verification")
+        # Check if email is verified
+        query = """
+            SELECT is_verified 
+            FROM email_verification 
+            WHERE user_id = %s;
+        """
+        verification_result = db_utils(dbname='users_db', user='postgres').read_data(query, (results[0]['id'],))
+        print(f"9. Verification result: {verification_result}")
+        
+        if not verification_result or not verification_result[0]['is_verified']:
+            print("10. Email not verified")
+            return jsonify({'error': 'Please verify your email before logging in'}), 403
+
+        print("11. Checking password")
         # Check password
         if check_password_hash(results[0]['password'], password):
+            print("12. Password correct, creating session")
             # Clear session and reset login attempts
             session.clear()
             session.permanent = True  # Make the session permanent
@@ -860,40 +936,21 @@ def user_login():
             }
 
             reset_login_attempts(client_ip, username)
-
+            print("13. Login successful")
             log_security_event('login_success', username, client_ip)
             
             response = jsonify({'message': 'Login successful'})
             return response, 200
         else:
-            # Invalid password
+            print("12. Password incorrect")
             record_failed_login(client_ip, username)
+            return jsonify({'error': 'Invalid credentials'}), 401
 
-            # Get attempts made and attempts left
-            user_key = get_login_attempt_key(client_ip, username)
-            attempts = int(redis_client.get(user_key) or 0)
-            attempts_remaining = max(0, ALLOWED_LOGIN_ATTEMPTS - attempts)
-
-            log_security_event('login_failure', username, client_ip, {
-                'reason': 'invalid_password',
-                'attempts': attempts,
-                'attempts_remaining': attempts_remaining
-            })
-            
-            if attempts_remaining > 0:
-                return jsonify({
-                    'error': 'Invalid credentials',
-                    'attempts_remaining': attempts_remaining
-                }), 401
-            else:
-                return jsonify({
-                    'error': 'Account temporarily locked',
-                    'lockout_remaining': get_remaining_lockout_time(user_key)
-                }), 429
-            
     except Exception as e:
-        print(f"Login error: {e}")
-        return jsonify({'error': 'Server error'}), 500
+        print(f"Login error: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': 'Login failed'}), 500
 
 @app.route('/logout', methods=['POST'])
 def user_logout():
@@ -1401,6 +1458,89 @@ def report_forum_item():
     except Exception as e:
         print(f"Error submitting report: {e}")
         return jsonify({"error": "Internal server error", "message": str(e)}), 500
+    
+@app.route('/verify-email', methods=['GET'])
+def verify_email():
+    token = request.args.get('token')
+    if not token:
+        return jsonify({'error': 'Missing verification token'}), 400
+
+    try:
+        # Check if token exists and is valid
+        query = """
+            UPDATE email_verification 
+            SET is_verified = TRUE 
+            WHERE verification_token = %s 
+            AND token_expiry > CURRENT_TIMESTAMP 
+            AND is_verified = FALSE 
+            RETURNING user_id;
+        """
+        result = db_utils(dbname='users_db', user='postgres').mutate_data(query, (token,))
+
+        if result:
+            return jsonify({'message': 'Email verified successfully'}), 200
+        else:
+            return jsonify({'error': 'Invalid or expired verification token'}), 400
+
+    except Exception as e:
+        print(f"Verification error: {e}")
+        return jsonify({'error': 'Verification failed'}), 500
+    
+@app.route('/request-password-reset', methods=['POST'])
+def request_password_reset():
+    data = request.get_json()
+    email = data.get('email')
+    
+    if not email:
+        return jsonify({'error': 'Email is required'}), 400
+        
+    try:
+        # Check if user exists
+        query = "SELECT id, username FROM users WHERE email = %s;"
+        result = db_utils(dbname='users_db', user='postgres').read_data(query, (email,))
+        
+        if result:
+            # Generate reset token
+            reset_token = secrets.token_urlsafe(32)
+            expiry = datetime.now() + timedelta(hours=1)
+            
+            # Store reset token
+            store_token_query = """
+                INSERT INTO password_reset_tokens (user_id, token, expiry)
+                VALUES (%s, %s, %s)
+                ON CONFLICT (user_id) DO UPDATE
+                SET token = EXCLUDED.token, expiry = EXCLUDED.expiry;
+            """
+            db_utils(dbname='users_db', user='postgres').mutate_data(
+                store_token_query, 
+                (result[0]['id'], reset_token, expiry)
+            )
+            
+            # Send reset email
+            reset_url = f"http://localhost:5173/reset-password?token={reset_token}"
+            msg = Message(
+                'Password Reset Request',
+                sender=app.config['MAIL_USERNAME'],
+                recipients=[email]
+            )
+            msg.body = f"""
+            Hello {result[0]['username']},
+            
+            You have requested to reset your password. Please click the following link to reset your password:
+            {reset_url}
+            
+            This link will expire in 1 hour.
+            
+            If you did not request this reset, please ignore this email.
+            """
+            mail.send(msg)
+        
+        # Always return success to prevent email enumeration
+        return jsonify({'message': 'If an account exists with this email, you will receive reset instructions.'}), 200
+        
+    except Exception as e:
+        print(f"Password reset error: {str(e)}")
+        return jsonify({'error': 'Failed to process reset request'}), 500
     
 if __name__ == "__main__":
     if authenticate_discogs_API:

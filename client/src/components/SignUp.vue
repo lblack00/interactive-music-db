@@ -75,6 +75,10 @@
 						</form>
 					</section>
 				</div>
+
+				<v-alert v-if="verificationSent" type="success" class="mt-10">
+					Please check your email to verify your account.
+				</v-alert>
 			</main>
 		</div>
 	</div>
@@ -97,6 +101,7 @@
 				confirmPassword: "",
 				returnPath: "/", // Default to home
 				formError: null,
+				verificationSent: false,
 			};
 		},
 		created() {
@@ -108,7 +113,7 @@
 		methods: {
 			async signup() {
 				if (this.password !== this.confirmPassword) {
-					this.formError = "Password do not match";
+					this.formError = "Passwords do not match";
 					return;
 				}
 
@@ -126,23 +131,20 @@
 						headers: {
 							"Content-Type": "application/json",
 						},
-						withCredentials: true, // Important for CORS with credentials
+						withCredentials: true,
 					});
 
 					if (response.status === 201) {
-						console.log("Signup successful");
-						this.$router.push(this.returnPath || "/");
-					} else {
-						this.formError = error.response.data.error ||
-										 "An error occurred during signup. Please try again.";
+						if (response.data.requiresVerification) {
+							this.verificationSent = true;
+							// Don't redirect, show verification message instead
+						} else {
+							this.$router.push(this.returnPath || "/");
+						}
 					}
 				} catch (error) {
 					console.error("Signup error:", error);
-					if (error.response?.data?.error) {
-						this.formError = error.response.data.error;
-					} else {
-						this.formError = "An error occurred during signup. Please try again.";
-					}
+					this.formError = error.response?.data?.error || "An error occurred during signup. Please try again.";
 				}
 			},
 		},

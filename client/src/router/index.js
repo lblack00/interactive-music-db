@@ -107,6 +107,16 @@ const router = createRouter({
 				genreOption: route.query.genreOption,
 			}),
 		},
+		{
+			path: '/verify-email',
+			name: 'VerifyEmail',
+			component: () => import('../components/VerifyEmail.vue')
+		},
+		{
+			path: '/forgot-password',
+			name: 'ForgotPassword',
+			component: () => import('../components/ForgotPassword.vue')
+		},
 	],
 });
 

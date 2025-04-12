@@ -45,6 +45,11 @@
 							</div>
 							<button type="submit">Login</button>
 						</form>
+						<div class="row">
+							<router-link to="/forgot-password" class="forgot-password-link">
+								Forgot Password?
+							</router-link>
+						</div>
 					</section>
 				</div>
 			</main>
