@@ -34,6 +34,7 @@ app.config['MAIL_USE_TLS'] = True
 app.config['MAIL_USERNAME'] = 'jax.395629@gmail.com'  
 app.config['MAIL_PASSWORD'] = 'enddzwbchwjiyzev'     # Set by us
 mail = Mail(app)
+CHECK_EMAIL_VERIFICATION = True
 
 # JWT Configuration
 app.config["JWT_SECRET_KEY"] = "your-secret-key"  # Change this to a secure secret key
@@ -600,24 +601,42 @@ class forum:
         return forum.db.mutate_data(query, (user_id, item_type, item_id, reason))
 
     @staticmethod
-    def add_references(item_type, item_id, reference_type, reference_id):
+    def add_reference(item_type, item_id, reference_type, reference_id, name):
         query = """
-            INSERT INTO forum_references(item_type, item_id, reference_type, reference_id, created_at)
-            VALUES(%s, %s, %s, %s, CURRENT_TIMESTAMP)
+            INSERT INTO forum_references(item_type, item_id, reference_type, reference_id, created_at, name)
+            VALUES(%s, %s, %s, %s, CURRENT_TIMESTAMP, %s)
             RETURNING id;
         """
-        return forum.db.mutate_data(query, (item_type, item_id, reference_type, reference_id))
+        return forum.db.mutate_data(query, (item_type, item_id, reference_type, reference_id, name))
 
     @staticmethod
-    def get_thread_references(item_type, item_id):
+    def delete_reference(_id, reference_id):
+        query = """
+            DELETE FROM forum_references fr
+            WHERE id=%s AND reference_id=%s
+            RETURNING id;
+        """
+        return forum.db.mutate_data(query, (_id, reference_id))
+
+    @staticmethod
+    def get_thread_references(item_id):
         query = """
             SELECT
-                fr.reference_type,
-                fr.reference_id
+                *
             FROM forum_references fr
-            WHERE fr.item_type = %s AND fr.item_id = %s;
+            WHERE fr.item_id = %s;
         """
-        return forum.db.read_data(query, (item_type, item_id))
+        return forum.db.read_data(query, (item_id))
+
+    @staticmethod
+    def get_reference(reference_id):
+        query = """
+            SELECT
+                *
+            FROM forum_references fr
+            WHERE fr.reference_id = %s;
+        """
+        return forum.db.read_data(query, (reference_id))
 
 @app.route('/release/', methods=['GET'])
 def get_release():
@@ -928,19 +947,20 @@ def user_login():
             log_security_event('login_failure', username, client_ip, {'reason': 'user_not_found'})
             return jsonify({'error': 'Invalid credentials'}), 401
 
-        print("8. Checking email verification")
-        # Check if email is verified
-        query = """
-            SELECT is_verified 
-            FROM email_verification 
-            WHERE user_id = %s;
-        """
-        verification_result = db_utils(dbname='users_db', user='postgres').read_data(query, (results[0]['id'],))
-        print(f"9. Verification result: {verification_result}")
-        
-        if not verification_result or not verification_result[0]['is_verified']:
-            print("10. Email not verified")
-            return jsonify({'error': 'Please verify your email before logging in'}), 403
+        if CHECK_EMAIL_VERIFICATION:
+            print("8. Checking email verification")
+            # Check if email is verified
+            query = """
+                SELECT is_verified 
+                FROM email_verification 
+                WHERE user_id = %s;
+            """
+            verification_result = db_utils(dbname='users_db', user='postgres').read_data(query, (results[0]['id'],))
+            print(f"9. Verification result: {verification_result}")
+            
+            if not verification_result or not verification_result[0]['is_verified']:
+                print("10. Email not verified")
+                return jsonify({'error': 'Please verify your email before logging in'}), 403
 
         print("11. Checking password")
         # Check password
@@ -1040,7 +1060,7 @@ def forum_search_reference():
                 'name': release['title'],
                 'artist': release['artists'],
                 'year': release['year'],
-                'type': 'master'
+                'type': 'release'
             })
 
     return jsonify({'results': results}), 200
@@ -1340,13 +1360,7 @@ def get_forum_thread(thread_id):
             
         replies = forum.get_thread_replies(thread_id)
         references = []
-        if thread_data[0]['category'] == 'Artist':
-            references = forum.get_thread_references('artist', thread_id)
-        elif thread_data[0]['category'] == 'Song':
-            references = forum.get_thread_references('release', thread_id)
-
-        if len(references) > 0 and len(references[0]) > 0:
-            references = references[0][0]
+        references = forum.get_thread_references(thread_id)
         
         # Format the thread data
         formatted_thread = {
@@ -1524,29 +1538,60 @@ def add_forum_reference():
     if 'user' not in session:
         return jsonify({'error': 'Not logged in'})
 
-    data = request.get_json()
-    item_type = data.get('item_type')
-    item_id = data.get('item_id')
-    reference_type = data.get('reference_type')
-    reference_id = data.get('reference_id')
+    if request.method == 'POST':
+        data = request.get_json()
+        item_type = data.get('item_type')
+        item_id = data.get('item_id')
+        reference_type = data.get('reference_type')
+        reference_id = data.get('reference_id')
+        reference_name = data.get('reference_name')
 
-    if not all([item_type, item_id, reference_type, reference_id]):
-        return jsonify({'error'})
+        if not all([item_type, item_id, reference_type, reference_id]):
+            return jsonify({'error'})
 
-    if item_type == 'thread':
-        thread = forum.get_thread(item_id)
-        if not thread or thread[0]['author_id'] != session['user']['id']:
-            return jsonify({'error': 'Not authorized'}), 402
+        if item_type == 'thread':
+            thread = forum.get_thread(item_id)
+            if not thread or thread[0]['author_id'] != session['user']['id']:
+                return jsonify({'error': 'Not authorized'}), 402
 
-    try:
-        result = forum.add_reference(item_type, item_id, reference_type, reference_id)
-        if result:
-            return jsonify({'success': True, 'reference': result[0][0]}), 201
-        else:
-            return jsonify({'error': 'Failed to add reference'}), 500
-    except Exception as e:
-        print(f'Error adding reference: {e}')
-        return jsonify({'error': 'Internal server error'}), 500
+        try:
+            result = forum.add_reference(item_type,
+                                        item_id,
+                                        reference_type,
+                                        reference_id,
+                                        reference_name)
+            if result:
+                return jsonify({'success': True, 'reference': result}), 201
+            else:
+                return jsonify({'error': 'Failed to add reference'}), 500
+        except Exception as e:
+            print(f'Error adding reference: {e}')
+            return jsonify({'error': 'Internal server error'}), 500
+
+@app.route('/forum/delete-reference/<int:reference_id>', methods=['DELETE'])
+def delete_forum_reference(reference_id):
+    if 'user' not in session:
+        return jsonify({'error': 'Not logged in'})
+
+    if request.method == 'DELETE':
+        reference = forum.get_reference(reference_id)
+        try:
+            if not reference:
+                return jsonify({'error': 'Reference not found'}), 404
+
+            if reference[0]['item_type'] == 'thread':
+                thread = forum.get_thread(reference[0]['item_id'])
+                if not thread or thread[0]['author_id'] != session['user']['id']:
+                    return jsonify({'error': 'Not authorized'}), 403
+
+            result = forum.delete_reference(reference[0]['id'], reference_id)
+            if result:
+                return jsonify({'success': True}), 200
+            else:
+                return jsonify({'error': 'Failed to delete reference'}), 500
+        except Exception as e:
+            print(f'Error deleting reference: {e}')
+            return jsonify({'error': 'Internal server error'}), 500
     
 @app.route('/verify-email', methods=['GET'])
 def verify_email():

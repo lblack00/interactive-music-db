@@ -69,6 +69,127 @@
 									</div>
 								</article>
 
+								<!-- add references to artist/release page section -->
+								<section v-if="isCurrentUserAuthor(thread.author)" class="mb-4">
+									<v-divider class="my-4"></v-divider>
+									
+									<h3 class="text-h6 font-weight-bold mb-2">Add References</h3>
+									<p class="text-body-2 mb-3">Link this thread to an artist or release.</p>
+									
+									<v-row align="start">
+										<v-col align="center" cols="12" sm="7">
+											<v-autocomplete
+												v-model="selectedReference"
+												:items="searchResults"
+												:loading="isSearching"
+												v-model:search="searchQuery"
+												item-title="displayName"
+												item-value="id"
+												label="Search artists or releases"
+												placeholder="Type to search"
+												outlined
+												dense
+												return-object
+												no-filter
+												:custom-filter="() => true"
+												:menu-props="{ closeOnContentClick: true }"
+											>
+												<template v-slot:selection="{ item }">
+													{{ item.raw.name }}
+													<span v-if="item.raw.type === 'release'" class="text-caption ms-1">
+														(Release)
+													</span>
+													<span v-else class="text-caption ms-1">
+														(Artist)
+													</span>
+												</template>
+
+												<template v-slot:item="{ props, item }">
+													<v-list-item v-bind="props">
+														<template v-slot:title>
+															<span v-if="item.raw.type === 'release'">
+																"{{ item.raw.name }}" {{ item.raw.artist }} [{{ item.raw.year }}]
+															</span>
+															<span v-else>{{ item.raw.name }}</span>
+														</template>
+														<template v-slot:subtitle>
+															<span v-if="item.raw.type === 'release'">Release</span>
+															<span v-else>Artist</span>
+														</template>
+													</v-list-item>
+												</template>
+
+												<!-- <template v-slot:append>
+													<v-btn
+														color="primary"
+														icon
+														density="compact"
+														:disabled="!selectedReference"
+														@click="addReference(selectedReference)"
+													>
+														<v-icon>mdi-plus</v-icon>
+													</v-btn>
+												</template> -->
+											</v-autocomplete>
+										</v-col>
+										<v-col align="center" cols="12" sm="3">
+											<v-select
+												v-model="referenceType"
+												hint="Filter type"
+												:items="referenceTypes"
+												item-title="text"
+												item-value="value"
+												label="Filter type"
+												outlined
+												return-object
+												single-line
+												dense
+											></v-select>
+										</v-col>
+										<v-col align="center" cols="12" sm="2" class="d-flex justify-center">
+											<v-btn
+												color="primary"
+												icon
+												density="compact"
+												:disabled="!selectedReference"
+												@click="addReference(selectedReference)"
+												style="margin:10px"
+											>
+												<v-icon>mdi-plus</v-icon>
+											</v-btn>
+										</v-col>
+									</v-row>
+								</section>
+
+								<!-- existing references -->
+								<section v-if="thread && thread.references && thread.references.length > 0" class="mb-4">
+									<v-divider class="my-4"></v-divider>
+
+									<h3 class="text-h6 font-weight-bold mb-2">References</h3>
+									<v-chip-group>
+										<v-chip
+											v-for="ref in thread.references"
+											:key="ref.id"
+											:to="getReferenceLink(ref)"
+											color="primary"
+											outlined
+											class="mr-2"
+										>
+											<v-icon small left>{{ getReferenceIcon(ref.reference_type) }}</v-icon>
+											{{ ref.name }}
+											<v-icon
+												v-if="isCurrentUserAuthor(thread.author)" 
+												right 
+												x-small 
+												class="ml-1" 
+												@click.stop.prevent="confirmDeleteReference(ref)"
+											>
+												mdi-close
+											</v-icon>
+										</v-chip>
+									</v-chip-group>
+								</section>
+
 								<section role="region" aria-labelledby="replies-heading">
 									<h2 id="replies-heading" class="text-h5 font-weight-bold mb-4">
 										Replies
@@ -321,7 +442,18 @@ export default {
 			reportType: "",
 			reportItemData: null,
 			reportReason: "",
-			customReportReason: ""
+			customReportReason: "",
+
+			searchQuery: "",
+			searchResults: [],
+			isSearching: false,
+			selectedReference: null,
+			referenceType: { text: 'All', value: 'all' },
+			referenceTypes: [
+				{ text: 'All', value: 'all' },
+				{ text: 'Artists', value: 'artist' },
+				{ text: 'Releases', value: 'release' }
+			]
 		};
 	},
 	computed: {
@@ -531,6 +663,12 @@ export default {
 			this.itemToDelete = this.thread;
 			this.deleteDialog = true;
 		},
+
+		confirmDeleteReference(reference) {
+			this.deleteType = "reference";
+			this.itemToDelete = reference;
+			this.deleteDialog = true;
+		},
 		
 		async performDelete() {
 			try {
@@ -560,6 +698,25 @@ export default {
 					this.thread.isDeleted = true;
 
 					// this.$router.push('/forum');
+				} else if (this.deleteType === "reference") {
+					const reference = this.itemToDelete;
+					const referenceId = reference.reference_id;
+					console.log('Removing reference with ID:', referenceId);
+					
+					try {
+						await axios.delete(`http://localhost:5001/forum/delete-reference/${referenceId}`, { 
+							withCredentials: true 
+						});
+						
+						// Remove from local data
+						const index = this.thread.references.findIndex(r => r.reference_id === referenceId);
+						if (index !== -1) {
+							this.thread.references.splice(index, 1);
+						}
+					} catch (error) {
+						console.error("Error removing reference:", error);
+						alert("Failed to remove reference. Please try again.");
+					}
 				}
 			} catch (error) {
 				console.error('Error deleting item:', error);
@@ -621,6 +778,117 @@ export default {
 				returnTo
 			)}`;
 		},
+
+		debugSearch(value) {
+			console.log("Debug search:", value);
+		},
+
+		async searchReferences(searchValue) {
+			if (!this.searchQuery || this.searchQuery.length < 2) {
+				this.searchResults = [];
+				return;
+			}
+			
+			this.isSearching = true;
+			
+			try {
+				const response = await axios.get(`http://localhost:5001/search/reference`, {
+					params: {
+						query: this.searchQuery,
+						type: this.referenceType.value
+					}
+				});
+
+				this.searchResults = response.data.results;
+			} catch (error) {
+				console.error('Error searching references:', error);
+				this.searchResults = [];
+			} finally {
+				this.isSearching = false;
+			}
+		},
+
+		async addReference(reference) {
+			if (!reference) return;
+
+			let reference_type = reference.type;
+			if (reference_type === 'master') {
+				reference_type = 'release';
+			}
+			
+			const isDuplicate = this.thread.references?.some(r => 
+				r.reference_id === reference.id && r.reference_type === reference_type
+			);
+			if (isDuplicate) {
+				alert("This reference has already been added.");
+				return;
+			}
+
+			try {
+				const response = await axios.post(`http://localhost:5001/forum/reference`, {
+					item_type: 'thread',
+					item_id: this.thread.id,
+					reference_type: reference_type,
+					reference_id: reference.id,
+					reference_name: reference.name,
+				}, { withCredentials: true });
+				
+				if (response.data.success) {
+					if (!this.thread.references) {
+						this.thread.references = [];
+					}
+
+					this.thread.references.push({
+						item_type: 'thread',
+						item_id: this.thread.id,
+						reference_type: reference_type,
+						reference_id: reference.id,
+						name: reference.name,
+					});
+
+					this.selectedReference = null;
+					this.searchQuery = "";
+				}
+			} catch (error) {
+				console.error('Error adding reference:', error);
+				alert('Failed to add reference. Please try again.');
+			}
+		},
+
+		getReferenceIcon(type) {
+			switch(type) {
+				case 'artist':
+					return 'mdi-account-music';
+				case 'release':
+					return 'mdi-album';
+				default:
+					return 'mdi-link';
+			}
+		},
+		
+		getReferenceLink(reference) {
+			switch(reference.reference_type) {
+				case 'artist':
+					return `/artist/${reference.reference_id}`;
+				case 'release':
+					return `/master/${reference.reference_id}`;
+				default:
+					return '#';
+			}
+		}
+	},
+	watch: {
+		searchQuery: {
+			handler(newVal) {
+				// console.log("Search query changed:", newVal);
+				if (newVal && newVal.length >= 2) {
+					this.searchReferences(newVal);
+				} else {
+					this.searchResults = [];
+				}
+			},
+			immediate: false
+		}
 	}
 };
 </script>
