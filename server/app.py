@@ -599,6 +599,26 @@ class forum:
         """
         return forum.db.mutate_data(query, (user_id, item_type, item_id, reason))
 
+    @staticmethod
+    def add_references(item_type, item_id, reference_type, reference_id):
+        query = """
+            INSERT INTO forum_references(item_type, item_id, reference_type, reference_id, created_at)
+            VALUES(%s, %s, %s, %s, CURRENT_TIMESTAMP)
+            RETURNING id;
+        """
+        return forum.db.mutate_data(query, (item_type, item_id, reference_type, reference_id))
+
+    @staticmethod
+    def get_thread_references(item_type, item_id):
+        query = """
+            SELECT
+                fr.reference_type,
+                fr.reference_id
+            FROM forum_references fr
+            WHERE fr.item_type = %s AND fr.item_id = %s;
+        """
+        return forum.db.read_data(query, (item_type, item_id))
+
 @app.route('/release/', methods=['GET'])
 def get_release():
     try:
@@ -994,6 +1014,37 @@ def user_search():
 
     return jsonify({'results':[]}), 200
 
+@app.route('/search/reference', methods=['GET'])
+def forum_search_reference():
+    query = request.args.get('query', '')
+    type = request.args.get('type', 'all')
+
+    if not query:
+        return jsonify({'results': []}), 200
+
+    results = []
+
+    if type == 'artist' or type == 'all':
+        artists = search.search_artist(query)
+        for artist in artists:
+            results.append({
+                'id': artist['id'],
+                'name': artist['name'],
+                'type': 'artist'
+            })
+    if type == 'release' or type == 'all':
+        releases = search.search_release(query)
+        for release in releases:
+            results.append({
+                'id': release['id'],
+                'name': release['title'],
+                'artist': release['artists'],
+                'year': release['year'],
+                'type': 'master'
+            })
+
+    return jsonify({'results': results}), 200
+
 #written by jax hendrickson
 @app.route('/ratings', methods=['GET'])
 def get_ratings():
@@ -1288,6 +1339,14 @@ def get_forum_thread(thread_id):
             return jsonify({"error": "Thread not found"}), 404
             
         replies = forum.get_thread_replies(thread_id)
+        references = []
+        if thread_data[0]['category'] == 'Artist':
+            references = forum.get_thread_references('artist', thread_id)
+        elif thread_data[0]['category'] == 'Song':
+            references = forum.get_thread_references('release', thread_id)
+
+        if len(references) > 0 and len(references[0]) > 0:
+            references = references[0][0]
         
         # Format the thread data
         formatted_thread = {
@@ -1300,7 +1359,8 @@ def get_forum_thread(thread_id):
                 "id": thread_data[0]['author_id'],
                 "name": thread_data[0]['author_name']
             },
-            "replies": []
+            "replies": [],
+            "references": references
         }
         
         # Format the replies
@@ -1458,6 +1518,35 @@ def report_forum_item():
     except Exception as e:
         print(f"Error submitting report: {e}")
         return jsonify({"error": "Internal server error", "message": str(e)}), 500
+
+@app.route('/forum/reference', methods=['POST'])
+def add_forum_reference():
+    if 'user' not in session:
+        return jsonify({'error': 'Not logged in'})
+
+    data = request.get_json()
+    item_type = data.get('item_type')
+    item_id = data.get('item_id')
+    reference_type = data.get('reference_type')
+    reference_id = data.get('reference_id')
+
+    if not all([item_type, item_id, reference_type, reference_id]):
+        return jsonify({'error'})
+
+    if item_type == 'thread':
+        thread = forum.get_thread(item_id)
+        if not thread or thread[0]['author_id'] != session['user']['id']:
+            return jsonify({'error': 'Not authorized'}), 402
+
+    try:
+        result = forum.add_reference(item_type, item_id, reference_type, reference_id)
+        if result:
+            return jsonify({'success': True, 'reference': result[0][0]}), 201
+        else:
+            return jsonify({'error': 'Failed to add reference'}), 500
+    except Exception as e:
+        print(f'Error adding reference: {e}')
+        return jsonify({'error': 'Internal server error'}), 500
     
 @app.route('/verify-email', methods=['GET'])
 def verify_email():
