@@ -26,10 +26,16 @@
 								v-if="!user.spotifyConnected"
 								color="green"
 								@click="initiateSpotifyAuth"
+								aria-label="Connect your Spotify account"
 							>
 								Connect Spotify
 							</v-btn>
-							<v-btn v-else color="red" @click="disconnectSpotify">
+							<v-btn
+								v-else
+								color="red"
+								@click="disconnectSpotify"
+								aria-label="Disconnect your Spotify account"
+							>
 								Disconnect Spotify
 							</v-btn>
 						</v-card>

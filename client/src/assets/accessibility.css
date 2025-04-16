@@ -9,7 +9,7 @@
 }
 
 /* Protanopia (Red-Blind) */
-.protanopia {
+[data-colorblind-mode="protanopia"] {
 	--primary-color: #74a8d2;
 	--secondary-color: #6b6b6b;
 	--link-color: #74a8d2;
@@ -17,13 +17,13 @@
 	color: var(--text-color);
 }
 
-.protanopia .v-btn.v-btn--elevated {
+[data-colorblind-mode="protanopia"] .v-btn.v-btn--elevated {
 	background-color: var(--primary-color) !important;
 	color: white !important;
 }
 
 /* Deuteranopia (Green-Blind) */
-.deuteranopia {
+[data-colorblind-mode="deuteranopia"] {
 	--primary-color: #7aa6d9;
 	--secondary-color: #6b6b6b;
 	--link-color: #7aa6d9;
@@ -31,13 +31,13 @@
 	color: var(--text-color);
 }
 
-.deuteranopia .v-btn.v-btn--elevated {
+[data-colorblind-mode="deuteranopia"] .v-btn.v-btn--elevated {
 	background-color: var(--primary-color) !important;
 	color: white !important;
 }
 
 /* Tritanopia (Blue-Blind) */
-.tritanopia {
+[data-colorblind-mode="tritanopia"] {
 	--primary-color: #d2741f;
 	--secondary-color: #6b6b6b;
 	--link-color: #d2741f;
@@ -45,13 +45,13 @@
 	color: var(--text-color);
 }
 
-.tritanopia .v-btn.v-btn--elevated {
+[data-colorblind-mode="tritanopia"] .v-btn.v-btn--elevated {
 	background-color: var(--primary-color) !important;
 	color: white !important;
 }
 
 /* Achromatopsia (Grayscale) */
-.achromatopsia {
+[data-colorblind-mode="achromatopsia"] {
 	--primary-color: #666666;
 	--secondary-color: #444444;
 	--link-color: #666666;
@@ -61,7 +61,7 @@
 }
 
 /* High Contrast */
-.high-contrast {
+[data-colorblind-mode="high-contrast"] {
 	--primary-color: #ffffff;
 	--secondary-color: #ffffff;
 	--background-color: #000000;
@@ -71,12 +71,12 @@
 	color: var(--text-color) !important;
 }
 
-.high-contrast .v-card {
+[data-colorblind-mode="high-contrast"] .v-card {
 	background-color: #222222 !important;
 	border: 2px solid white !important;
 }
 
-.high-contrast .v-btn.v-btn--elevated {
+[data-colorblind-mode="high-contrast"] .v-btn.v-btn--elevated {
 	background-color: white !important;
 	color: black !important;
 	border: 2px solid white !important;

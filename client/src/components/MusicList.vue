@@ -14,22 +14,22 @@
 							<v-divider></v-divider>
 							<v-list class="overflow-y-auto" style="flex: 1">
 								<v-list-item>
-									<v-btn block>Button 1</v-btn>
+									<v-btn block aria-label="Menu option 1">Button 1</v-btn>
 								</v-list-item>
 								<v-list-item>
-									<v-btn block>Button 2</v-btn>
+									<v-btn block aria-label="Menu option 2">Button 2</v-btn>
 								</v-list-item>
 								<v-list-item>
-									<v-btn block>Button 3</v-btn>
+									<v-btn block aria-label="Menu option 3">Button 3</v-btn>
 								</v-list-item>
 								<v-list-item>
-									<v-btn block>Button 4</v-btn>
+									<v-btn block aria-label="Menu option 4">Button 4</v-btn>
 								</v-list-item>
 								<v-list-item>
-									<v-btn block>Button 5</v-btn>
+									<v-btn block aria-label="Menu option 5">Button 5</v-btn>
 								</v-list-item>
 								<v-list-item>
-									<v-btn block>Button 6</v-btn>
+									<v-btn block aria-label="Menu option 6">Button 6</v-btn>
 								</v-list-item>
 							</v-list>
 						</v-card>
@@ -79,27 +79,47 @@
 										<!-- Action Buttons Column -->
 										<v-col cols="3" class="d-flex justify-end">
 											<!-- Edit Button -->
-											<v-btn variant="plain" @click="editSong(song)">
+											<v-btn
+												variant="plain"
+												@click="editSong(song)"
+												aria-label="Edit song"
+											>
 												<v-icon>mdi-pencil</v-icon>
 											</v-btn>
 
 											<!-- Delete Button -->
-											<v-btn variant="plain" @click="deleteSong(song)">
+											<v-btn
+												variant="plain"
+												@click="deleteSong(song)"
+												aria-label="Delete song"
+											>
 												<v-icon>mdi-delete</v-icon>
 											</v-btn>
 
 											<!-- Share Button -->
-											<v-btn variant="plain" @click="shareSong(song)">
+											<v-btn
+												variant="plain"
+												@click="shareSong(song)"
+												aria-label="Share song"
+											>
 												<v-icon>mdi-share-variant</v-icon>
 											</v-btn>
 
 											<!-- Link Button (Opens External URL) -->
-											<v-btn variant="plain" :to="`/master/${song.id}`">
+											<v-btn
+												variant="plain"
+												:to="`/master/${song.id}`"
+												aria-label="View song details"
+											>
 												<v-icon>mdi-link</v-icon>
 											</v-btn>
 
 											<!-- Spotify Button (or WiFi) -->
-											<v-btn variant="plain" @click="spotifyAction(song)">
+											<v-btn
+												variant="plain"
+												@click="spotifyAction(song)"
+												aria-label="Open in Spotify"
+											>
 												<v-icon>mdi-spotify</v-icon>
 												<!-- Use mdi-wifi if preferred -->
 											</v-btn>
@@ -147,27 +167,47 @@
 										<!-- Action Buttons Column -->
 										<v-col cols="3" class="d-flex justify-end">
 											<!-- Edit Button -->
-											<v-btn variant="plain" @click="editSong(artist)">
+											<v-btn
+												variant="plain"
+												@click="editSong(artist)"
+												aria-label="Edit artist"
+											>
 												<v-icon>mdi-pencil</v-icon>
 											</v-btn>
 
 											<!-- Delete Button -->
-											<v-btn variant="plain" @click="deleteSong(artist)">
+											<v-btn
+												variant="plain"
+												@click="deleteSong(artist)"
+												aria-label="Delete artist"
+											>
 												<v-icon>mdi-delete</v-icon>
 											</v-btn>
 
 											<!-- Share Button -->
-											<v-btn variant="plain" @click="shareSong(artist)">
+											<v-btn
+												variant="plain"
+												@click="shareSong(artist)"
+												aria-label="Share artist"
+											>
 												<v-icon>mdi-share-variant</v-icon>
 											</v-btn>
 
 											<!-- Link Button (Opens External URL) -->
-											<v-btn variant="plain" :to="`/artist/${artist.id}`">
+											<v-btn
+												variant="plain"
+												:to="`/artist/${artist.id}`"
+												aria-label="View artist details"
+											>
 												<v-icon>mdi-link</v-icon>
 											</v-btn>
 
 											<!-- Spotify Button (or WiFi) -->
-											<v-btn variant="plain" @click="spotifyAction(artist)">
+											<v-btn
+												variant="plain"
+												@click="spotifyAction(artist)"
+												aria-label="Open artist in Spotify"
+											>
 												<v-icon>mdi-spotify</v-icon>
 												<!-- Use mdi-wifi if preferred -->
 											</v-btn>

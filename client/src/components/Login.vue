@@ -1,7 +1,13 @@
 <!-- This file was written by Lucas Black -->
 <!--ARIA Landmarks added by Chantelle Cabanilla-->
 <template>
-	<div class="grid-container">
+	<div
+		class="grid-container"
+		:class="[
+			colorblindClass,
+			{ 'enable-patterns': enablePatterns, 'show-labels': showLabels },
+		]"
+	>
 		<header role="navigation">
 			<Navbar />
 		</header>
@@ -9,7 +15,7 @@
 			<main role="main">
 				<v-row no-gutters class="justify-center">
 					<v-col cols="4">
-						<v-alert v-if="loginError" type="error" class="mt-10" >
+						<v-alert v-if="loginError" type="error" class="mt-10">
 							{{ loginError }}
 						</v-alert>
 					</v-col>
@@ -43,7 +49,9 @@
 									autocomplete="current-password"
 								/>
 							</div>
-							<button type="submit">Login</button>
+							<button type="submit" aria-label="Log in to your account">
+								Login
+							</button>
 						</form>
 					</section>
 				</div>
@@ -66,8 +74,29 @@
 				username: "",
 				password: "",
 				returnPath: "/",
-				loginError: null
+				loginError: null,
+				colorblindMode: localStorage.getItem("colorblindMode") || "Default",
+				enablePatterns: localStorage.getItem("enablePatterns") === "true",
+				showLabels: localStorage.getItem("showLabels") === "true",
 			};
+		},
+		computed: {
+			colorblindClass() {
+				switch (this.colorblindMode) {
+					case "Red-Blind (Protanopia)":
+						return "protanopia";
+					case "Green-Blind (Deuteranopia)":
+						return "deuteranopia";
+					case "Blue-Blind (Tritanopia)":
+						return "tritanopia";
+					case "Grayscale (achromatopsia)":
+						return "achromatopsia";
+					case "High Contrast":
+						return "high-contrast";
+					default:
+						return "";
+				}
+			},
 		},
 		created() {
 			// Get return path from URL query parameters

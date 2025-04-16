@@ -1,7 +1,13 @@
 <!-- This file was written by Lucas Black -->
 <!--ARIA Landmarks added by Chantelle Cabanilla-->
 <template>
-	<div class="grid-container">
+	<div
+		class="grid-container"
+		:class="[
+			colorblindClass,
+			{ 'enable-patterns': enablePatterns, 'show-labels': showLabels },
+		]"
+	>
 		<header role="navigation">
 			<Navbar />
 		</header>
@@ -9,16 +15,17 @@
 			<main role="main">
 				<v-row no-gutters class="justify-center">
 					<v-col cols="4">
-						<v-alert v-if="formError" type="error" class="mt-10" >
-							{{ formError }}
+						<v-alert v-if="signupError" type="error" class="mt-10">
+							{{ signupError }}
 						</v-alert>
 					</v-col>
 				</v-row>
 
 				<div class="container mt-5">
 					<h2 id="signup-heading">Sign Up</h2>
+
 					<section role="region" aria-labelledby="signup-heading">
-						<form @submit.prevent="signup" aria-label="Signup form">
+						<form @submit.prevent="signup" aria-label="Sign up form">
 							<div class="row" role="form" aria-labelledby="username-label">
 								<label id="username-label" for="username">Username</label>
 								<input
@@ -30,6 +37,7 @@
 									autocomplete="username"
 								/>
 							</div>
+
 							<div class="row" role="form" aria-labelledby="email-label">
 								<label id="email-label" for="email">Email</label>
 								<input
@@ -41,6 +49,7 @@
 									autocomplete="email"
 								/>
 							</div>
+
 							<div class="row" role="form" aria-labelledby="password-label">
 								<label id="password-label" for="password">Password</label>
 								<input
@@ -52,12 +61,13 @@
 									autocomplete="new-password"
 								/>
 							</div>
+
 							<div
 								class="row"
 								role="form"
-								aria-labelledby="confirmPasswordlabel"
+								aria-labelledby="confirm-password-label"
 							>
-								<label id="confirmPassword-label" for="confirmPassword"
+								<label id="confirm-password-label" for="confirmPassword"
 									>Confirm Password</label
 								>
 								<input
@@ -69,7 +79,8 @@
 									autocomplete="new-password"
 								/>
 							</div>
-							<button type="submit" aria-label="Complete signup">
+
+							<button type="submit" aria-label="Create new account">
 								Sign Up
 							</button>
 						</form>
@@ -95,54 +106,56 @@
 				email: "",
 				password: "",
 				confirmPassword: "",
-				returnPath: "/", // Default to home
-				formError: null,
+				signupError: null,
+				colorblindMode: localStorage.getItem("colorblindMode") || "Default",
+				enablePatterns: localStorage.getItem("enablePatterns") === "true",
+				showLabels: localStorage.getItem("showLabels") === "true",
 			};
 		},
-		created() {
-			// Store the previous path if it exists
-			if (this.$route.query.returnTo) {
-				this.returnPath = decodeURIComponent(this.$route.query.returnTo);
-			}
+		computed: {
+			colorblindClass() {
+				switch (this.colorblindMode) {
+					case "Red-Blind (Protanopia)":
+						return "protanopia";
+					case "Green-Blind (Deuteranopia)":
+						return "deuteranopia";
+					case "Blue-Blind (Tritanopia)":
+						return "tritanopia";
+					case "Grayscale (achromatopsia)":
+						return "achromatopsia";
+					case "High Contrast":
+						return "high-contrast";
+					default:
+						return "";
+				}
+			},
 		},
 		methods: {
 			async signup() {
+				this.signupError = null;
+
 				if (this.password !== this.confirmPassword) {
-					this.formError = "Password do not match";
+					this.signupError = "Passwords do not match";
 					return;
 				}
 
-				this.formError = null;
-
 				try {
 					const path = "http://localhost:5001/signup";
-					const data = {
+					const response = await axios.post(path, {
 						username: this.username,
 						email: this.email,
 						password: this.password,
-					};
-
-					const response = await axios.post(path, data, {
-						headers: {
-							"Content-Type": "application/json",
-						},
-						withCredentials: true, // Important for CORS with credentials
 					});
 
-					if (response.status === 201) {
-						console.log("Signup successful");
-						this.$router.push(this.returnPath || "/");
+					if (response.status === 200) {
+						await this.$router.push("/login");
 					} else {
-						this.formError = error.response.data.error ||
-										 "An error occurred during signup. Please try again.";
+						this.signupError = "Error creating account";
 					}
 				} catch (error) {
 					console.error("Signup error:", error);
-					if (error.response?.data?.error) {
-						this.formError = error.response.data.error;
-					} else {
-						this.formError = "An error occurred during signup. Please try again.";
-					}
+					this.signupError =
+						error.response.data.error || "Error creating account";
 				}
 			},
 		},
@@ -150,9 +163,6 @@
 </script>
 
 <style scoped>
-	@import "../assets/login.css";
-	@import "../assets/background.css";
-	.mt-3 {
-		margin-top: 20px;
-	}
+	@import "../../src/assets/background.css";
+	@import "../../src/assets/login.css";
 </style>

@@ -81,43 +81,7 @@
 								<p v-if="profileFileError" style="color: red">
 									{{ profileFileError }}
 								</p>
-
 								<v-divider class="my-4"></v-divider>
-								<h2 class="text-h5 font-weight-bold mb-2">Accessibility</h2>
-								<v-card class="mb-4 pa-3">
-									<v-select
-										label="Color Vision Mode"
-										:items="[
-											'Default',
-											'Red-Blind (Protanopia)',
-											'Green-Blind (Deuteranopia)',
-											'Blue-Blind (Tritanopia)',
-											'Grayscale (achromatopsia)',
-											'High Contrast',
-										]"
-										variant="outlined"
-										@change="applyColorblindMode"
-									></v-select>
-
-									<v-switch
-										label="Enable Patterns on UI Elements"
-										hint="Adds textures to buttons to make them more distinguishable"
-										persistent-hint
-										@change="applyAccessibilitySettings"
-									></v-switch>
-
-									<v-switch
-										label="Show Text Labels on Icons"
-										hint="Displays text labels alongside icons for better clarity"
-										persistent-hint
-										@change="applyAccessibilitySettings"
-									></v-switch>
-
-									<div class="mt-3">
-										<v-btn> Preview Accessibility Changes </v-btn>
-									</div>
-								</v-card>
-
 								<h2 class="text-h5 font-weight-bold mb-2">
 									Accessibility Settings
 								</h2>
@@ -152,14 +116,6 @@
 									@change="applyAccessibilitySettings"
 								></v-switch>
 
-								<v-btn
-									color="primary"
-									@click="previewAccessibilityChanges"
-									class="mb-4"
-								>
-									Preview Changes
-								</v-btn>
-
 								<v-divider class="my-4"></v-divider>
 
 								<h2 class="text-h5 font-weight-bold mb-2">Spotify OAuth</h2>
@@ -172,13 +128,23 @@
 									v-if="!user.spotifyConnected"
 									color="green"
 									@click="initiateSpotifyAuth"
+									aria-label="Connect your Spotify account"
 									>Connect Spotify</v-btn
 								>
-								<v-btn v-else color="red" @click="disconnectSpotify"
+								<v-btn
+									v-else
+									color="red"
+									@click="disconnectSpotify"
+									aria-label="Disconnect your Spotify account"
 									>Disconnect Spotify</v-btn
 								>
 								<v-divider class="my-4"></v-divider>
-								<v-btn type="submit" color="primary">Save Changes</v-btn>
+								<v-btn
+									type="submit"
+									color="primary"
+									aria-label="Save all profile changes"
+									>Save Changes</v-btn
+								>
 							</v-form>
 						</v-card>
 					</v-col>
@@ -203,7 +169,7 @@
 					profileImage: "/images/UnknownPerson.png",
 					spotifyConnected: false,
 				},
-				newProfileImage: null, // To store the preview of the new image
+				newProfileImage: null,
 				profileFileError: "",
 				clientId: import.meta.env.VITE_SPOTIFY_CLIENT_ID,
 				redirectUri: "http://localhost:5173/",
@@ -231,79 +197,90 @@
 				}
 			},
 		},
+		watch: {
+			// Add watcher for colorblindMode
+			colorblindMode: {
+				immediate: true,
+				handler(newMode) {
+					// Update localStorage
+					localStorage.setItem("colorblindMode", newMode);
+
+					// Apply the style to the root element
+					document.documentElement.setAttribute(
+						"data-colorblind-mode",
+						newMode === "Default" ? "" : this.colorblindClass
+					);
+
+					// Update CSS custom properties based on the mode
+					const root = document.documentElement;
+					if (newMode === "Default") {
+						root.style.removeProperty("--primary-color");
+						root.style.removeProperty("--secondary-color");
+						root.style.removeProperty("--background-color");
+						root.style.removeProperty("--text-color");
+						root.style.removeProperty("--link-color");
+					}
+				},
+			},
+		},
 		methods: {
 			saveProfile() {
+				// Apply accessibility settings
+				this.applyAccessibilitySettings();
+
 				alert("Profile updated successfully!");
 				// Needs to be implemented
 			},
 			handleFileUpload(event) {
-				const file = event.target.files[0]; // Get the selected file
+				const file = event.target.files[0];
 
-				if (!file) return; // If no file is selected, do nothing
+				if (!file) return;
 
 				if (file.size > 1024 * 1024) {
-					// Check if file is larger than 1MB
 					this.profileFileError = "File size must be less than 1MB.";
 					return;
 				}
 
-				this.profileFileError = ""; // Clear any previous errors
+				this.profileFileError = "";
 
 				const reader = new FileReader();
 				reader.onload = (e) => {
-					this.newProfileImage = e.target.result; // Update new profile image preview
+					this.newProfileImage = e.target.result;
 				};
 				reader.readAsDataURL(file);
 			},
 
 			applyColorblindMode() {
-				const appElement = document.getElementById("app");
-				if (appElement) {
-					// Remove existing classes
-					appElement.classList.remove(
-						"protanopia",
-						"deuteranopia",
-						"tritanopia",
-						"achromatopsia",
-						"high-contrast"
-					);
-
-					// Add new class based on selected mode
-					if (this.colorblindMode !== "Default") {
-						appElement.classList.add(this.colorblindClass);
-					}
-				}
 				// Save setting to localStorage for persistence
 				localStorage.setItem("colorblindMode", this.colorblindMode);
+
+				// Dispatch storage event to notify App.vue
+				window.dispatchEvent(
+					new StorageEvent("storage", {
+						key: "colorblindMode",
+						newValue: this.colorblindMode,
+					})
+				);
 			},
 
 			applyAccessibilitySettings() {
-				const appElement = document.getElementById("app");
-				if (appElement) {
-					// Toggle pattern class
-					if (this.enablePatterns) {
-						appElement.classList.add("enable-patterns");
-					} else {
-						appElement.classList.remove("enable-patterns");
-					}
-
-					// Toggle labels class
-					if (this.showLabels) {
-						appElement.classList.add("show-labels");
-					} else {
-						appElement.classList.remove("show-labels");
-					}
-				}
 				// Save settings to localStorage
 				localStorage.setItem("enablePatterns", this.enablePatterns);
 				localStorage.setItem("showLabels", this.showLabels);
-			},
 
-			previewAccessibilityChanges() {
-				this.applyColorblindMode();
-				this.applyAccessibilitySettings();
-				// Show a notification that changes are applied
-				alert("Accessibility settings have been applied");
+				// Dispatch storage events to notify App.vue
+				window.dispatchEvent(
+					new StorageEvent("storage", {
+						key: "enablePatterns",
+						newValue: String(this.enablePatterns),
+					})
+				);
+				window.dispatchEvent(
+					new StorageEvent("storage", {
+						key: "showLabels",
+						newValue: String(this.showLabels),
+					})
+				);
 			},
 
 			// For Spotify
@@ -446,19 +423,7 @@
 			this.applyAccessibilitySettings();
 		},
 		beforeDestroy() {
-			// Clean up any applied filters
-			const appElement = document.getElementById("app");
-			if (appElement) {
-				appElement.classList.remove(
-					"protanopia",
-					"deuteranopia",
-					"tritanopia",
-					"achromatopsia",
-					"high-contrast",
-					"enable-patterns",
-					"show-labels"
-				);
-			}
+			// Not needed anymore as App.vue manages the classes
 		},
 	};
 </script>
