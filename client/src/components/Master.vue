@@ -296,4 +296,8 @@
 	.credit-line .company-line {
 		margin: 8px 0;
 	}
+
+	pre {
+		background: #243d6b;
+	}
 </style>
