@@ -109,28 +109,22 @@
 						</div>
 					</section>
 
-					<br />
-
+					<br v-if="hasCredits" />
 					<section
 						role="region"
 						aria-labelledby="credits-heading"
 						v-if="hasCredits"
+						class="credits-section"
 					>
 						<div class="row">
 							<h2 id="credits-heading">Credits</h2>
 							<hr aria-hidden="true" />
-							<p
-								v-for="(credit, index) in data.artist_credits?.track_artist"
-								:key="`track-${index}`"
-							>
-								{{ credit.role }} - {{ credit.artist_name }}
-							</p>
-							<p
-								v-for="(credit, index) in data.artist_credits?.artist"
-								:key="`artist-${index}`"
-							>
-								{{ credit.role }} - {{ credit.artist_name }}
-							</p>
+							
+							<div class="credits-content">
+								<p v-for="(artists, role) in groupedByRole" :key="role" class="credit-line">
+									{{ role }} - {{ artists.join(', ') }}
+								</p>
+							</div>
 						</div>
 					</section>
 
@@ -139,13 +133,18 @@
 						role="region"
 						aria-labelledby="companies-heading"
 						v-if="data.company?.length"
+						class="company-section"
 					>
 						<div class="row">
 							<h2 id="companies-heading">Companies</h2>
 							<hr aria-hidden="true" />
-							<p v-for="(company, index) in filteredCompanies" :key="index">
-								{{ company.entity_type_name }} - {{ company.company_name }}
-							</p>
+							<div class="company-content">
+								<p v-for="(company_name, entity_type) in filteredCompanies"
+									:key="entity"
+									class="company-line">
+									{{ entity_type }} - {{ company_name.join(', ') }}
+								</p>
+							</div>
 						</div>
 					</section>
 				</div>
@@ -186,18 +185,71 @@
 				},
 				image_uri: "",
 				loading: true,
+				hasCredits: true,
 			};
 		},
 		computed: {
 			filteredCompanies() {
-				return this.data.company?.filter((x) => x.company_name !== null) || [];
+				const companyGroups = {};
+
+				this.data.company.forEach(company => {
+					const name = company.company_name || "Unknown Company";
+					const entity_type = company.entity_type_name || "Unknown Entity";
+
+					if (!companyGroups[entity_type]) {
+						companyGroups[entity_type] = [];
+					}
+					if (companyGroups[entity_type] && entity_type !== "Unknown Entity") {
+						companyGroups[entity_type] = [];
+
+						if (!companyGroups[entity_type].includes(name) && name !== "Unknown Company") {
+							companyGroups[entity_type].push(name);
+						}
+					}
+				});
+
+				return companyGroups;
 			},
-			hasCredits() {
-				return (
-					this.data.artist_credits?.track_artist?.length > 0 ||
-					this.data.artist_credits?.artist?.length > 0
-				);
-			},
+			groupedByRole() {
+				const allCredits = [
+					...(this.data.artist_credits?.artist || []),
+					...(this.data.artist_credits?.track_artist || [])
+				];
+
+				const roleGroups = {};
+				
+				allCredits.forEach(credit => {
+					const role = credit.role || "Unknown Role";
+					const artistName = credit.artist_name;
+					
+					if (!role || role === "Unknown Role") {
+						return;
+					}
+
+					if (!roleGroups[role]) {
+						roleGroups[role] = [];
+					}
+
+					if (!roleGroups[role].includes(artistName)) {
+						roleGroups[role].push(artistName);
+					}
+				});
+				
+				for (const role in roleGroups) {
+					roleGroups[role].sort();
+				}
+
+				const orderedRoles = {};
+				Object.keys(roleGroups).sort().forEach(role => {
+					orderedRoles[role] = roleGroups[role];
+				});
+
+				if (Object.keys(roleGroups).length === 0) {
+					this.hasCredits = true;
+				}
+				
+				return orderedRoles;
+			}
 		},
 		methods: {
 			async getMaster() {
@@ -232,4 +284,16 @@
 <style scoped>
 	@import "../../src/assets/master.css";
 	@import "../../src/assets/background.css";
+
+	.credits-section .company-section {
+		margin-top: 20px;
+	}
+
+	.credits-content .company-content {
+		margin-left: 10px;
+	}
+
+	.credit-line .company-line {
+		margin: 8px 0;
+	}
 </style>
