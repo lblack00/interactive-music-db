@@ -478,7 +478,9 @@ export default {
 	methods: {
 		async checkUserSession() {
 			try {
-				const response = await axios.get('http://localhost:5001/check-session', { withCredentials: true });
+				const response = await axios.get('http://localhost:5001/check-session', {
+					withCredentials: true
+				});
 				if (response.data.logged_in) {
 					this.currentUser = response.data.user;
 				}

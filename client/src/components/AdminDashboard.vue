@@ -15,81 +15,71 @@
 									Admin Dashboard
 								</h1>
 
-								<section role="region" aria-labelledby="pending-changes-title">
-									<h2
-										class="text-h5 font-weight-bold mb-4"
-										id="pending-changes-title"
-									>
-										Pending User Edits
-									</h2>
-									<v-list dense aria-label="List of pending edits">
-										<v-list-item
-											v-for="change in pendingChanges"
-											:key="change.id"
-										>
-											<v-list-item-content>
-												<v-list-item-title class="font-weight-bold">{{
-													change.postTitle
-												}}</v-list-item-title>
-												<v-list-item-subtitle
-													class="text-caption text--secondary"
-												>
-													Edited by: {{ change.author.name }} on
-													{{ change.date }}
-												</v-list-item-subtitle>
-												<v-list-item-text>
-													<strong>Suggested Edit:</strong>
-													{{ change.suggestedEdit }}
-												</v-list-item-text>
-											</v-list-item-content>
-											<v-list-item-action>
-												<v-btn
-													color="success"
-													@click="approveChange(change.id)"
-												>
-													Approve
-												</v-btn>
-												<v-btn
-													color="error"
-													class="ml-2"
-													@click="rejectChange(change.id)"
-												>
-													Reject
-												</v-btn>
-											</v-list-item-action>
-										</v-list-item>
-									</v-list>
-								</section>
-
-								<v-divider class="my-4" aria-hidden="true"></v-divider>
-
 								<section role="region" aria-labelledby="manage-posts-title">
-									<h2
-										class="text-h5 font-weight-bold mb-4"
-										id="manage-posts-title"
-									>
-										Manage User Posts
+									<h2 class="text-h5 font-weight-bold mb-4" id="manage-posts-title">
+										Manage User Reports
 									</h2>
-									<v-list dense aria-label="List of user posts">
-										<v-list-item v-for="post in userPosts" :key="post.id">
-											<v-list-item-content>
-												<v-list-item-title class="font-weight-bold">{{
-													post.title
-												}}</v-list-item-title>
-												<v-list-item-subtitle
-													class="text-caption text--secondary"
-												>
-													Posted by: {{ post.author.name }} on {{ post.date }}
-												</v-list-item-subtitle>
-												<v-list-item-text>{{ post.content }}</v-list-item-text>
-											</v-list-item-content>
-											<v-list-item-action>
-												<v-btn color="error" @click="deletePost(post.id)"
-													>Delete</v-btn
-												>
-											</v-list-item-action>
-										</v-list-item>
-									</v-list>
+
+									<div class="d-flex align-center mb-3">
+										<span class="mr-2">Sort by:</span>
+										<v-btn-toggle v-model="sortBy" mandatory>
+											<v-btn value="date" small>Date</v-btn>
+											<v-btn value="author" small>Author</v-btn>
+											<v-btn value="category" small>Category</v-btn>
+										</v-btn-toggle>
+										<v-btn icon class="ml-2" @click="toggleSortDirection">
+											<v-icon>
+												{{ sortDirection === 'asc' ? 'mdi-sort-descending' : 'mdi-sort-ascending' }}
+											</v-icon>
+										</v-btn>
+									</div>
+
+									<v-container>
+										<v-row>
+											<v-col v-for="post in sortedPosts" :key="post.reportId" cols="12" md="6" lg="6">
+												<v-card class="mb-4" elevation="2">
+													<v-card-title class="text-h6 primary--text">
+														{{ post.title }}
+													</v-card-title>
+
+													<v-card-subtitle>
+														Posted by: {{ post.author }} on {{ post.reportCreatedAt }}
+													</v-card-subtitle>
+
+													<v-card-text>
+														<v-chip class="mb-3" small :color="post.resolved ? 'success' : 'warning'" text-color="white">
+															{{ post.resolved ? 'Resolved' : 'Pending' }}
+														</v-chip>
+														
+														<v-chip class="mb-3 ml-2" small color="primary" text-color="white" v-if="post.category">
+															{{ post.category }}
+														</v-chip>
+														
+														<v-divider class="mb-3"></v-divider>
+														
+														<div class="content-preview">
+															<strong>Report Reason: </strong>
+															<p class="mt-1">{{ post.reportReason }}</p>
+															<strong>Content:</strong>
+															<p class="mt-1">{{ post.contentText }}</p>
+														</div>
+													</v-card-text>
+
+													<v-card-actions>
+														<v-spacer></v-spacer>
+														<v-btn color="error" text @click="deletePost(post.reportId)">
+															<v-icon left>mdi-delete</v-icon>
+															Delete
+														</v-btn>
+														<v-btn color="primary" text @click="markAsResolved(post.reportId)">
+															<v-icon left>mdi-check</v-icon>
+															Mark Resolved
+														</v-btn>
+													</v-card-actions>
+												</v-card>
+											</v-col>
+										</v-row>
+									</v-container>
 								</section>
 							</v-card>
 						</v-col>
@@ -102,6 +92,7 @@
 
 <script>
 	import Navbar from "./Navbar.vue";
+	import axios from 'axios';
 
 	export default {
 		name: "AdminDashboard",
@@ -119,16 +110,62 @@
 						suggestedEdit: "Updated the notes on Kill Em' All by Metallica.",
 					},
 				],
-				userPosts: [
-					{
-						id: 1,
-						title: "Favorite Music Genres",
-						author: { name: "User1" },
-						date: "February 18, 2025",
-						content: "Did you guys see what Ye posted on X?",
-					},
-				],
+				sortBy: 'date',
+				sortDirection: 'desc',
+				loading: true,
+				data: {}
 			};
+		},
+		computed: {
+			userPosts() {
+				if (!this.data.reports || !this.data.content) {
+					return [];
+				}
+
+				let reports = this.data.reports;
+				let content = this.data.content;
+
+				const joinedData = reports.map(report => {
+					const matchingContent = content.find(item => item.id === report.item_id);
+
+					return {
+						reportId: report.id,
+						reportReason: report.reason,
+						reportCreatedAt: report.created_at,
+						resolved: report.resolved,
+						contentId: matchingContent?.id,
+						title: matchingContent?.title,
+						author: matchingContent?.author_name,
+						category: matchingContent?.category,
+						contentText: matchingContent?.content
+					};
+				});
+
+				return joinedData;
+			},
+			sortedPosts() {
+				if (!this.userPosts.length) return [];
+				
+				const sorted = [...this.userPosts].sort((a, b) => {
+					if (this.sortBy === 'author') {
+						return (a.author || '').localeCompare(b.author || '');
+					} 
+					else if (this.sortBy === 'date') {
+						return new Date(a.reportCreatedAt || 0) - new Date(b.reportCreatedAt || 0);
+					}
+					else if (this.sortBy === 'category') {
+						return (a.category || '').localeCompare(b.category || '');
+					}
+					return 0;
+				});
+
+				console.log(sorted);
+
+				return this.sortDirection === 'asc' ? sorted : sorted.reverse();
+			}
+		},
+		created() {
+			this.getReports();
 		},
 		methods: {
 			approveChange(changeId) {
@@ -141,9 +178,27 @@
 					(change) => change.id !== changeId
 				);
 			},
-			deletePost(postId) {
-				this.userPosts = this.userPosts.filter((post) => post.id !== postId);
+			deletePost(reportId) {
+				this.data.reports = this.data.reports.filter((report) => report.id !== reportId);
 			},
+			async getReports() {
+				try {
+					const response = await axios.get("http://localhost:5001/admin/reports", {
+						withCredentials: true
+					});
+
+					this.data = response.data;
+
+					console.log(this.data);
+					this.loading = false;
+				} catch (error) {
+					console.error("Error fetching reports:", error);
+					this.loading = false;
+				}
+			},
+			toggleSortDirection() {
+				this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
+			}
 		},
 	};
 </script>

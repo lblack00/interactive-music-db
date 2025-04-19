@@ -15,6 +15,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from flask_jwt_extended import JWTManager, jwt_required, get_jwt_identity, create_access_token
 from datetime import timedelta, datetime
 from flask_cors import cross_origin
+from functools import wraps
 
 app = Flask(__name__)
 app.secret_key = os.urandom(16)
@@ -438,6 +439,12 @@ class users:
 
         return users.db.read_data(query, (username,))
 
+    @staticmethod
+    def is_user_admin(username):
+        query = "SELECT is_admin FROM users WHERE username=%s;"
+
+        return users.db.read_data(query, (username,))[0]['is_admin']
+
 class forum:
     db = db_utils(dbname='users_db', user='postgres')
 
@@ -541,6 +548,15 @@ class forum:
             ORDER BY r.created_at ASC;
         """
         return forum.db.read_data(query, (thread_id,))
+
+    @staticmethod
+    def get_thread_reply(reply_id):
+        query = """
+            SELECT *
+            FROM forum_replies
+            WHERE id = %s;
+        """
+        return forum.db.read_data(query, (reply_id,))
     
     @staticmethod
     def add_reply(user_id, thread_id, content, parent_id=None):
@@ -599,6 +615,26 @@ class forum:
             RETURNING id;
         """
         return forum.db.mutate_data(query, (user_id, item_type, item_id, reason))
+
+    @staticmethod
+    def get_reports():
+        query = """
+            SELECT *
+            FROM forum_reports
+            ORDER BY created_at DESC;
+        """
+        reports = forum.db.read_data(query)
+        content = []
+        for report in reports:
+            if report['item_type'] == 'thread':
+                content.append(forum.get_thread(report['item_id'])[0])
+            else:
+                content.append(forum.get_thread_reply(report['item_id'])[0])
+
+        return {
+            'reports': reports,
+            'content': content
+        }
 
     @staticmethod
     def add_reference(item_type, item_id, reference_type, reference_id, name):
@@ -870,33 +906,34 @@ def user_signup():
             if not user_id:
                 return jsonify({'error': 'Failed to create user'}), 500
 
-            print("8. Storing verification token...")
-            store_verification_token_query = """
-                INSERT INTO email_verification (user_id, verification_token, token_expiry)
-                VALUES (%s, %s, %s);
-            """
-            db_utils(dbname='users_db', user='postgres').mutate_data(
-                store_verification_token_query, 
-                (user_id, verification_token, token_expiry)
-            )
-            print("9. Verification token stored")
+            if CHECK_EMAIL_VERIFICATION:
+                print("8. Storing verification token...")
+                store_verification_token_query = """
+                    INSERT INTO email_verification (user_id, verification_token, token_expiry)
+                    VALUES (%s, %s, %s);
+                """
+                db_utils(dbname='users_db', user='postgres').mutate_data(
+                    store_verification_token_query, 
+                    (user_id, verification_token, token_expiry)
+                )
+                print("9. Verification token stored")
 
-            print("10. Sending verification email...")
-            verification_url = f"http://localhost:5173/verify-email?token={verification_token}"
-            msg = Message(
-                'Verify your email address',
-                sender=app.config['MAIL_USERNAME'],
-                recipients=[email]
-            )
-            msg.body = f"""
-            Welcome to Interactive Music DB!
-            Please click the following link to verify your email address:
-            {verification_url}
-            
-            This link will expire in 24 hours.
-            """
-            mail.send(msg)
-            print("11. Verification email sent")
+                print("10. Sending verification email...")
+                verification_url = f"http://localhost:5173/verify-email?token={verification_token}"
+                msg = Message(
+                    'Verify your email address',
+                    sender=app.config['MAIL_USERNAME'],
+                    recipients=[email]
+                )
+                msg.body = f"""
+                Welcome to Interactive Music DB!
+                Please click the following link to verify your email address:
+                {verification_url}
+                
+                This link will expire in 24 hours.
+                """
+                mail.send(msg)
+                print("11. Verification email sent")
 
             return jsonify({
                 'message': 'User created successfully. Please check your email to verify your account.',
@@ -1531,6 +1568,30 @@ def report_forum_item():
         
     except Exception as e:
         print(f"Error submitting report: {e}")
+        return jsonify({"error": "Internal server error", "message": str(e)}), 500
+
+def admin_required(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        if 'user' not in session:
+            return jsonify({"error": "Admin access required"}), 403
+
+        user = session['user']
+        if not user or not users.is_user_admin(session['user']['username']):
+            return jsonify({"error": "Admin access required"}), 403
+        return f(*args, **kwargs)
+    return decorated
+
+@app.route('/admin/reports', methods=['GET'])
+@admin_required
+def get_forum_reports():
+    try:
+        forum_reports = forum.get_reports()
+        if forum_reports is not None:
+            return jsonify(forum_reports), 200
+        return jsonify({"error": "Database error fetching reports"}), 500
+    except Exception as e:
+        print(f"Error fetching reports: {e}")
         return jsonify({"error": "Internal server error", "message": str(e)}), 500
 
 @app.route('/forum/reference', methods=['POST'])
