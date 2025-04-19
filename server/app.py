@@ -552,9 +552,22 @@ class forum:
     @staticmethod
     def get_thread_reply(reply_id):
         query = """
-            SELECT *
-            FROM forum_replies
-            WHERE id = %s;
+            SELECT
+                r.id,
+                r.thread_id,
+                r.content,
+                r.parent_id,
+                r.created_at,
+                r.is_edited,
+                r.is_deleted,
+                u.username as author_name,
+                t.title
+            FROM forum_replies r
+            JOIN users u
+            ON r.user_id = u.id
+            JOIN forum_threads t
+            ON r.thread_id = t.id
+            WHERE r.id = %s;
         """
         return forum.db.read_data(query, (reply_id,))
     

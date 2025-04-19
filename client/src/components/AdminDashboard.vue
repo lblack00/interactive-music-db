@@ -38,8 +38,11 @@
 										<v-row>
 											<v-col v-for="post in sortedPosts" :key="post.reportId" cols="12" md="6" lg="6">
 												<v-card class="mb-4" elevation="2">
-													<v-card-title class="text-h6 primary--text">
+													<v-card-title v-if="post.reportType==='thread'" class="text-h6 primary--text">
 														{{ post.title }}
+													</v-card-title>
+													<v-card-title v-else class="text-h6 primary--text">
+														Reply to '{{ post.title }}'
 													</v-card-title>
 
 													<v-card-subtitle>
@@ -132,12 +135,13 @@
 						reportId: report.id,
 						reportReason: report.reason,
 						reportCreatedAt: report.created_at,
+						reportType: report.item_type,
 						resolved: report.resolved,
 						contentId: matchingContent?.id,
 						title: matchingContent?.title,
 						author: matchingContent?.author_name,
 						category: matchingContent?.category,
-						contentText: matchingContent?.content
+						contentText: matchingContent?.content,
 					};
 				});
 
