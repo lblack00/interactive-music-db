@@ -31,12 +31,15 @@
 									label="Email"
 									outlined
 									required
+									readonly
 								></v-text-field>
 								<v-textarea
 									v-model="user.bio"
 									label="Bio"
 									outlined
 									rows="3"
+									:counter="300"
+  								maxlength="300"
 								></v-textarea>
 
 								<!-- Profile Picture Section -->
@@ -190,21 +193,33 @@
 
 <script>
 	import Navbar from "./Navbar.vue";
+	import axios from "axios";
 
 	export default {
 		name: "userSettings",
 		components: { Navbar },
 		data() {
 			return {
+				loggedIn: false,
 				user: {
-					username: "Username",
-					email: "username@example.com",
+					id: null,
+					username: "",
+					email: "",
 					bio: "This is my bio!",
 					profileImage: "/images/UnknownPerson.png",
 					spotifyConnected: false,
 				},
+				originalUser: {
+					id: null,
+					username: "",
+					email: "",
+					bio: "This is my bio!",
+					profileImage: "/images/UnknownPerson.png",
+				},
 				newProfileImage: null, // To store the preview of the new image
 				profileFileError: "",
+
+				errorUpdating: false,
 				clientId: import.meta.env.VITE_SPOTIFY_CLIENT_ID,
 				redirectUri: "http://localhost:5173/",
 				colorblindMode: localStorage.getItem("colorblindMode") || "Default",
@@ -232,10 +247,78 @@
 			},
 		},
 		methods: {
-			saveProfile() {
-				alert("Profile updated successfully!");
-				// Needs to be implemented
+			async getCurrentSettings() {
+				try {
+					
+					const response = await axios.get(
+						"http://localhost:5001/check-session",
+						{
+							withCredentials: true,
+						}
+					);
+					
+					this.loggedIn = response.data.logged_in;
+					if (response.data.logged_in) {
+						this.user.username = response.data.user.username;
+						this.user.id = response.data.user.id;
+						this.user.email = response.data.user.email;
+
+						this.originalUser.username = response.data.user.username;
+						this.originalUser.id = response.data.user.id;
+						this.originalUser.email = response.data.user.email;
+					}
+					else {
+						// Redirect to 404
+						this.$router.push('/404');
+					}
+				} catch (error) {
+					console.error("Error checking session:", error);
+					this.loggedIn = false;
+					this.user = null;
+				}
+
 			},
+
+			async saveProfile() {
+				if (this.user.username !== this.originalUser.username) {
+					try {
+						const response = await axios.post(
+							"http://localhost:5001/update-username",
+							{
+								new_username: this.user.username
+							},
+							{
+								withCredentials: true // if you're using session cookies
+							}
+						);
+						console.log("Username has been updated!");
+						this.originalUser.username = this.user.username;
+					} catch (error) {
+						this.errorUpdating = true;
+						console.error("Error updating username:", error);
+						if (error.response && error.response.status === 409) {
+							alert("That username is already taken.");
+						} else {
+							alert("Error updating username");
+						}
+						// Revert the username on error if needed
+						this.user.username = this.originalUser.username;
+					}
+				}
+
+				if (this.user.bio !== this.originalUser.bio) {
+					console.log("Bio has changed!");
+				}
+
+				if (this.user.profileImage !== this.originalUser.profileImage) {
+					console.log("pfp has changed!");
+				}
+
+				if(!this.errorUpdating) {
+					alert("Profile updated successfully!");
+				}
+			},
+
 			handleFileUpload(event) {
 				const file = event.target.files[0]; // Get the selected file
 
@@ -460,6 +543,9 @@
 				);
 			}
 		},
+		created() {
+			this.getCurrentSettings();
+		}
 	};
 </script>
 <style scoped>

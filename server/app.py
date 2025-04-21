@@ -1310,6 +1310,45 @@ def get_user_music_list(username, item_type):
         print(f"Error fetching music list: {e}")
         return jsonify({'error': 'Server error'}), 500
 
+# Written by Matthew Stenvold
+@app.route('/update-username', methods=['POST'])
+def update_username():
+    print("Session contents:", session)  # Debug print
+    if 'user' not in session:
+        return jsonify({'error': 'Not logged in'}), 401
+
+    data = request.get_json()
+    new_username = data.get('new_username')
+    user_id = session['user']['id']
+
+    if not new_username:
+        return jsonify({'error': 'No username provided'}), 400
+
+    try:
+        db = db_utils(dbname='users_db', user='postgres')
+
+        update_query = """
+            UPDATE users
+            SET username = %s
+            WHERE id = %s
+            RETURNING id;
+        """
+        result = db.mutate_data(update_query, (new_username, user_id))
+
+        if not result:
+            return jsonify({'error': 'User not found or username not updated'}), 404
+
+        session['user']['username'] = new_username
+
+        return jsonify({'success': True}), 200
+
+    except psycopg.errors.UniqueViolation:
+        return jsonify({'error': 'Username already taken'}), 409  # 409 = Conflict
+
+    except Exception as e:
+        print(f"Error updating username: {e}")
+        return jsonify({'error': 'Server error'}), 500
+
 # Written by Lucas Black
 @app.route('/forum/threads', methods=['GET'])
 def get_all_threads():
