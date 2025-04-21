@@ -54,7 +54,7 @@
 									<v-col cols="5" class="text-center">
 										<p class="font-weight-bold">Current</p>
 										<img
-											:src="user.profileImage"
+											:src="originalUser.profileImage"
 											height="200"
 											width="200"
 											class="mt-2 mx-auto"
@@ -63,10 +63,10 @@
 									</v-col>
 
 									<!-- New Profile Image Preview -->
-									<v-col cols="5" class="text-center" v-if="newProfileImage">
+									<v-col cols="5" class="text-center" v-if="user.profileImage">
 										<p class="font-weight-bold">New</p>
 										<img
-											:src="newProfileImage"
+											:src="user.profileImage"
 											height="200"
 											width="200"
 											class="mt-2 mx-auto"
@@ -206,7 +206,7 @@
 					username: "",
 					email: "",
 					bio: "This is my bio!",
-					profileImage: "/images/UnknownPerson.png",
+					profileImage: null,
 					spotifyConnected: false,
 				},
 				originalUser: {
@@ -312,6 +312,7 @@
 
 				if (this.user.profileImage !== this.originalUser.profileImage) {
 					console.log("pfp has changed!");
+					this.originalUser.profileImage = this.user.profileImage;
 				}
 
 				if(!this.errorUpdating) {
@@ -334,7 +335,7 @@
 
 				const reader = new FileReader();
 				reader.onload = (e) => {
-					this.newProfileImage = e.target.result; // Update new profile image preview
+					this.user.profileImage = e.target.result; // Update new profile image preview
 				};
 				reader.readAsDataURL(file);
 			},
