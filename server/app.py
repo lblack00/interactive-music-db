@@ -1254,7 +1254,9 @@ def get_user_music_list(username, item_type):
         user_result = db.read_data(user_query, (username,))
 
         if not user_result:
+            print("testing")
             return jsonify({'error': 'User not found'}), 404
+            
 
         user_id = user_result[0]['id']
 
