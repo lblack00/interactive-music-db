@@ -113,7 +113,7 @@
 <style scoped>
 	.filler {
 		/* Top if fixed, bottom if not */
-		height: 6rem; 
+		height: 4rem; 
 		/* height: 0rem; */
 	}
 
@@ -154,13 +154,6 @@
 		padding: 0.5rem 1rem;
 		border-radius: 50px;
 		transition: background-color 0.3s ease;
-
-		/* Add thin black outline */
-	text-shadow: 
-  -0.5px -0.5px 0 #000,  
-   0.5px -0.5px 0 #000,
-  -0.5px  0.5px 0 #000,
-   0.5px  0.5px 0 #000;
 	}
 
 	.navbar-links a:hover {

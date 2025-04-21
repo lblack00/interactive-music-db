@@ -74,9 +74,13 @@
 															<v-icon left>mdi-delete</v-icon>
 															Delete
 														</v-btn>
-														<v-btn color="primary" text @click="markAsResolved(post.reportId)">
+														<v-btn v-if="!post.resolved" color="primary" text @click="markAsResolved(post.reportId, true)">
 															<v-icon left>mdi-check</v-icon>
 															Mark Resolved
+														</v-btn>
+														<v-btn v-else color="primary" text @click="markAsResolved(post.reportId, false)">
+															<v-icon left>mdi-undo</v-icon>
+															Mark Unresolved
 														</v-btn>
 													</v-card-actions>
 												</v-card>
@@ -184,6 +188,25 @@
 			},
 			deletePost(reportId) {
 				this.data.reports = this.data.reports.filter((report) => report.id !== reportId);
+			},
+			async markAsResolved(reportId, resolveToggle) {
+				try {
+					const path = `http://localhost:5001/admin/reports/resolve/${reportId}`;
+					const response = await axios.put(path, {
+						isResolved: resolveToggle
+					}, {
+						withCredentials: true
+					});
+
+					const reportIndex = this.data.reports.findIndex((report) => report.id === reportId);
+					if (reportIndex !== -1) {
+						const updatedReport = { ...this.data.reports[reportIndex], resolved: resolveToggle };
+
+						this.data.reports.splice(reportIndex, 1, updatedReport);
+					}
+				} catch (error) {
+					console.error("Error resolving report:", error);
+				}
 			},
 			async getReports() {
 				try {
