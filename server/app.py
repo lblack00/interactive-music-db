@@ -652,6 +652,23 @@ class forum:
         }
 
     @staticmethod
+    def resolve_report(report_id, is_resolved):
+        query = """
+            UPDATE forum_reports fr
+            SET resolved = %s, resolved_by = %s, resolved_at = CURRENT_TIMESTAMP
+            WHERE id = %s;
+        """
+        return forum.db.mutate_data(query, (is_resolved, session['user']['id'], report_id))
+
+    @staticmethod
+    def delete_report_reply():
+        pass
+
+    @staticmethod
+    def delete_report_thread():
+        pass
+
+    @staticmethod
     def add_reference(item_type, item_id, reference_type, reference_id, name):
         query = """
             INSERT INTO forum_references(item_type, item_id, reference_type, reference_id, created_at, name)
@@ -1687,6 +1704,23 @@ def get_forum_reports():
         if forum_reports is not None:
             return jsonify(forum_reports), 200
         return jsonify({"error": "Database error fetching reports"}), 500
+    except Exception as e:
+        print(f"Error fetching reports: {e}")
+        return jsonify({"error": "Internal server error", "message": str(e)}), 500
+
+@app.route('/admin/reports/resolve/<int:report_id>', methods=['PUT'])
+@admin_required
+def resolve_forum_report(report_id):
+    try:
+        data = request.get_json()
+        # content = data.get('content')
+        is_resolved = data.get('isResolved')
+
+        if is_resolved is not None:
+            forum.resolve_report(report_id, is_resolved)
+
+            return jsonify({"success": "Updated report as resolved"}), 200
+        return jsonify({"error": "Database error resolving report"}), 500
     except Exception as e:
         print(f"Error fetching reports: {e}")
         return jsonify({"error": "Internal server error", "message": str(e)}), 500
