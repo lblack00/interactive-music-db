@@ -266,6 +266,17 @@
 						this.originalUser.username = response.data.user.username;
 						this.originalUser.id = response.data.user.id;
 						this.originalUser.email = response.data.user.email;
+						
+						const imageUrl = `http://localhost:5001/static/pfp/${response.data.user.id}profilepic.png`;
+
+						try {
+							// Check if the image exists
+							await axios.get(imageUrl);
+							this.originalUser.profileImage = imageUrl;
+						} catch {
+							// If not found, use default
+							this.originalUser.profileImage = "/images/UnknownPerson.png";
+						}
 					}
 					else {
 						// Redirect to 404
@@ -311,8 +322,24 @@
 				}
 
 				if (this.user.profileImage !== this.originalUser.profileImage) {
-					console.log("pfp has changed!");
-					this.originalUser.profileImage = this.user.profileImage;
+					try {
+						const formData = new FormData();
+						formData.append("image", this.profileFile); // file selected in handleFileUpload
+
+						await axios.post("http://localhost:5001/update-user-pfp", formData, {
+							withCredentials: true,
+							headers: {
+								"Content-Type": "multipart/form-data",
+							},
+						});
+
+						this.originalUser.profileImage = this.user.profileImage;
+						console.log("Profile picture uploaded successfully!");
+					} catch (error) {
+						this.errorUpdating = true;
+						console.error("Error uploading profile image:", error);
+						alert("Error uploading profile image");
+					}
 				}
 
 				if(!this.errorUpdating) {
@@ -321,21 +348,21 @@
 			},
 
 			handleFileUpload(event) {
-				const file = event.target.files[0]; // Get the selected file
+				const file = event.target.files[0];
 
-				if (!file) return; // If no file is selected, do nothing
+				if (!file) return;
 
 				if (file.size > 1024 * 1024) {
-					// Check if file is larger than 1MB
 					this.profileFileError = "File size must be less than 1MB.";
 					return;
 				}
 
-				this.profileFileError = ""; // Clear any previous errors
+				this.profileFileError = "";
+				this.profileFile = file; // <-- Save the file for later upload
 
 				const reader = new FileReader();
 				reader.onload = (e) => {
-					this.user.profileImage = e.target.result; // Update new profile image preview
+					this.user.profileImage = e.target.result; // For preview
 				};
 				reader.readAsDataURL(file);
 			},

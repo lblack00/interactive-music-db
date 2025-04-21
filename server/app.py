@@ -12,10 +12,12 @@ from flask import Flask, jsonify, request, session, make_response
 from flask_mail import Mail, Message
 from flask_cors import CORS
 from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.utils import secure_filename
 from flask_jwt_extended import JWTManager, jwt_required, get_jwt_identity, create_access_token
 from datetime import timedelta, datetime
 from flask_cors import cross_origin
 from functools import wraps
+from PIL import Image
 
 app = Flask(__name__)
 app.secret_key = os.urandom(16)
@@ -1348,6 +1350,47 @@ def update_username():
     except Exception as e:
         print(f"Error updating username: {e}")
         return jsonify({'error': 'Server error'}), 500
+    
+# Written by Matthew Stenvold
+@app.route('/update-user-pfp', methods=['POST'])
+def update_user_pfp():
+    if 'user' not in session:
+        return jsonify({'error': 'Not logged in'}), 401
+
+    user_id = session['user']['id']
+    image_file = request.files.get('image')
+
+    if not image_file:
+        return jsonify({'error': 'No file uploaded'}), 400
+
+    original_filename = secure_filename(image_file.filename)
+    _, ext = os.path.splitext(original_filename)
+    
+    # Check if the uploaded file is an image and convert to PNG if not
+    if ext.lower() not in ['.jpg', '.jpeg', '.png']:
+        return jsonify({'error': 'Invalid file type. Only JPG, JPEG, and PNG are allowed.'}), 400
+
+    # Force the file to be saved as .png
+    filename = f"{user_id}profilepic.png"
+    upload_path = os.path.join('static', 'pfp', filename)
+
+    os.makedirs(os.path.dirname(upload_path), exist_ok=True)
+
+    # If the image isn't already a PNG, convert it
+    if ext.lower() != '.png':
+        try:
+            # Open the image using Pillow
+            image = Image.open(image_file)
+            # Save it as PNG
+            image.save(upload_path, 'PNG')
+
+        except Exception as e:
+            return jsonify({'error': f'Error processing image: {str(e)}'}), 500
+    else:
+        # If it's already PNG, just save it
+        image_file.save(upload_path)
+
+    return jsonify({'success': True, 'filename': filename})
 
 # Written by Lucas Black
 @app.route('/forum/threads', methods=['GET'])
