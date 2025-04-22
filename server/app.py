@@ -1451,11 +1451,60 @@ def get_profile_image_path(user_id):
         # If the image doesn't exist, send unknown user pfp
         return "/static/pfp/unknownPFP.png"
     
+# Written by Matthew Stenvold
 @app.route('/get-profile-image/<int:user_id>', methods=['GET'])
 def get_profile_image(user_id):
     image_url = get_profile_image_path(user_id)
     print(image_url)
     return jsonify({'image_url': image_url})
+
+# Written by Matthew Stenvold
+@app.route('/get-bio/<int:user_id>', methods=['GET'])
+def get_bio(user_id):
+    try:
+        db = db_utils(dbname='users_db', user='postgres')
+
+        query = "SELECT bio FROM users WHERE id = %s;"
+        result = db.read_data(query, (user_id,))
+
+        if result:
+            return jsonify({'bio': result[0]['bio']}), 200
+        else:
+            return jsonify({'error': 'User not found'}), 404
+
+    except Exception as e:
+        print(f"Error fetching bio: {e}")
+        return jsonify({'error': 'Server error'}), 500
+
+# Written by Matthew Stenvold
+@app.route('/update-bio', methods=['POST'])
+def update_bio():
+    if 'user' not in session:
+        return jsonify({'error': 'Not logged in'}), 401
+
+    user_id = session['user']['id']
+    new_bio = request.json.get('bio')
+
+    # Validate bio length
+    if new_bio and len(new_bio) > 500:
+        return jsonify({'error': 'Bio cannot be longer than 500 characters'}), 400
+
+    try:
+        db = db_utils(dbname='users_db', user='postgres')
+
+        update_query = """
+            UPDATE users
+            SET bio = %s
+            WHERE id = %s
+        """
+
+        db.mutate_data(update_query, (new_bio, user_id))
+
+        return jsonify({'success': True, 'bio': new_bio}), 200
+
+    except Exception as e:
+        print(f"Error updating bio: {e}")
+        return jsonify({'error': 'Server error'}), 500
 
 # Written by Lucas Black
 @app.route('/forum/threads', methods=['GET'])

@@ -35,7 +35,7 @@
 								></v-text-field>
 								<v-textarea
 									v-model="user.bio"
-									placeholder="It seems you have nothing written, Tell us something about yourself..."
+									placeholder="It seems you have nothing written. Tell us something about yourself..."
 									label="Bio"
 									outlined
 									rows="3"
@@ -211,9 +211,7 @@
 					spotifyConnected: false,
 				},
 				originalUser: {
-					id: null,
 					username: null,
-					email: null,
 					bio: null,
 					profileImage: null,
 				},
@@ -265,14 +263,15 @@
 						this.user.email = response.data.user.email;
 
 						this.originalUser.username = response.data.user.username;
-						this.originalUser.id = response.data.user.id;
-						this.originalUser.email = response.data.user.email;
 						
 						const imageResponse = await axios.get(
 							`http://localhost:5001/get-profile-image/${this.user.id}`
 						);
     				this.originalUser.profileImage = `http://localhost:5001${imageResponse.data.image_url}`;
-						// console.log(imageUrl);
+						
+						const bioResponse = await axios.get(`http://localhost:5001/get-bio/${this.user.id}`);
+						this.user.bio = bioResponse.data.bio;
+						this.originalUser.bio = this.user.bio;
 					}
 					else {
 						// Redirect to 404
@@ -314,7 +313,19 @@
 				}
 
 				if (this.user.bio !== this.originalUser.bio) {
-					console.log("Bio has changed!");
+					try {
+						const response = await axios.post(
+							"http://localhost:5001/update-bio",
+							{ bio: this.user.bio },
+							{ withCredentials: true }
+						);
+
+						console.log("Bio updated successfully:", response.data.bio);
+						this.originalUser.bio = this.user.bio;
+					} catch (error) {
+						console.error("Error updating bio:", error);
+						alert("There was an error updating your bio.");
+					}
 				}
 
 				if (this.user.profileImage !== this.originalUser.profileImage && this.user.profileImage) {
