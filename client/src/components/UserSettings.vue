@@ -35,11 +35,12 @@
 								></v-text-field>
 								<v-textarea
 									v-model="user.bio"
+									placeholder="It seems you have nothing written, Tell us something about yourself..."
 									label="Bio"
 									outlined
 									rows="3"
-									:counter="300"
-  								maxlength="300"
+									:counter="500"
+  								maxlength="500"
 								></v-textarea>
 
 								<!-- Profile Picture Section -->
@@ -203,18 +204,18 @@
 				loggedIn: false,
 				user: {
 					id: null,
-					username: "",
-					email: "",
-					bio: "This is my bio!",
+					username: null,
+					email: null,
+					bio: null,
 					profileImage: null,
 					spotifyConnected: false,
 				},
 				originalUser: {
 					id: null,
-					username: "",
-					email: "",
-					bio: "This is my bio!",
-					profileImage: "/images/UnknownPerson.png",
+					username: null,
+					email: null,
+					bio: null,
+					profileImage: null,
 				},
 				newProfileImage: null, // To store the preview of the new image
 				profileFileError: "",
@@ -267,16 +268,11 @@
 						this.originalUser.id = response.data.user.id;
 						this.originalUser.email = response.data.user.email;
 						
-						const imageUrl = `http://localhost:5001/static/pfp/${response.data.user.id}profilepic.png`;
-
-						try {
-							// Check if the image exists
-							await axios.get(imageUrl);
-							this.originalUser.profileImage = imageUrl;
-						} catch {
-							// If not found, use default
-							this.originalUser.profileImage = "/images/UnknownPerson.png";
-						}
+						const imageResponse = await axios.get(
+							`http://localhost:5001/get-profile-image/${this.user.id}`
+						);
+    				this.originalUser.profileImage = `http://localhost:5001${imageResponse.data.image_url}`;
+						// console.log(imageUrl);
 					}
 					else {
 						// Redirect to 404
@@ -321,7 +317,7 @@
 					console.log("Bio has changed!");
 				}
 
-				if (this.user.profileImage !== this.originalUser.profileImage) {
+				if (this.user.profileImage !== this.originalUser.profileImage && this.user.profileImage) {
 					try {
 						const formData = new FormData();
 						formData.append("image", this.profileFile); // file selected in handleFileUpload
@@ -334,6 +330,7 @@
 						});
 
 						this.originalUser.profileImage = this.user.profileImage;
+						this.user.profileImage = null;
 						console.log("Profile picture uploaded successfully!");
 					} catch (error) {
 						this.errorUpdating = true;
@@ -345,6 +342,7 @@
 				if(!this.errorUpdating) {
 					alert("Profile updated successfully!");
 				}
+				this.errorUpdating = false;
 			},
 
 			handleFileUpload(event) {

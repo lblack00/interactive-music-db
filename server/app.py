@@ -1392,6 +1392,25 @@ def update_user_pfp():
 
     return jsonify({'success': True, 'filename': filename})
 
+# Written by Matthew Stenvold
+def get_profile_image_path(user_id):
+    filename = f"{user_id}profilepic.png"
+    image_path = os.path.join("static", "pfp", filename)
+
+    if os.path.exists(image_path):
+        
+        return f"/static/pfp/{filename}"
+        
+    else:
+        # If the image doesn't exist, send unknown user pfp
+        return "/static/pfp/unknownPFP.png"
+    
+@app.route('/get-profile-image/<int:user_id>', methods=['GET'])
+def get_profile_image(user_id):
+    image_url = get_profile_image_path(user_id)
+    print(image_url)
+    return jsonify({'image_url': image_url})
+
 # Written by Lucas Black
 @app.route('/forum/threads', methods=['GET'])
 def get_all_threads():

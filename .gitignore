@@ -8,4 +8,4 @@
 # Don't upload user profile pictures
 server/static/pfp/*
 # But allow the .gitkeep file to be tracked (if present)
-!server/static/pfp/.gitkeep
+!server/static/pfp/unknownPFP.png
