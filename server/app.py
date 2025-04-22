@@ -642,14 +642,60 @@ class forum:
         content = []
         for report in reports:
             if report['item_type'] == 'thread':
-                content.append(forum.get_thread(report['item_id'])[0])
+                thread_query = """
+                    SELECT 
+                        t.id,
+                        t.title,
+                        t.content,
+                        t.category,
+                        t.created_at,
+                        t.updated_at,
+                        t.is_deleted,
+                        u.id as author_id, 
+                        u.username as author_name
+                    FROM forum_threads t
+                    JOIN users u ON t.user_id = u.id
+                    WHERE t.id = %s;
+                """
+                thread_content = forum.db.read_data(thread_query, (report['item_id'],))
+                if thread_content and len(thread_content) > 0:
+                    content.append(thread_content[0])
             else:
-                content.append(forum.get_thread_reply(report['item_id'])[0])
+                reply_content = forum.get_thread_reply(report['item_id'])
+                if reply_content and len(reply_content) > 0:
+                    content.append(reply_content[0])
 
         return {
             'reports': reports,
             'content': content
         }
+
+    @staticmethod
+    def resolve_report(report_id, is_resolved):
+        query = """
+            UPDATE forum_reports fr
+            SET resolved = %s, resolved_by = %s, resolved_at = CURRENT_TIMESTAMP
+            WHERE id = %s;
+        """
+        return forum.db.mutate_data(query, (is_resolved, session['user']['id'], report_id))
+
+    @staticmethod
+    def delete_report_reply(reply_id, is_deleted):
+        query = """
+            UPDATE forum_replies
+            SET is_deleted = %s
+            WHERE id = %s;
+        """
+        return forum.db.mutate_data(query, (is_deleted, reply_id))
+
+    @staticmethod
+    def delete_report_thread(thread_id, is_deleted):
+        query = """
+            UPDATE forum_threads
+            SET is_deleted = %s
+            WHERE id = %s;
+        """
+        return forum.db.mutate_data(query, (is_deleted, thread_id))
 
     @staticmethod
     def add_reference(item_type, item_id, reference_type, reference_id, name):
@@ -1706,6 +1752,54 @@ def get_forum_reports():
         if forum_reports is not None:
             return jsonify(forum_reports), 200
         return jsonify({"error": "Database error fetching reports"}), 500
+    except Exception as e:
+        print(f"Error fetching reports: {e}")
+        return jsonify({"error": "Internal server error", "message": str(e)}), 500
+
+@app.route('/admin/reports/resolve/<int:report_id>', methods=['PUT'])
+@admin_required
+def resolve_forum_report(report_id):
+    try:
+        data = request.get_json()
+        is_resolved = data.get('isResolved')
+
+        if is_resolved is not None:
+            forum.resolve_report(report_id, is_resolved)
+
+            return jsonify({"success": "Updated report as resolved"}), 200
+        return jsonify({"error": "Database error resolving report"}), 500
+    except Exception as e:
+        print(f"Error fetching reports: {e}")
+        return jsonify({"error": "Internal server error", "message": str(e)}), 500
+
+@app.route('/admin/reports/delete-reply/<int:reply_id>', methods=['PUT'])
+@admin_required
+def delete_forum_report_reply(reply_id):
+    try:
+        data = request.get_json()
+        is_deleted = data.get('isDeleted')
+
+        if is_deleted is not None:
+            forum.delete_report_reply(reply_id, is_deleted)
+
+            return jsonify({"success": "Updated report reply as deleted"}), 200
+        return jsonify({"error": "Database error deleting reply"}), 500
+    except Exception as e:
+        print(f"Error fetching reports: {e}")
+        return jsonify({"error": "Internal server error", "message": str(e)}), 500
+
+@app.route('/admin/reports/delete-thread/<int:thread_id>', methods=['PUT'])
+@admin_required
+def delete_forum_report_thread(thread_id):
+    try:
+        data = request.get_json()
+        is_deleted = data.get('isDeleted')
+
+        if is_deleted is not None:
+            forum.delete_report_thread(thread_id, is_deleted)
+
+            return jsonify({"success": "Updated report thread as deleted"}), 200
+        return jsonify({"error": "Database error deleting thread"}), 500
     except Exception as e:
         print(f"Error fetching reports: {e}")
         return jsonify({"error": "Internal server error", "message": str(e)}), 500
