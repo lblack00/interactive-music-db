@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from "vue-router";
 import Release from "../components/Release.vue";
 import Master from "../components/Master.vue";
 import NotFound from "../components/NotFound.vue";
+import NotAuthorized from "../components/NotAuthorized.vue";
 import SignUp from "../components/SignUp.vue";
 import Login from "../components/Login.vue";
 import Home from "../components/Home.vue";
@@ -36,6 +37,11 @@ const router = createRouter({
 			path: "/:pathMatch(.*)*",
 			name: "NotFound",
 			component: NotFound,
+		},
+		{
+			path: "/unauthorized",
+			name: "NotAuthorized",
+			component: NotAuthorized,
 		},
 		{
 			path: "/",
