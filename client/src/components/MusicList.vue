@@ -180,8 +180,122 @@
 								</v-list>
 							</v-card>
 
+							<v-row>
+								<v-col v-for="(playlist, index) in spotifyPlaylists" :key="'spotify-' + index" cols="12" sm="6" md="4">
+									<v-card class="mb-4 playlist-card">
+										<v-img
+											v-if="playlist.images && playlist.images.length > 0"
+											:src="playlist.images[0].url"
+											height="150"
+											cover
+										>
+											<template v-slot:placeholder>
+												<v-row class="fill-height ma-0" align="center" justify="center">
+													<v-progress-circular indeterminate color="grey-lighten-5"></v-progress-circular>
+												</v-row>
+											</template>
+										</v-img>
+										<v-card-title class="text-truncate">{{ playlist.name }}</v-card-title>
+										<v-card-subtitle>{{ playlist.tracks.total }} tracks</v-card-subtitle>
+										<v-card-text class="text-truncate">
+											{{ playlist.description || 'No description available' }}
+										</v-card-text>
+										<v-card-actions>
+											<v-btn
+												color="primary"
+												variant="elevated"
+												@click="playPlaylist(playlist)"
+											>
+												<v-icon class="mr-2">mdi-play</v-icon>
+												Play
+											</v-btn>
+											<v-spacer></v-spacer>
+											<v-btn
+												color="success"
+												variant="text"
+												:href="playlist.external_urls.spotify"
+												target="_blank"
+											>
+												<v-icon small>mdi-spotify</v-icon>
+											</v-btn>
+											<v-btn icon @click="showPlaylistDetails(playlist)">
+												<v-icon>mdi-dots-vertical</v-icon>
+											</v-btn>
+										</v-card-actions>
+									</v-card>
+								</v-col>
+							</v-row>
+
+							<v-dialog v-model="playlistDialog" max-width="600px">
+								<v-card v-if="selectedPlaylist">
+									<v-img
+										v-if="selectedPlaylist.images && selectedPlaylist.images.length > 0"
+										:src="selectedPlaylist.images[0].url"
+										height="200"
+										cover
+									></v-img>
+									<v-card-title>{{ selectedPlaylist.name }}</v-card-title>
+									<v-card-subtitle>
+										By {{ selectedPlaylist.owner.display_name }} - {{ selectedPlaylist.tracks.total }} tracks
+									</v-card-subtitle>
+									<v-card-text>
+										<p>{{ selectedPlaylist.description || 'No description available' }}</p>
+										<p class="mt-4">
+											<strong>Public:</strong> {{ selectedPlaylist.public ? 'Yes' : 'No' }}
+										</p>
+										<p>
+											<strong>Collaborative:</strong> {{ selectedPlaylist.collaborative ? 'Yes' : 'No' }}
+										</p>
+									</v-card-text>
+									<v-card-actions>
+										<v-btn
+											color="primary"
+											variant="elevated"
+											@click="playPlaylistFromDialog()"
+										>
+											<v-icon class="mr-2">mdi-play</v-icon>
+											Play
+										</v-btn>
+										<v-btn
+											color="success"
+											variant="text"
+											:href="selectedPlaylist.external_urls.spotify"
+											target="_blank"
+										>
+											<v-icon left>mdi-spotify</v-icon>
+											Open in Spotify
+										</v-btn>
+										<v-spacer></v-spacer>
+										<v-btn color="grey" variant="text" @click="playlistDialog = false">
+											Close
+										</v-btn>
+									</v-card-actions>
+								</v-card>
+							</v-dialog>
+
+							<v-card v-if="currentPlaylistId" class="pa-4 mb-4 now-playing-card">
+								<v-card-title class="d-flex align-center">
+									<span>Now Playing: {{ currentPlaylist ? currentPlaylist.name : 'Unknown Playlist' }}</span>
+									<v-spacer></v-spacer>
+									<v-btn icon @click="closePlayer">
+										<v-icon>mdi-close</v-icon>
+									</v-btn>
+								</v-card-title>
+								<v-divider></v-divider>
+								<div class="spotify-player-container">
+									<iframe 
+										:src="`https://open.spotify.com/embed/playlist/${currentPlaylistId}`"
+										width="100%" 
+										height="450" 
+										frameborder="0" 
+										allowtransparency="true" 
+										allow="encrypted-media">
+									</iframe>
+								</div>
+							</v-card>
+
 							<!-- Playlist Cards -->
-							<v-card
+							<!-- <v-card
 								v-for="(playlist, index) in playlists"
 								:key="'playlist-' + index"
 								class="pa-4 mb-4"
@@ -198,7 +312,7 @@
 										</v-list-item-content>
 									</v-list-item>
 								</v-list>
-							</v-card>
+							</v-card> -->
 						</v-col>
 					</v-row>
 				</v-container>
@@ -224,6 +338,11 @@
 				userSongs: [],
 				userArtists: [],
 				playlists: [],
+				spotifyPlaylists: [],
+				playlistDialog: false,
+				selectedPlaylist: null,
+				currentPlaylistId: null,
+				currentPlaylist: null,
 				userNotFound: false,
 			};
 		},
@@ -245,6 +364,14 @@
 		async created() {
 			await this.fetchMusicList();
 			await this.fetchSpotifyPlaylists();
+
+			const savedPlaylistId = localStorage.getItem('lastPlayedPlaylistId');
+			const savedPlaylistData = localStorage.getItem('lastPlayedPlaylistData');
+
+			if (savedPlaylistId && savedPlaylistData) {
+				this.currentPlaylistId = savedPlaylistId;
+				this.currentPlaylist = JSON.parse(savedPlaylistData);
+			}
 		},
 		methods: {
 			async fetchMusicList() {
@@ -280,11 +407,44 @@
 						withCredentials: true
 					});
 
-					console.log(response);
+					if (response.data.items) {
+						this.spotifyPlaylists = response.data.items;
+					}
 				} catch (error) {
 					console.error("Error fetching Spotify playlists:", error);
 				}
-			}
+			},
+			showPlaylistDetails(playlist) {
+				this.selectedPlaylist = playlist;
+				this.playlistDialog = true;
+			},
+			playPlaylist(playlist) {
+				this.currentPlaylist = playlist;
+				this.currentPlaylistId = playlist.id;
+
+				localStorage.setItem('lastPlayedPlaylistId', playlist.id);
+				localStorage.setItem('lastPlayedPlaylistData', JSON.stringify(playlist));
+
+				this.playlistDialog = false;
+				
+				this.$nextTick(() => {
+					const playerElement = document.querySelector('.now-playing-card');
+					if (playerElement) {
+						playerElement.scrollIntoView({ behavior: 'smooth' });
+					}
+				});
+			},
+			playPlaylistFromDialog() {
+				if (this.selectedPlaylist) {
+					this.playPlaylist(this.selectedPlaylist);
+				}
+			},
+			closePlayer() {
+				this.currentPlaylistId = null;
+				this.currentPlaylist = null;
+				localStorage.removeItem('lastPlayedPlaylistId');
+				localStorage.removeItem('lastPlayedPlaylistData');
+			},
 		},
 	};
 </script>
