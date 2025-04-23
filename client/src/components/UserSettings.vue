@@ -220,7 +220,7 @@
 
 				errorUpdating: false,
 				clientId: import.meta.env.VITE_SPOTIFY_CLIENT_ID,
-				redirectUri: "http://localhost:5173/",
+				redirectUri: "http://localhost:5173/user-settings",
 				colorblindMode: localStorage.getItem("colorblindMode") || "Default",
 				enablePatterns: localStorage.getItem("enablePatterns") === "true",
 				showLabels: localStorage.getItem("showLabels") === "true",
@@ -272,6 +272,20 @@
 						const bioResponse = await axios.get(`http://localhost:5001/get-bio/${this.user.id}`);
 						this.user.bio = bioResponse.data.bio;
 						this.originalUser.bio = this.user.bio;
+
+						try {
+							const spotifyResponse = await axios.get(
+								`http://localhost:5001/get-spotify-status`,
+								{ withCredentials: true }
+							);
+							this.user.spotifyConnected = spotifyResponse.data.connected;
+
+							if (this.user.spotifyConnected &&
+								localStorage.getItem("spotify_access_token")) {
+
+								this.accessToken = localStorage.getItem("spotify_access_token");
+							}
+						} catch (error) {}
 					}
 					else {
 						// Redirect to 404
@@ -486,8 +500,23 @@
 						this.accessToken = data.access_token;
 						localStorage.setItem("spotify_access_token", data.access_token);
 						localStorage.setItem("spotify_refresh_token", data.refresh_token);
-						this.user.spotifyConnected = true;
-						alert("Spotify connected successfully!");
+
+						try {
+							await axios.post(
+								"http://localhost:5001/update-spotify-tokens",
+								{ 
+									access_token: data.access_token,
+									refresh_token: data.refresh_token,
+									expires_in: data.expires_in,
+									connected: true
+								},
+								{ withCredentials: true }
+							);
+							alert("Spotify connected successfully!");
+							this.user.spotifyConnected = true;
+						} catch (error) {
+							console.error("Error saving Spotify tokens:", error);
+						}
 					} else {
 						alert("Failed to retrieve access token");
 					}
@@ -547,7 +576,17 @@
 					.replace(/\//g, "_")
 					.replace(/=+$/, "");
 			},
-			disconnectSpotify() {
+			async disconnectSpotify() {
+				try {
+					await axios.post(
+						"http://localhost:5001/update-spotify-tokens",
+						{ connected: false },
+						{ withCredentials: true }
+					);
+				} catch (error) {
+					console.error("Error saving Spotify tokens:", error);
+				}
+
 				this.user.spotifyConnected = false;
 				this.accessToken = "";
 				localStorage.removeItem("spotify_access_token");

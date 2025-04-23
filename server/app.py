@@ -1295,6 +1295,69 @@ def get_upcoming_releases():
         print(f"Error fetching releases: {e}")
         return jsonify({'error': str(e)}), 500
 
+@app.route('/update-spotify-tokens', methods=['POST'])
+def save_spotify_tokens():
+    if 'user' not in session:
+        return jsonify({"error": "Not authenticated"}), 401
+
+    data = request.get_json()
+    if not data:
+        return jsonify({"error": "No data provided"}), 400
+
+    access_token = data.get('access_token')
+    refresh_token = data.get('refresh_token')
+    expires_in = data.get('expires_in')
+    connected = data.get('connected')
+
+    if 'user' in session and not 'spotify' in session['user']:
+        session['user']['spotify'] = {}
+
+    if connected:
+        session['user']['spotify']['access_token'] = access_token
+        session['user']['spotify']['refresh_token'] = refresh_token
+        session['user']['spotify']['expires_in'] = expires_in
+    session['user']['spotify']['connected'] = connected
+    session.modified = True
+
+    return jsonify({"success": "Save Spotify OAuth tokens"}), 200
+
+@app.route('/get-spotify-status', methods=['GET'])
+@cross_origin(supports_credentials=True)
+def get_spotify_status():
+    if 'user' in session and 'spotify' in session['user']:
+        return jsonify({"connected": session['user']['spotify']['connected']}), 200
+    return jsonify({"error": "Error getting Spotify status"}), 204
+
+@app.route('/get-spotify-playlists', methods=['GET'])
+@cross_origin(supports_credentials=True)
+def get_spotify_playlists():
+    if 'user' not in session or 'spotify' not in session['user'] or \
+    not session['user']['spotify'].get('connected'):
+        return jsonify({"error": "Spotify not connected"}), 401
+
+    access_token = session['user']['spotify'].get('access_token')
+    if not access_token:
+        return jsonify({"error": "No access token found"}), 401
+
+    try:
+        response = requests.get(
+            'https://api.spotify.com/v1/me/playlists',
+            headers={
+                'Authorization': f'Bearer {access_token}',
+                'Content-Type': 'application/json'
+            },
+            params={'limit': 50}
+        )
+
+        if response.status_code == 401:
+            return jsonify({"error": "Spotify token expired"}), 401
+
+        return jsonify(response.json()), 200
+    
+    except Exception as e:
+        print(f"Error fetching Spotify playlists: {e}")
+        return jsonify({"error": f"Error fetching playlists: {str(e)}"}), 500
+
 # Written by Matthew Stenvold
 @app.route('/api/musiclist/<string:username>/<string:item_type>', methods=['GET'])
 def get_user_music_list(username, item_type):

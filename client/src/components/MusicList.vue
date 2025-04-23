@@ -244,6 +244,7 @@
 		},
 		async created() {
 			await this.fetchMusicList();
+			await this.fetchSpotifyPlaylists();
 		},
 		methods: {
 			async fetchMusicList() {
@@ -272,6 +273,18 @@
 					this.userNotFound = true;
 				}
 			},
+			async fetchSpotifyPlaylists() {
+				try {
+					const path = 'http://localhost:5001/get-spotify-playlists'
+					const response = await axios.get(path, {
+						withCredentials: true
+					});
+
+					console.log(response);
+				} catch (error) {
+					console.error("Error fetching Spotify playlists:", error);
+				}
+			}
 		},
 	};
 </script>

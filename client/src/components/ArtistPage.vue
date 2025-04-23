@@ -191,9 +191,6 @@
 
 			getDiscographyImage(masterId) {
 				const image = this.discography_images[masterId];
-
-				console.log(this.discography_images);
-				console.log(`Looking for image with master ID: ${masterId}, found: ${image ? 'yes' : 'no'}`);
 				return image || "/images/UnknownSong.png";
 			}
 		},
