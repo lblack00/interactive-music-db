@@ -320,7 +320,11 @@
 					console.error("Error fetching reports:", error);
 					this.loading = false;
 
-					if (error.response.status === 403) {
+					if (error.response) {
+						if (error.response.status === 403) {
+							this.$router.push("/unauthorized");
+						}
+					} else if (error.request) {
 						this.$router.push("/unauthorized");
 					}
 				}

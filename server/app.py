@@ -11,6 +11,7 @@ import secrets
 from flask import Flask, jsonify, request, session, make_response
 from flask_mail import Mail, Message
 from flask_cors import CORS
+from flask_caching import Cache
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 from flask_jwt_extended import JWTManager, jwt_required, get_jwt_identity, create_access_token
@@ -65,6 +66,7 @@ token_file = "discogs_auth.json"
 
 authenticate_discogs_API = True
 discogs_client_instance = None
+cache = Cache(app, config={'CACHE_TYPE': 'simple'})
 
 # source: https://github.com/jesseward/discogs-oauth-example
 def save_tokens(token, secret):
@@ -819,6 +821,7 @@ def get_artist():
         return jsonify(data)
 
 @app.route('/artist-discography-images', methods=['GET'])
+@cache.cached(timeout=3600, query_string=True)
 def get_artist_discography_images():
     if request.method == 'GET':
         artist_id = int(request.args.get('artist_id'))
@@ -842,6 +845,7 @@ def get_artist_discography_images():
         return jsonify(data)
 
 @app.route('/get-master-image', methods=['GET'])
+@cache.cached(timeout=3600, query_string=True)
 def get_master_image():
     if request.method == 'GET':
         master_id = int(request.args.get('master_id'))
@@ -856,6 +860,7 @@ def get_master_image():
         return jsonify({})
 
 @app.route('/get-artist-image', methods=['GET'])
+@cache.cached(timeout=3600, query_string=True)
 def get_artist_image():
     if request.method == 'GET':
         artist_id = int(request.args.get('artist_id'))
