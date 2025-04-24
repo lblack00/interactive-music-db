@@ -45,7 +45,7 @@
 										<div class="d-flex align-center mb-4">
 											<router-link :to="`/user/${thread.author.name}`" class="text-decoration-none">
 												<img
-													:src="`http://localhost:5001/static/pfp/${thread.author.id}profilepic.png`"
+													:src="`http://localhost:5001${thread.author.pfp}`"
 													alt="Profile Image"
 													width="40"
 													height="40"
@@ -219,7 +219,7 @@
 																<!-- Profile Image (Clickable if you want it) -->
 																<router-link :to="`/user/${reply.author.name}`" class="text-decoration-none">
 																	<img
-																		:src="`http://localhost:5001/static/pfp/${reply.author.id}profilepic.png`"
+																		:src="`http://localhost:5001${reply.author.pfp}`"
 																		alt="Profile Image"
 																		width="40"
 																		height="40"

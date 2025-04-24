@@ -343,6 +343,7 @@ export default {
 					replies: thread.replies,
 					link: `/forum/thread/${thread.id}`,
 					author: thread.author.name,
+					userId: thread.author.id,
 					createdAt: new Date(thread.date)
 				}));
 				
@@ -402,6 +403,7 @@ export default {
 					replies: thread.replies,
 					link: `/forum/thread/${thread.id}`,
 					author: thread.author.name,
+					userId: thread.author.id,
 					createdAt: new Date(thread.date)
 				}));
 				
@@ -451,6 +453,7 @@ export default {
 						replies: 0,
 						link: `/forum/thread/${response.data.id}`,
 						author: response.data.author.name,
+						userId: response.data.author.id,
 						createdAt: new Date(response.data.date)
 					};
 

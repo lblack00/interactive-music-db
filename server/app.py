@@ -1691,8 +1691,10 @@ def get_forum_thread(thread_id):
             return jsonify({"error": "Thread not found"}), 404
             
         replies = forum.get_thread_replies(thread_id)
-        references = []
         references = forum.get_thread_references(thread_id)
+        
+        # Retrieve the author profile image URL for the thread author
+        thread_author_image_url = get_profile_image_path(thread_data[0]['author_id'])
         
         # Format the thread data
         formatted_thread = {
@@ -1703,14 +1705,16 @@ def get_forum_thread(thread_id):
             "isEdited": thread_data[0].get('is_edited', False),
             "author": {
                 "id": thread_data[0]['author_id'],
-                "name": thread_data[0]['author_name']
+                "name": thread_data[0]['author_name'],
+                "pfp": thread_author_image_url  # Add the profile image URL
             },
             "replies": [],
             "references": references
         }
         
-        # Format the replies
+        # Format the replies and include the author image URL for each reply author
         for reply in replies:
+            reply_author_image_url = get_profile_image_path(reply['author_id'])
             formatted_reply = {
                 "id": reply['id'],
                 "content": reply['content'],
@@ -1719,7 +1723,8 @@ def get_forum_thread(thread_id):
                 "parentId": reply['parent_id'],
                 "author": {
                     "id": reply['author_id'],
-                    "name": reply['author_name']
+                    "name": reply['author_name'],
+                    "pfp": reply_author_image_url  # Add the profile image URL for the reply author
                 }
             }
             formatted_thread["replies"].append(formatted_reply)
@@ -1729,6 +1734,7 @@ def get_forum_thread(thread_id):
     except Exception as e:
         print(f"Error fetching thread: {e}")
         return jsonify({"error": "Internal server error", "message": str(e)}), 500
+
 
 # Written by Lucas Black
 @app.route('/forum/thread/<int:thread_id>/reply', methods=['POST'])
