@@ -2117,6 +2117,48 @@ def request_password_reset():
         print(f"Password reset error: {str(e)}")
         return jsonify({'error': 'Failed to process reset request'}), 500
     
+@app.route('/reset-password', methods=['POST'])
+def reset_password():
+    data = request.get_json()
+    token = data.get('token')
+    new_password = data.get('password')
+    
+    if not token or not new_password:
+        return jsonify({'error': 'Missing required fields'}), 400
+        
+    try:
+        # Verify token and get user
+        query = """
+            SELECT user_id 
+            FROM password_reset_tokens 
+            WHERE token = %s AND expiry > CURRENT_TIMESTAMP;
+        """
+        result = db_utils(dbname='users_db', user='postgres').read_data(query, (token,))
+        
+        if not result:
+            return jsonify({'error': 'Invalid or expired reset token'}), 400
+            
+        user_id = result[0]['user_id']
+        
+        # Update password
+        hashed_password = generate_password_hash(new_password)
+        update_query = """
+            UPDATE users 
+            SET password = %s 
+            WHERE id = %s;
+        """
+        db_utils(dbname='users_db', user='postgres').mutate_data(update_query, (hashed_password, user_id))
+        
+        # Delete used token
+        delete_query = "DELETE FROM password_reset_tokens WHERE token = %s;"
+        db_utils(dbname='users_db', user='postgres').mutate_data(delete_query, (token,))
+        
+        return jsonify({'message': 'Password reset successful'}), 200
+        
+    except Exception as e:
+        print(f"Password reset error: {str(e)}")
+        return jsonify({'error': 'Failed to reset password'}), 500
+    
 if __name__ == "__main__":
     if authenticate_discogs_API:
         authenticate_discogs()
