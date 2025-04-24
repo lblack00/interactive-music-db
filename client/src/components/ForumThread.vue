@@ -43,10 +43,24 @@
 
 										<!-- display author and date published -->
 										<div class="d-flex align-center mb-4">
+											<router-link :to="`/user/${thread.author.name}`" class="text-decoration-none">
+												<img
+													:src="`http://localhost:5001/static/pfp/${thread.author.id}profilepic.png`"
+													alt="Profile Image"
+													width="40"
+													height="40"
+													class="mr-3 rounded-md"
+												/>
+											</router-link>
+
 											<div>
-												<div class="font-weight-bold">
+												<router-link
+													:to="`/user/${thread.author.name}`"
+													class="font-weight-bold text-body"
+													style="text-decoration: none;"
+												>
 													{{ thread.author.name }}
-												</div>
+												</router-link>
 												<div class="text-caption text--secondary">
 													{{ thread.date }}
 												</div>
@@ -199,14 +213,38 @@
 											<v-list-item-content>
 												<article :aria-labelledby="`reply-author-${reply.id}`">
 													<div class="d-flex justify-space-between">
-														<div>
-															<v-list-item-title :id="`reply-author-${reply.id}`" class="font-weight-bold">
-																{{ reply.author.name }}
-															</v-list-item-title>
-															<v-list-item-subtitle class="text-caption text--secondary">
-																{{ reply.date }}
-															</v-list-item-subtitle>
-														</div>
+														<v-list-item class="pa-0">
+															<!-- Container for image and text, not wrapped in a router-link -->
+															<div class="d-flex align-center">
+																<!-- Profile Image (Clickable if you want it) -->
+																<router-link :to="`/user/${reply.author.name}`" class="text-decoration-none">
+																	<img
+																		:src="`http://localhost:5001/static/pfp/${reply.author.id}profilepic.png`"
+																		alt="Profile Image"
+																		width="40"
+																		height="40"
+																		class="mr-3 rounded-md"
+																	/>
+																</router-link>
+																
+																<!-- Text Content (Name + Date) -->
+																<div class="d-flex flex-column">
+																	<!-- Name (Clickable) -->
+																	<router-link 
+																		:to="`/user/${reply.author.name}`" 
+																		class="font-weight-bold text--primary text-decoration-none"
+																		style="color: black;"
+																	>
+																		{{ reply.author.name }}
+																	</router-link>
+																	
+																	<!-- Date (Not clickable) -->
+																	<v-list-item-subtitle class="text-caption text--secondary">
+																		{{ reply.date }}
+																	</v-list-item-subtitle>
+																</div>
+															</div>
+														</v-list-item>
 														<!-- buttons for replies -->
 														<div class="d-flex">
 															<v-btn icon small @click="replyToComment(reply)" aria-label="Reply to this comment">

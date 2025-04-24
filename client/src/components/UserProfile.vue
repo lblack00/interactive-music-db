@@ -14,7 +14,7 @@
 									<v-avatar size="120" class="profile-avatar">
 										<v-img
 											:src="
-												user.avatarUrl ||
+												user.profileImage ||
 												'https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png'
 											"
 											alt="Profile"
@@ -164,7 +164,8 @@
 <script>
 	import Navbar from "./Navbar.vue";
 	import { format } from "date-fns";
-
+	import axios from "axios";
+	
 	export default {
 		name: "UserSettings",
 		components: { Navbar },
@@ -172,11 +173,11 @@
 			return {
 				activeTab: "metrics",
 				user: {
-					username: "MusicLover123",
-					email: "username@example.com",
-					bio: "Music enthusiast | Vinyl collector | Always exploring new genres",
+					username: this.$route.params.username,
+					id: null,
+					bio: null,
 					spotifyConnected: true,
-					avatarUrl: null,
+					profileImage: null,
 				},
 				userMetrics: {
 					totalHours: 247,
@@ -201,6 +202,18 @@
 							date: "2024-03-14",
 							title: "Album Completed",
 							description: "Finished 'Dark Side of the Moon'",
+						},
+						{
+							type: "discovery",
+							date: "2024-03-13",
+							title: "New Discovery",
+							description: "Added Jazz Fusion to favorite genres",
+						},
+						{
+							type: "discovery",
+							date: "2024-03-13",
+							title: "New Discovery",
+							description: "Added Jazz Fusion to favorite genres",
 						},
 						{
 							type: "discovery",
@@ -240,8 +253,36 @@
 			},
 		},
 		methods: {
-			saveProfile() {
-				alert("Profile updated successfully!");
+			async getProfile() {
+				try {
+					const response = await axios.get(`http://localhost:5001/get-user-id/${this.user.username}`);
+					this.user.id = response.data.id;
+				} catch (error) {
+					console.error("Error finding user:", error);
+					this.$router.push('/404');
+					return; // stop here if the user doesn't exist
+				}
+
+				// Attempt to load profile image (fail gracefully)
+				try {
+					const imageResponse = await axios.get(
+						`http://localhost:5001/get-profile-image/${this.user.id}`
+					);
+					this.user.profileImage = `http://localhost:5001${imageResponse.data.image_url}`;
+				} catch (error) {
+					console.warn("Failed to load profile image:", error);
+					this.user.profileImage = null; // or a default placeholder if you'd like
+				}
+
+				// Attempt to load bio (fail gracefully)
+				try {
+					const bioResponse = await axios.get(`http://localhost:5001/get-bio/${this.user.id}`);
+					this.user.bio = bioResponse.data.bio;
+				} catch (error) {
+					console.warn("Failed to load bio:", error);
+					this.user.bio = ""; // or a default message like "No bio available"
+				}
+
 			},
 			async initiateSpotifyAuth() {
 				try {
@@ -328,7 +369,8 @@
 				return format(new Date(dateString), "MMM d");
 			},
 		},
-		mounted() {
+		created() {
+			this.getProfile();
 			this.fetchUserMetrics();
 		},
 	};

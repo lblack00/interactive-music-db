@@ -1573,6 +1573,22 @@ def update_bio():
     except Exception as e:
         print(f"Error updating bio: {e}")
         return jsonify({'error': 'Server error'}), 500
+    
+# Written by Matthew Stenvold
+@app.route('/get-user-id/<string:username>', methods=['GET'])
+def get_user_id(username):
+    try:
+        db = db_utils(dbname='users_db', user='postgres')
+        query = "SELECT id FROM users WHERE username = %s;"
+        result = db.read_data(query, (username,))
+        
+        if result:
+            return jsonify({'id': result[0]['id']}), 200
+        else:
+            return jsonify({'error': 'User not found'}), 404
+    except Exception as e:
+        print(f"Error fetching user ID: {e}")
+        return jsonify({'error': 'Server error'}), 500
 
 # Written by Lucas Black
 @app.route('/forum/threads', methods=['GET'])
