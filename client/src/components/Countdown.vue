@@ -1,3 +1,4 @@
+<!-- This file was written by Jax Hendrickson -->
 <!--ARIA Landmarks added by Chantelle Cabanilla-->
 <template>
 	<div class="grid-container">
@@ -59,11 +60,11 @@
 									>
 										<v-card>
 											<v-img
-												:src="album.cover_url || 'default-album-cover.jpg'"
-												height="200"
-												cover
-												class="bg-grey-lighten-2"
-												:alt="`Album cover`"
+											:src="getAlbumCover(album)"
+											height="200"
+											cover
+											class="bg-grey-lighten-2"
+											:alt="`Album cover for ${album.title}`"
 											/>
 
 											<v-card-title>{{ album.title }}</v-card-title>
@@ -174,6 +175,13 @@
 			toggleFavorite(album) {
 				console.log("Toggle favorite for:", album.title);
 			},
+			getAlbumCover(album) {
+				// Option 1: Using a placeholder service
+				return `https://placehold.co/400x400/1E1E1E/FFFFFF?text=${encodeURIComponent(album.title)}`;
+				
+				// Option 2: Using a local placeholder
+				// return '/src/assets/default-album-cover.png';
+			}
 		},
 		async created() {
 			console.log("Component created");
