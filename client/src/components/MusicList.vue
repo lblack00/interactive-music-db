@@ -82,7 +82,7 @@
 											<!-- Action Buttons Column -->
 											<v-col cols="3" class="d-flex justify-end">
 												<!-- Edit Button -->
-												<v-btn variant="plain" @click="editSong(song)">
+												<v-btn variant="plain" @click="editRating(song, 'master')">
 													<v-icon>mdi-pencil</v-icon>
 												</v-btn>
 
@@ -139,7 +139,7 @@
 											<!-- Action Buttons Column -->
 											<v-col cols="3" class="d-flex justify-end">
 												<!-- Edit Button -->
-												<v-btn variant="plain" @click="editSong(artist)">
+												<v-btn variant="plain" @click="editRating(artist, 'artist')">
 													<v-icon>mdi-pencil</v-icon>
 												</v-btn>
 
@@ -311,18 +311,36 @@
       </v-card-actions>
     </v-card>
   </v-dialog>
+
+	<v-dialog v-model="ratingDialog" max-width="600px">
+		<v-card>
+			<v-card-title>Edit Rating</v-card-title>
+			<v-card-text>
+				<!-- Pass the current itemType and itemId to the RatingSystem component -->
+				<RatingSystem
+					:itemType="currentItemType"
+					:itemId="currentItemId"
+				/>
+			</v-card-text>
+			<v-card-actions class="justify-end">
+				<v-btn text @click="ratingDialog = false">Close</v-btn>
+			</v-card-actions>
+		</v-card>
+	</v-dialog>
 </template>
 
 <script>
 	import Navbar from "./Navbar.vue";
 	import axios from "axios";
-	import NotFound from "./NotFound.vue"
+	import NotFound from "./NotFound.vue";
+	import RatingSystem from "./RatingSystem.vue";
 
 	export default {
 		name: "MusicList",
 		components: {
 			Navbar,
 			NotFound,
+			RatingSystem,
 		},
 		data() {
 			return {
@@ -338,6 +356,7 @@
 				currentPlaylist: null,
 				userNotFound: false,
 				deleteDialog: false,        // Controls the visibility of the dialog
+				ratingDialog: false,
 				itemToDelete: null,         // Holds the item data to delete
 				itemTypeToDelete: null,     // Holds the item type to delete (either 'master' or 'artist')
 				itemIndexToDelete: null,    // Holds the index of the item in the list to remove
@@ -401,6 +420,12 @@
 
 					this.userNotFound = true;
 				}
+			},
+			editRating(item, itemType = 'artist') {
+				// Set current itemType ('artist' or 'master') and item ID for the dialog
+				this.currentItemType = itemType;
+				this.currentItemId = item.id; // Both artist and master objects have an 'id' attribute
+				this.ratingDialog = true; // Open the dialog
 			},
 			 // Trigger the confirmation dialog
 			confirmDelete(item, itemType, index = null) {
