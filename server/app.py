@@ -1393,10 +1393,12 @@ def get_user_music_list(username, item_type):
 
         # Different types of data have different names for "name"
         nameAlias = ""
-        if item_type == "master":
+        if item_type == "master": 
             nameAlias = "title"
         elif item_type == "artist":
             nameAlias = "name"
+        else:
+            return jsonify({'error': f'Invalid item_type: {item_type}'}), 400  # Error for unrecognized item_type
 
         # TODO Change created at to updated at
 
@@ -1424,6 +1426,35 @@ def get_user_music_list(username, item_type):
 
     except Exception as e:
         print(f"Error fetching music list: {e}")
+        return jsonify({'error': 'Server error'}), 500
+    
+# written by Matthew Stenvold
+@app.route('/delete-user-rating', methods=['DELETE'])
+def delete_user_rating():
+    if 'user' not in session:
+        return jsonify({'error': 'Not logged in'}), 401
+
+    item_type = request.args.get('item_type')
+    item_id = request.args.get('item_id')
+    user_id = session['user']['id']
+
+    # Define the delete query
+    delete_query = """
+        DELETE FROM ratings 
+        WHERE user_id = %s AND item_type = %s AND item_id = %s
+    """
+    print("as")
+    try:
+        # Use mutate_data method to execute the delete query
+        result = db_utils(dbname='users_db', user='postgres').mutate_data(delete_query, (user_id, item_type, item_id))
+
+        if result is None:
+            return jsonify({'message': 'Rating deleted successfully'}), 200
+        else:
+            return jsonify({'error': 'Rating not found or could not be deleted'}), 400
+
+    except Exception as e:
+        print(f"Error deleting rating: {e}")
         return jsonify({'error': 'Server error'}), 500
 
 # Written by Matthew Stenvold

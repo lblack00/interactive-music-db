@@ -46,11 +46,11 @@
 
 							<!-- User's Music Card -->
 							<v-card class="pa-4 mb-4">
-								<v-card-title>{{ username }}'s Music</v-card-title>
+								<v-card-title>{{ username }}'s Albums</v-card-title>
 								<v-divider></v-divider>
 								<v-list>
 									<v-list-item
-										v-for="(song, index) in userSongs"
+										v-for="(song, index) in userAlbums"
 										:key="'user-' + index"
 									>
 										<v-row align="center" class="w-100">
@@ -87,7 +87,7 @@
 												</v-btn>
 
 												<!-- Delete Button -->
-												<v-btn variant="plain" @click="deleteSong(song)">
+												<v-btn variant="plain" @click="confirmDelete(song, 'master', index)">
 													<v-icon>mdi-delete</v-icon>
 												</v-btn>
 
@@ -144,7 +144,7 @@
 												</v-btn>
 
 												<!-- Delete Button -->
-												<v-btn variant="plain" @click="deleteSong(artist)">
+												<v-btn variant="plain" @click="confirmDelete(artist, 'artist', index)">
 													<v-icon>mdi-delete</v-icon>
 												</v-btn>
 
@@ -297,6 +297,20 @@
 			</div>
 		</div>
 	</div>
+
+	<!-- Confirmation Dialog -->
+	<v-dialog v-model="deleteDialog" max-width="500px">
+    <v-card>
+      <v-card-title class="headline">Confirm Deletion</v-card-title>
+      <v-card-text>
+        Are you sure you want to delete this item from your list?
+      </v-card-text>
+      <v-card-actions>
+        <v-btn color="green darken-1" text @click="deleteEntry">Yes</v-btn>
+        <v-btn color="red darken-1" text @click="cancelDelete">No</v-btn>
+      </v-card-actions>
+    </v-card>
+  </v-dialog>
 </template>
 
 <script>
@@ -313,7 +327,8 @@
 		data() {
 			return {
 				username: this.$route.params.username || "",
-				userSongs: [],
+				userAlbums: [],
+				userTracks: [],
 				userArtists: [],
 				playlists: [],
 				spotifyPlaylists: [],
@@ -322,6 +337,10 @@
 				currentPlaylistId: null,
 				currentPlaylist: null,
 				userNotFound: false,
+				deleteDialog: false,        // Controls the visibility of the dialog
+				itemToDelete: null,         // Holds the item data to delete
+				itemTypeToDelete: null,     // Holds the item type to delete (either 'master' or 'artist')
+				itemIndexToDelete: null,    // Holds the index of the item in the list to remove
 			};
 		},
 		props: {
@@ -362,20 +381,82 @@
 					
 					
 
-					// Store the fetched songs into userSongs
-					this.userSongs = response.data;
-
-					// TODO: Implement this so it grabs the artists from the user
+					// Store the fetched songs into userAlbums 
+					this.userAlbums = response.data;
 					const response2 = await axios.get(
 						`http://localhost:5001/api/musiclist/${username}/artist`
 					);
 
 					// Store the fetched artists into user artists
 					this.userArtists = response2.data;
+
+					// const response3 = await axios.get(
+					// 	`http://localhost:5001/api/musiclist/${username}/release`
+					// );
+
+					// // Store the fetched releases into user releases
+					// this.userReleases = response3.data;
 				} catch (error) {
 					console.error("Error fetching music list:", error);
 
 					this.userNotFound = true;
+				}
+			},
+			 // Trigger the confirmation dialog
+			confirmDelete(item, itemType, index = null) {
+				this.itemToDelete = item;  // Store the item to be deleted
+				this.itemTypeToDelete = itemType;  // Store the item type
+				this.indexToDelete = index;  // Store the index of the item in the list
+				this.deleteDialog = true;  // Show the confirmation dialog
+			},
+
+			// Cancel the deletion
+			cancelDelete() {
+				this.deleteDialog = false;  // Hide the dialog
+				this.itemToDelete = null;  // Clear the stored item
+				this.itemTypeToDelete = null;  // Clear the item type
+				this.indexToDelete = null;  // Clear the index
+			},
+
+			// Proceed with the deletion
+			async deleteEntry() {
+				// Close the dialog
+				this.deleteDialog = false;
+
+				// Call deleteRating to delete the rating from the backend and remove it from the list
+				await this.deleteRating(this.itemTypeToDelete, this.itemToDelete.id, this.indexToDelete);
+
+				// Clear the stored item after deletion
+				this.itemToDelete = null;
+				this.itemTypeToDelete = null;
+				this.indexToDelete = null;
+			},
+
+			async deleteRating(itemType, itemId, index = null) {
+				try {
+					const response = await axios.delete('http://localhost:5001/delete-user-rating', {
+						params: {
+							item_type: itemType,
+							item_id: itemId
+						},
+						withCredentials: true
+					});
+
+					if (response.data.message === 'Rating deleted successfully') {
+						console.log(`Rating deleted for ${itemType} with ID ${itemId}`);
+						
+						// Remove from local list if index is provided
+						if (itemType === 'artist' && index !== null) {
+							this.userArtists.splice(index, 1);
+						} else if (itemType === 'master' && index !== null) {
+							this.userAlbums.splice(index, 1);
+						}
+
+					} else {
+						console.log(`No rating found for ${itemType} with ID ${itemId}`);
+					}
+				} catch (error) {
+					console.error(`Error deleting rating for ${itemType} with ID ${itemId}:`, error);
 				}
 			},
 			async fetchSpotifyPlaylists() {

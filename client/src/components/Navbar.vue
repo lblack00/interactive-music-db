@@ -113,8 +113,8 @@
 <style scoped>
 	.filler {
 		/* Top if fixed, bottom if not */
-		height: 4rem; 
-		/* height: 0rem; */
+		/* height: 4rem;  */
+		height: 0rem;
 	}
 
 	.navbar {
@@ -124,7 +124,7 @@
 		justify-content: space-between;
 		align-items: center;
 		width: 100%;
-		position: fixed;
+		/* position: fixed; */
 		z-index: 50;
 	}
 
