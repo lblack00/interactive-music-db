@@ -70,11 +70,11 @@
 
 													<v-card-actions>
 														<v-spacer></v-spacer>
-														<v-btn v-if="!post.isDeleted" color="error" text @click="deletePost(post, true)">
+														<v-btn v-if="!post.isDeleted" color="error" text @click="showDeleteDialog(post, true)">
 															<v-icon left>mdi-delete</v-icon>
 															Delete
 														</v-btn>
-														<v-btn v-else color="error" text @click="deletePost(post, false)">
+														<v-btn v-else color="error" text @click="showDeleteDialog(post, false)">
 															<v-icon left>mdi-restore</v-icon>
 															Restore
 														</v-btn>
@@ -141,11 +141,11 @@
 
 																<v-card-actions>
 																	<v-spacer></v-spacer>
-																	<v-btn v-if="!post.isDeleted" color="error" text @click="deletePost(post, true)">
+																	<v-btn v-if="!post.isDeleted" color="error" text @click="showDeleteDialog(post, true)">
 																		<v-icon left>mdi-delete</v-icon>
 																		Delete
 																	</v-btn>
-																	<v-btn v-else color="error" text @click="deletePost(post, false)">
+																	<v-btn v-else color="error" text @click="showDeleteDialog(post, false)">
 																		<v-icon left>mdi-restore</v-icon>
 																		Restore
 																	</v-btn>
@@ -174,6 +174,33 @@
 				</v-container>
 			</main>
 		</div>
+
+		<v-dialog v-model="deleteDialog" max-width="500px">
+			<v-card>
+				<v-card-title class="text-h5">
+					{{ currentAction === 'delete' ? 'Delete Content' : 'Restore Content' }}
+				</v-card-title>
+				<v-card-text>
+					<p v-if="currentAction === 'delete'">
+						Are you sure you want to delete this {{ selectedPost?.reportType === 'thread' ? 'thread' : 'reply' }}?
+						This action will hide the content from users but can be reversed later.
+					</p>
+					<p v-else>
+						Are you sure you want to restore this {{ selectedPost?.reportType === 'thread' ? 'thread' : 'reply' }}?
+						This action will make the content visible to users again.
+					</p>
+				</v-card-text>
+				<v-card-actions>
+					<v-spacer></v-spacer>
+					<v-btn color="blue darken-1" text @click="deleteDialog = false">
+						Cancel
+					</v-btn>
+					<v-btn color="error" text @click="confirmDelete">
+						{{ currentAction === 'delete' ? 'Delete' : 'Restore' }}
+					</v-btn>
+				</v-card-actions>
+			</v-card>
+		</v-dialog>
 	</div>
 </template>
 
@@ -200,6 +227,9 @@
 				sortBy: 'date',
 				sortDirection: 'desc',
 				loading: true,
+				deleteDialog: false,
+				selectedPost: null,
+				currentAction: 'delete',
 				data: {}
 			};
 		},
@@ -265,6 +295,17 @@
 				this.pendingChanges = this.pendingChanges.filter(
 					(change) => change.id !== changeId
 				);
+			},
+			showDeleteDialog(report, action) {
+				this.deleteDialog = true;
+				this.selectedReport = report;
+				this.currentAction = action ? 'delete' : 'restore';
+			},
+			async confirmDelete() {
+				if (this.selectedReport) {
+					this.deletePost(this.selectedReport, this.currentAction === 'delete');
+					this.deleteDialog = false;
+				}
 			},
 			async deletePost(report, deletedValue) {
 				try {

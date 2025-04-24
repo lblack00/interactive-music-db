@@ -11,7 +11,7 @@
 				<v-container>
 					<v-row>
 						<!-- Left Sidebar (Skinny Scrollable Vertical Card) -->
-						<v-col cols="12" md="2" style="position: fixed">
+						<!-- <v-col cols="12" md="2" style="position: fixed">
 							<v-card class="pa-4 d-flex flex-column" max-height="80vh">
 								<v-card-title>Menu</v-card-title>
 								<v-divider></v-divider>
@@ -36,7 +36,7 @@
 									</v-list-item>
 								</v-list>
 							</v-card>
-						</v-col>
+						</v-col> -->
 
 						<!-- Main Content (Music List) -->
 						<v-col cols="12" md="9" style="margin-left: 20%">
@@ -91,20 +91,9 @@
 													<v-icon>mdi-delete</v-icon>
 												</v-btn>
 
-												<!-- Share Button -->
-												<v-btn variant="plain" @click="shareSong(song)">
-													<v-icon>mdi-share-variant</v-icon>
-												</v-btn>
-
 												<!-- Link Button (Opens External URL) -->
 												<v-btn variant="plain" :to="`/master/${song.id}`">
 													<v-icon>mdi-link</v-icon>
-												</v-btn>
-
-												<!-- Spotify Button (or WiFi) -->
-												<v-btn variant="plain" @click="spotifyAction(song)">
-													<v-icon>mdi-spotify</v-icon>
-													<!-- Use mdi-wifi if preferred -->
 												</v-btn>
 											</v-col>
 										</v-row>
@@ -159,20 +148,9 @@
 													<v-icon>mdi-delete</v-icon>
 												</v-btn>
 
-												<!-- Share Button -->
-												<v-btn variant="plain" @click="shareSong(artist)">
-													<v-icon>mdi-share-variant</v-icon>
-												</v-btn>
-
 												<!-- Link Button (Opens External URL) -->
 												<v-btn variant="plain" :to="`/artist/${artist.id}`">
 													<v-icon>mdi-link</v-icon>
-												</v-btn>
-
-												<!-- Spotify Button (or WiFi) -->
-												<v-btn variant="plain" @click="spotifyAction(artist)">
-													<v-icon>mdi-spotify</v-icon>
-													<!-- Use mdi-wifi if preferred -->
 												</v-btn>
 											</v-col>
 										</v-row>
@@ -198,7 +176,7 @@
 										<v-card-title class="text-truncate">{{ playlist.name }}</v-card-title>
 										<v-card-subtitle>{{ playlist.tracks.total }} tracks</v-card-subtitle>
 										<v-card-text class="text-truncate">
-											{{ playlist.description || 'No description available' }}
+											{{ decodeHTML(playlist.description) || 'No description available' }}
 										</v-card-text>
 										<v-card-actions>
 											<v-btn
@@ -239,7 +217,7 @@
 										By {{ selectedPlaylist.owner.display_name }} - {{ selectedPlaylist.tracks.total }} tracks
 									</v-card-subtitle>
 									<v-card-text>
-										<p>{{ selectedPlaylist.description || 'No description available' }}</p>
+										<p>{{ decodeHTML(selectedPlaylist.description) || 'No description available' }}</p>
 										<p class="mt-4">
 											<strong>Public:</strong> {{ selectedPlaylist.public ? 'Yes' : 'No' }}
 										</p>
@@ -445,6 +423,11 @@
 				localStorage.removeItem('lastPlayedPlaylistId');
 				localStorage.removeItem('lastPlayedPlaylistData');
 			},
+			decodeHTML(html) {
+				const txt = document.createElement("textarea");
+				txt.innerHTML = html;
+				return txt.value;
+			}
 		},
 	};
 </script>

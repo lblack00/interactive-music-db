@@ -185,7 +185,6 @@
 				},
 				image_uri: "",
 				loading: true,
-				hasCredits: true,
 			};
 		},
 		computed: {
@@ -209,6 +208,14 @@
 				});
 
 				return companyGroups;
+			},
+			hasCredits() {
+				const allCredits = [
+					...(this.data.artist_credits?.artist || []),
+					...(this.data.artist_credits?.track_artist || [])
+				];
+				
+				return allCredits.some(credit => credit.role && credit.role !== "Unknown Role");
 			},
 			groupedByRole() {
 				const allCredits = [
@@ -243,10 +250,6 @@
 				Object.keys(roleGroups).sort().forEach(role => {
 					orderedRoles[role] = roleGroups[role];
 				});
-
-				if (Object.keys(roleGroups).length === 0) {
-					this.hasCredits = true;
-				}
 				
 				return orderedRoles;
 			}
