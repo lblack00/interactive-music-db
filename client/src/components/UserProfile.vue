@@ -42,7 +42,7 @@
 											prepend-icon="mdi-music-note"
 											variant="elevated"
 										>
-											{{ userMetrics.songsRated }} Songs Rated
+											{{ userMetrics.totalRatings }} Entries Rated
 										</v-chip>
 										<v-chip
 											color="info"
@@ -181,7 +181,7 @@
 				},
 				userMetrics: {
 					totalHours: 247,
-					songsRated: 543,
+					totalRatings: 543,
 					averageRating: 4.2,
 					topGenres: [
 						{ name: "Rock", percentage: 35 },
@@ -240,12 +240,12 @@
 					{
 						title: "AVERAGE RATING",
 						value: this.userMetrics.averageRating,
-						subtitle: "Out of 5 stars",
+						subtitle: "Out of 10 stars",
 						color: "#2c7a7b",
 					},
 					{
-						title: "SONGS RATED",
-						value: this.userMetrics.songsRated,
+						title: "ENTRIES RATED",
+						value: this.userMetrics.totalRatings,
 						subtitle: "Total ratings given",
 						color: "#3cba92",
 					},
@@ -282,7 +282,25 @@
 					console.warn("Failed to load bio:", error);
 					this.user.bio = ""; // or a default message like "No bio available"
 				}
+				this.fetchUserRatingStats(this.user.id);
+			},
+			async fetchUserRatingStats(userId) {
+				try {
+					const response = await axios.get('http://localhost:5001/user-rating-stats', {
+						params: { user_id: userId },
+						withCredentials: true
+					});
 
+					if (response.status === 200) {
+						const { total_ratings, average_rating } = response.data;
+						console.log(`Total Ratings: ${total_ratings}, Average Rating: ${average_rating}`);
+						// Store the values in your component's data if needed
+						this.userMetrics.totalRatings = total_ratings;
+						this.userMetrics.averageRating = parseFloat(average_rating).toFixed(2);
+					}
+				} catch (error) {
+					console.error('Failed to fetch user rating stats:', error);
+				}
 			},
 			async initiateSpotifyAuth() {
 				try {
@@ -338,15 +356,6 @@
 					.replace(/\//g, "_")
 					.replace(/=+$/, "");
 			},
-			async fetchUserMetrics() {
-				try {
-					// TODO: Implement API call to fetch user metrics
-					// This would typically be an API call to your backend
-					// For now, we're using mock data in the data() section
-				} catch (error) {
-					console.error("Error fetching user metrics:", error);
-				}
-			},
 			getGenreColor(genre) {
 				const colors = {
 					Rock: "#3cba92",
@@ -371,7 +380,6 @@
 		},
 		created() {
 			this.getProfile();
-			this.fetchUserMetrics();
 		},
 	};
 </script>

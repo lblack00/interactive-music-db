@@ -1640,6 +1640,32 @@ def get_user_id(username):
     except Exception as e:
         print(f"Error fetching user ID: {e}")
         return jsonify({'error': 'Server error'}), 500
+    
+# Written by Matthew Stenvold
+@app.route('/user-rating-stats', methods=['GET'])
+def get_user_rating_stats():
+    user_id = request.args.get('user_id')
+
+    if not user_id:
+        return jsonify({'error': 'Missing user_id'}), 400
+
+    try:
+        query = """
+            SELECT COUNT(*) AS total_ratings, 
+                   COALESCE(AVG(rating), 0) AS average_rating
+            FROM ratings
+            WHERE user_id = %s
+        """
+
+        result = db_utils(dbname='users_db', user='postgres').read_data(query, (user_id,))
+        stats = result[0] if result else {'total_ratings': 0, 'average_rating': 0}
+
+        return jsonify(stats), 200
+
+    except Exception as e:
+        print(f"Error getting rating stats: {e}")
+        return jsonify({'error': 'Server error'}), 500
+
 
 # Written by Lucas Black
 @app.route('/forum/threads', methods=['GET'])
