@@ -40,9 +40,20 @@
 
 						<!-- Main Content (Music List) -->
 						<v-col cols="12" md="9" style="margin-left: 20%">
-							<h1 class="text-h4 font-weight-bold mb-4">
-								{{ username }}'s Music List
-							</h1>
+							<v-row align="center" class="mb-4">
+								<v-col cols="auto">
+									<router-link :to="`/user/${username}`">
+										<v-avatar size="70" class="profile-avatar">
+											<v-img :src="UserProfilePic" alt="Profile" />
+										</v-avatar>
+									</router-link>
+								</v-col>
+								<v-col class="d-flex align-center">
+									<h1 class="text-h4 font-weight-bold m-0">
+										{{ username }}'s Music List
+									</h1>
+								</v-col>
+							</v-row>
 
 							<!-- User's Music Card -->
 							<v-card class="pa-4 mb-4">
@@ -336,7 +347,7 @@
 				/>
 			</v-card-text>
 			<v-card-actions class="justify-end">
-				<v-btn text @click="ratingDialog = false">Close</v-btn>
+				<v-btn text @click="handleCloseRatingDialog">Close</v-btn>
 			</v-card-actions>
 		</v-card>
 	</v-dialog>
@@ -358,6 +369,8 @@
 		data() {
 			return {
 				username: this.$route.params.username || "",
+				userId: null,
+				UserProfilePic: null,
 				userAlbums: [],
 				userTracks: [],
 				userArtists: [],
@@ -400,6 +413,8 @@
 		},
 		methods: {
 			async initPage() {
+				await this.getUserId();
+				this.getPFP()
 				await this.fetchMusicList();
 				await this.fetchSpotifyPlaylists();
 
@@ -411,6 +426,23 @@
 				if (savedPlaylistId && savedPlaylistData) {
 					this.currentPlaylistId = savedPlaylistId;
 					this.currentPlaylist = JSON.parse(savedPlaylistData);
+				}
+			},
+			async getUserId() {
+				try {
+						const response = await axios.get(`http://localhost:5001/get-user-id/${this.username}`);
+						this.userId = response.data.id;
+				} catch (error) { }
+			},
+			async getPFP() {
+				try {
+						const imageResponse = await axios.get(
+								`http://localhost:5001/get-profile-image/${this.userId}`
+						);
+						this.UserProfilePic = `http://localhost:5001${imageResponse.data.image_url}`;
+				} catch (error) {
+						console.warn("Failed to load profile image:", error);
+						this.UserProfilePic = null; // or a default placeholder if you'd like
 				}
 			},
 			async isSessionUser(identifier, type = 'id') {
@@ -523,6 +555,42 @@
 					console.error(`Error deleting rating for ${itemType} with ID ${itemId}:`, error);
 				}
 			},
+			async handleCloseRatingDialog() {
+  this.ratingDialog = false;
+
+  if (this.isListOwner) {
+    try {
+      const response = await axios.get('http://localhost:5001/generic-user-rating', {
+        params: {
+          item_type: this.currentItemType,
+          item_id: this.currentItemId,
+          user_id: this.userId
+        }
+      });
+
+      const data = response.data;
+
+      if (response.status === 200) {
+        console.log("Updated Rating:", data.rating);
+
+        // Update the appropriate item in userAlbums or userArtists
+        const targetArray = this.currentItemType === 'master' ? this.userAlbums : this.userArtists;
+				console.log(this.userAlbums);
+        const itemToUpdate = targetArray.find(item => item.id === this.currentItemId);
+        if (itemToUpdate) {
+          itemToUpdate.rating = data.rating;
+        } else {
+          console.warn(`Item with ID ${this.currentItemId} not found in ${this.currentItemType === 'master' ? 'userAlbums' : 'userArtists'}`);
+        }
+
+      } else {
+        console.error("Failed to fetch rating:", data.error);
+      }
+    } catch (error) {
+      console.error("Error fetching rating:", error);
+    }
+  }
+},
 			async fetchSpotifyPlaylists() {
 				try {
 					const path = 'http://localhost:5001/get-spotify-playlists'

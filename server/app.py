@@ -1247,6 +1247,35 @@ def get_user_rating():
     except Exception as e:
         print(f"Error getting user rating: {e}")
         return jsonify({'error': 'Server error'}), 500
+    
+# Written by Matthew Stenvold
+@app.route('/generic-user-rating', methods=['GET'])
+def get_generic_user_rating():
+    item_type = request.args.get('item_type')
+    item_id = request.args.get('item_id')
+    user_id = request.args.get('user_id')
+
+    if not user_id:
+        return jsonify({'error': 'Missing user_id'}), 400
+
+    try:
+        query = """
+            SELECT rating 
+            FROM ratings 
+            WHERE user_id = %s 
+            AND item_type = %s 
+            AND item_id = %s
+        """
+        
+        result = db_utils(dbname='users_db', user='postgres').read_data(query, (user_id, item_type, item_id))
+        print(result)
+        if result:
+            return jsonify({'rating': result[0]['rating']}), 200
+        return jsonify({'rating': 0}), 200
+        
+    except Exception as e:
+        print(f"Error getting user rating: {e}")
+        return jsonify({'error': 'Server error'}), 500
 
 #route written by jax hendrickson
 @app.route('/rate', methods=['POST'])
@@ -1432,8 +1461,6 @@ def get_user_music_list(username, item_type):
                 item_info = artist.get_artist(item_id)
             else:
                 continue  # Skip unknown item types
-
-            print(item_info[0].get(nameAlias, "Unknown"))
             if item_info:
                 detailed_results.append({
                     "id": item_id,
@@ -1441,7 +1468,6 @@ def get_user_music_list(username, item_type):
                     "rating": rating["rating"],
                     "created_at": created_at,  # Date without year
                 })
-        print(detailed_results)
         return jsonify(detailed_results), 200
 
     except Exception as e:
