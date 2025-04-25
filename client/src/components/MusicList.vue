@@ -57,11 +57,11 @@
 
 							<!-- User's Music Card -->
 							<v-card class="pa-4 mb-4">
-								<v-card-title>{{ username }}'s Albums</v-card-title>
+								<v-card-title>{{ username }}'s Songs</v-card-title>
 								<v-divider></v-divider>
 								<v-list>
 									<v-list-item
-										v-for="(song, index) in userAlbums"
+										v-for="(song, index) in userSongs"
 										:key="'user-' + index"
 									>
 										<v-row align="center" class="w-100">
@@ -371,7 +371,7 @@
 				username: this.$route.params.username || "",
 				userId: null,
 				UserProfilePic: null,
-				userAlbums: [],
+				userSongs: [],
 				userTracks: [],
 				userArtists: [],
 				playlists: [],
@@ -471,8 +471,8 @@
 					
 					
 
-					// Store the fetched songs into userAlbums 
-					this.userAlbums = response.data;
+					// Store the fetched songs into userSongs 
+					this.userSongs = response.data;
 					const response2 = await axios.get(
 						`http://localhost:5001/api/musiclist/${username}/artist`
 					);
@@ -545,7 +545,7 @@
 						if (itemType === 'artist' && index !== null) {
 							this.userArtists.splice(index, 1);
 						} else if (itemType === 'master' && index !== null) {
-							this.userAlbums.splice(index, 1);
+							this.userSongs.splice(index, 1);
 						}
 
 					} else {
@@ -573,14 +573,14 @@
       if (response.status === 200) {
         console.log("Updated Rating:", data.rating);
 
-        // Update the appropriate item in userAlbums or userArtists
-        const targetArray = this.currentItemType === 'master' ? this.userAlbums : this.userArtists;
-				console.log(this.userAlbums);
+        // Update the appropriate item in userSongs or userArtists
+        const targetArray = this.currentItemType === 'master' ? this.userSongs : this.userArtists;
+				console.log(this.userSongs);
         const itemToUpdate = targetArray.find(item => item.id === this.currentItemId);
         if (itemToUpdate) {
           itemToUpdate.rating = data.rating;
         } else {
-          console.warn(`Item with ID ${this.currentItemId} not found in ${this.currentItemType === 'master' ? 'userAlbums' : 'userArtists'}`);
+          console.warn(`Item with ID ${this.currentItemId} not found in ${this.currentItemType === 'master' ? 'userSongs' : 'userArtists'}`);
         }
 
       } else {

@@ -127,7 +127,7 @@
 													Recent Activity
 												</v-card-title>
 												<v-card-text class="pa-0">
-													<v-timeline density="compact" align="start">
+													<v-timeline density="compact" align="start" >
 														<v-timeline-item
 															v-for="(activity, index) in userMetrics.recentActivity"
 															:key="index"
@@ -313,7 +313,7 @@
 							if (activity.action_type === 'artist_rating') {
 								title = 'New Artist Rating';
 							} else if (activity.action_type === 'master_rating') {
-								title = 'New Album Rating';
+								title = 'New Song Rating';
 							} else if (activity.action_type === 'forum_thread') {
 								title = 'New Thread Created';
 							} else if (activity.action_type === 'forum_reply') {
@@ -508,7 +508,14 @@
 		border-radius: 12px;
 		margin-bottom: 12px;
 		border: 1px solid rgba(67, 97, 238, 0.1);
+		width: 100%; /* Ensures the content takes up full width */
+		box-sizing: border-box; /* Ensures padding is included in width calculation */
 	}
+
+	:deep(.v-timeline-item__body) {
+		display: flex;
+		width: 100%;
+	} 
 
 	.timeline-content .text-subtitle-2 {
 		color: rgba(0, 0, 0, 0.87);
