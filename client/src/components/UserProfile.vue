@@ -12,10 +12,7 @@
 							<v-row no-gutters align="center" class="pa-4">
 								<v-col cols="12" sm="auto" class="text-center text-sm-left">
 									<v-avatar size="120" class="profile-avatar">
-										<v-img
-											:src="user.profileImage"
-											alt="Profile"
-										></v-img>
+										<v-img :src="user.profileImage" alt="Profile"></v-img>
 									</v-avatar>
 								</v-col>
 								<v-col class="pl-4">
@@ -123,42 +120,67 @@
 										<v-col cols="12" md="6">
 											<v-card class="activity-card pa-4" elevation="2">
 												<v-card-title class="text-h6">
-													<v-icon start color="primary" class="mr-2">mdi-history</v-icon>
+													<v-icon start color="primary" class="mr-2"
+														>mdi-history</v-icon
+													>
 													Recent Activity
 												</v-card-title>
 												<v-card-text class="pa-0">
-													<v-timeline density="compact" align="start" >
-														<v-timeline-item
-															v-for="(activity, index) in userMetrics.recentActivity"
-															:key="index"
-															:dot-color="getActivityColor(activity.type)"
-															size="small"
-															class="w-100"
-														>
-															<div class="timeline-content w-100">
-																<!-- Title and time on the same line -->
-																<div class="d-flex justify-space-between align-center w-100">
-																	<div class="text-subtitle-2 font-weight-medium">
-																		<router-link
-																			:to="activity.url"
-																			class="text-decoration-none text-primary"
-																			style="color: inherit;"
+													<div class="activity-container">
+														<v-timeline density="compact" align="start">
+															<v-timeline-item
+																v-for="(
+																	activity, index
+																) in userMetrics.recentActivity"
+																:key="index"
+																:dot-color="getActivityColor(activity.type)"
+																size="small"
+																class="w-100"
+															>
+																<div class="timeline-content w-100">
+																	<!-- Title and time on the same line -->
+																	<div
+																		class="d-flex justify-space-between align-center w-100"
+																	>
+																		<div
+																			class="text-subtitle-2 font-weight-medium"
 																		>
-																			{{ activity.title }}
-																		</router-link>
+																			<router-link
+																				:to="activity.url"
+																				class="text-decoration-none text-primary"
+																				style="color: inherit"
+																			>
+																				{{ activity.title }}
+																			</router-link>
+																		</div>
+																		<div
+																			class="text-caption text-medium-emphasis"
+																		>
+																			{{ timeAgo(activity.date) }}
+																		</div>
 																	</div>
-																	<div class="text-caption text-medium-emphasis">
-																		{{ timeAgo(activity.date) }}
-																	</div>
-																</div>
 
-																<!-- Description below -->
-																<div class="text-caption text-medium-emphasis mt-1">
-																	{{ activity.description }}
+																	<!-- Description below -->
+																	<div
+																		class="text-caption text-medium-emphasis mt-1"
+																	>
+																		{{ activity.description }}
+																	</div>
 																</div>
-															</div>
-														</v-timeline-item>
-													</v-timeline>
+															</v-timeline-item>
+														</v-timeline>
+													</div>
+													<div class="activity-footer">
+														<v-btn
+															variant="text"
+															color="primary"
+															class="mt-2"
+															@click="loadMoreActivities"
+														>
+															View More Activity
+															<v-icon end>mdi-chevron-down</v-icon>
+														</v-btn>
+													</div>
 												</v-card-text>
 											</v-card>
 										</v-col>
@@ -177,7 +199,7 @@
 	import Navbar from "./Navbar.vue";
 	import { format } from "date-fns";
 	import axios from "axios";
-	
+
 	export default {
 		name: "UserSettings",
 		components: { Navbar },
@@ -208,7 +230,7 @@
 							date: "Thu, 24 Apr 2025 21:47:05 GMT",
 							title: "New Rating",
 							description: "Gave '/master/5' 5 stars",
-							url: "/master/5"
+							url: "/master/5",
 						},
 					],
 				},
@@ -245,79 +267,123 @@
 		methods: {
 			async getProfile() {
 				try {
-						const response = await axios.get(`http://localhost:5001/get-user-id/${this.user.username}`);
-						this.user.id = response.data.id;
-				} catch (error) {
-						console.error("Error finding user:", error);
-						this.$router.push('/404');
-						return; // stop here if the user doesn't exist
-				}
+					const response = await axios.get(
+						`http://localhost:5001/get-user-id/${this.user.username}`
+					);
+					this.user.id = response.data.id;
 
-				// Attempt to load profile image (fail gracefully)
-				try {
+					// Attempt to load profile image (fail gracefully)
+					try {
 						const imageResponse = await axios.get(
-								`http://localhost:5001/get-profile-image/${this.user.id}`
+							`http://localhost:5001/get-profile-image/${this.user.id}`
 						);
 						this.user.profileImage = `http://localhost:5001${imageResponse.data.image_url}`;
-				} catch (error) {
+					} catch (error) {
 						console.warn("Failed to load profile image:", error);
-						this.user.profileImage = null; // or a default placeholder if you'd like
-				}
+						this.user.profileImage = null;
+					}
 
-				// Attempt to load bio (fail gracefully)
-				try {
-						const bioResponse = await axios.get(`http://localhost:5001/get-bio/${this.user.id}`);
+					// Attempt to load bio (fail gracefully)
+					try {
+						const bioResponse = await axios.get(
+							`http://localhost:5001/get-bio/${this.user.id}`
+						);
 						this.user.bio = bioResponse.data.bio;
-				} catch (error) {
+					} catch (error) {
 						console.warn("Failed to load bio:", error);
-						this.user.bio = ""; // or a default message like "No bio available"
+						this.user.bio = "";
+					}
+
+					// Fetch user rating stats
+					await this.fetchUserRatingStats(this.user.id);
+
+					// Fetch recent activities
+					const activities = await this.getRecentUserActivity(this.user.id, 10);
+					this.userMetrics.recentActivity = activities;
+				} catch (error) {
+					console.error("Error finding user:", error);
+					this.$router.push("/404");
 				}
+			},
+			async fetchUserTopGenres() {
+				try {
+					const response = await axios.get(
+						"http://localhost:5001/user-top-genres",
+						{
+							params: { user_id: this.user.id },
+							withCredentials: true,
+						}
+					);
 
-				this.fetchUserRatingStats(this.user.id);
-
-				// Fetch the top 5 recent activities and store them in recentActivity
-				const activities = await this.getRecentUserActivity(this.user.id, 10);
-				this.recentActivity = activities;  // Store the activities in recentActivity
-				console.log(this.recentActivity);  // Log the recent activities for debugging
+					if (response.status === 200) {
+						this.userMetrics.topGenres = response.data;
+						console.log("Fetched top genres:", this.userMetrics.topGenres);
+					}
+				} catch (error) {
+					console.error("Failed to fetch top genres:", error);
+					// Keep default hardcoded genres as fallback
+				}
 			},
 			async fetchUserRatingStats(userId) {
 				try {
-					const response = await axios.get('http://localhost:5001/user-rating-stats', {
-						params: { user_id: userId },
-						withCredentials: true
-					});
+					console.log("Fetching rating stats for user:", userId);
+					const response = await axios.get(
+						"http://localhost:5001/user-rating-stats",
+						{
+							params: { user_id: userId },
+							withCredentials: true,
+						}
+					);
 
-					if (response.status === 200) {
+					if (response.status === 200 && response.data) {
 						const { total_ratings, average_rating } = response.data;
-						console.log(`Total Ratings: ${total_ratings}, Average Rating: ${average_rating}`);
-						// Store the values in your component's data if needed
-						this.userMetrics.totalRatings = total_ratings;
-						this.userMetrics.averageRating = parseFloat(average_rating).toFixed(2);
+						console.log("Rating stats response:", response.data);
+
+						// Update the metrics
+						this.userMetrics.totalRatings = total_ratings || 0;
+						this.userMetrics.averageRating = average_rating
+							? parseFloat(average_rating).toFixed(2)
+							: "0.00";
+
+						console.log("Updated metrics:", {
+							totalRatings: this.userMetrics.totalRatings,
+							averageRating: this.userMetrics.averageRating,
+						});
+					} else {
+						console.warn("No rating stats data received");
+						this.userMetrics.totalRatings = 0;
+						this.userMetrics.averageRating = "0.00";
 					}
 				} catch (error) {
-					console.error('Failed to fetch user rating stats:', error);
+					console.error("Failed to fetch user rating stats:", error);
+					this.userMetrics.totalRatings = 0;
+					this.userMetrics.averageRating = "0.00";
 				}
 			},
 			async getRecentUserActivity(userId, limit = 10) {
 				try {
-					const response = await axios.get('http://localhost:5001/user-recent-activity', {
-						params: { user_id: userId, limit: limit },
-						withCredentials: true
-					});
+					console.log("Fetching recent activity for user:", userId);
+					const response = await axios.get(
+						"http://localhost:5001/user-recent-activity",
+						{
+							params: { user_id: userId, limit: limit },
+							withCredentials: true,
+						}
+					);
 
-					if (response.status === 200) {
-						console.log('Raw API Response:', response.data);
+					if (response.status === 200 && response.data) {
+						console.log("Raw API Response:", response.data);
 
-						const processedActivities = response.data.map(activity => {
-							let title = '';
-							if (activity.action_type === 'artist_rating') {
-								title = 'New Artist Rating';
-							} else if (activity.action_type === 'master_rating') {
-								title = 'New Song Rating';
-							} else if (activity.action_type === 'forum_thread') {
-								title = 'New Thread Created';
-							} else if (activity.action_type === 'forum_reply') {
-								title = 'New Reply';
+						const processedActivities = response.data.map((activity) => {
+							let title = "";
+							if (activity.action_type === "artist_rating") {
+								title = "New Artist Rating";
+							} else if (activity.action_type === "master_rating") {
+								title = "New Song Rating";
+							} else if (activity.action_type === "forum_thread") {
+								title = "New Thread Created";
+							} else if (activity.action_type === "forum_reply") {
+								title = "New Reply";
 							}
 
 							return {
@@ -325,17 +391,19 @@
 								date: activity.created_at,
 								title: title,
 								description: activity.description,
-								url: activity.relevant_url
+								url: activity.relevant_url,
 							};
 						});
 
-						this.userMetrics.recentActivity = processedActivities;
-						console.log('Processed Recent Activity:', this.userMetrics.recentActivity);
+						console.log("Processed Activities:", processedActivities);
+						return processedActivities;
 					} else {
-						console.log('No activity found');
+						console.warn("No activity data received");
+						return [];
 					}
 				} catch (error) {
-					console.error('Error fetching recent activity:', error);
+					console.error("Error fetching recent activity:", error);
+					return [];
 				}
 			},
 			async initiateSpotifyAuth() {
@@ -404,45 +472,62 @@
 			},
 			getActivityColor(type) {
 				const colors = {
-					master_rating: "#ff6f61",  // Coral red for master ratings
-					artist_rating: "#f4a300",  // A warm amber for artist ratings
+					master_rating: "#ff6f61", // Coral red for master ratings
+					artist_rating: "#f4a300", // A warm amber for artist ratings
 					forum_reply: "#2c7a7b",
 					forum_thread: "#3cba92",
-			};
+				};
 				return colors[type] || "#000000";
 			},
 			formatDate(dateString) {
 				return format(new Date(dateString), "MMM d");
 			},
 			timeAgo(dateString) {
-  const itemTime = new Date(Date.parse(dateString)).getTime();
-  const currentTime = this.currentTime.getTime();
-  const diffInSeconds = Math.floor((currentTime - itemTime) / 1000);
+				const itemTime = new Date(Date.parse(dateString)).getTime();
+				const currentTime = this.currentTime.getTime();
+				const diffInSeconds = Math.floor((currentTime - itemTime) / 1000);
 
-  console.log(`[timeAgo] Now: ${currentTime} (${new Date(currentTime).toISOString()}) | Item: ${itemTime} (${new Date(itemTime).toISOString()}) | Diff: ${diffInSeconds}s`);
+				console.log(
+					`[timeAgo] Now: ${currentTime} (${new Date(
+						currentTime
+					).toISOString()}) | Item: ${itemTime} (${new Date(
+						itemTime
+					).toISOString()}) | Diff: ${diffInSeconds}s`
+				);
 
-  const intervals = [
-    { label: 'year', seconds: 31536000 },
-    { label: 'month', seconds: 2592000 },
-    { label: 'day', seconds: 86400 },
-    { label: 'hour', seconds: 3600 },
-    { label: 'minute', seconds: 60 },
-    { label: 'second', seconds: 1 },
-  ];
+				const intervals = [
+					{ label: "year", seconds: 31536000 },
+					{ label: "month", seconds: 2592000 },
+					{ label: "day", seconds: 86400 },
+					{ label: "hour", seconds: 3600 },
+					{ label: "minute", seconds: 60 },
+					{ label: "second", seconds: 1 },
+				];
 
-  for (const interval of intervals) {
-    const count = Math.floor(diffInSeconds / interval.seconds);
-    if (count > 0) {
-      return `${count} ${interval.label}${count > 1 ? 's' : ''} ago`;
-    }
-  }
+				for (const interval of intervals) {
+					const count = Math.floor(diffInSeconds / interval.seconds);
+					if (count > 0) {
+						return `${count} ${interval.label}${count > 1 ? "s" : ""} ago`;
+					}
+				}
 
-  return 'just now';
-},
+				return "just now";
+			},
+			async loadMoreActivities() {
+				const currentLimit = this.userMetrics.recentActivity.length;
+				const newActivities = await this.getRecentUserActivity(
+					this.user.id,
+					currentLimit + 10
+				);
+				this.userMetrics.recentActivity = newActivities;
+			},
 		},
 		created() {
 			this.currentTime = new Date();
-			this.getProfile();
+			this.getProfile().then(() => {
+				// After profile is loaded and we have user.id
+				this.fetchUserTopGenres();
+			});
 		},
 	};
 </script>
@@ -515,7 +600,7 @@
 	:deep(.v-timeline-item__body) {
 		display: flex;
 		width: 100%;
-	} 
+	}
 
 	.timeline-content .text-subtitle-2 {
 		color: rgba(0, 0, 0, 0.87);
@@ -535,39 +620,56 @@
 	}
 
 	/* Custom scrollbar for timeline */
-	.activity-card ::-webkit-scrollbar {
-		width: 6px;
+	.activity-container::-webkit-scrollbar {
+		width: 4px;
 	}
 
-	.activity-card ::-webkit-scrollbar-track {
-		background: #f1f1f1;
-		border-radius: 3px;
+	.activity-container::-webkit-scrollbar-track {
+		background: rgba(67, 97, 238, 0.05);
+		border-radius: 2px;
 	}
 
-	.activity-card ::-webkit-scrollbar-thumb {
-		background: rgba(67, 97, 238, 0.5);
+	.activity-container::-webkit-scrollbar-thumb {
+		background: rgba(67, 97, 238, 0.2);
+		border-radius: 2px;
+		transition: background 0.2s ease;
 	}
 
-	.activity-card ::-webkit-scrollbar-thumb:hover {
-		background: rgba(67, 97, 238, 0.7);
+	.activity-container::-webkit-scrollbar-thumb:hover {
+		background: rgba(67, 97, 238, 0.3);
 	}
 
-	/* Update Vuetify theme colors */
-	:deep(.v-timeline-item__dot) {
-		background-color: #4361ee;
+	/* For Firefox */
+	.activity-container {
+		scrollbar-width: thin;
+		scrollbar-color: rgba(67, 97, 238, 0.2) rgba(67, 97, 238, 0.05);
 	}
 
-	:deep(.v-progress-linear__determinate) {
-		background-color: #4361ee;
+	.activity-container {
+		max-height: 400px;
+		overflow-y: auto;
+		position: relative;
+		padding-right: 8px;
 	}
 
-	:deep(.v-chip) {
-		background-color: rgba(67, 97, 238, 0.1);
-		color: #4361ee;
+	.activity-container::after {
+		content: "";
+		position: absolute;
+		bottom: 0;
+		left: 0;
+		right: 0;
+		height: 40px;
+		background: linear-gradient(
+			to bottom,
+			rgba(255, 255, 255, 0) 0%,
+			rgba(255, 255, 255, 0.8) 50%,
+			rgba(255, 255, 255, 1) 100%
+		);
+		pointer-events: none;
 	}
 
-	:deep(.v-chip--elevated) {
-		box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-		border: 1px solid rgba(255, 255, 255, 0.1);
+	.activity-footer {
+		text-align: center;
+		padding-top: 8px;
 	}
 </style>

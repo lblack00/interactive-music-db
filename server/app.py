@@ -2316,8 +2316,59 @@ def reset_password():
     except Exception as e:
         print(f"Password reset error: {str(e)}")
         return jsonify({'error': 'Failed to reset password'}), 500
+
+@app.route('/user-top-genres', methods=['GET'])
+def get_user_top_genres():
+    user_id = request.args.get('user_id')
+    
+    if not user_id:
+        return jsonify({'error': 'Missing user_id'}), 400
+        
+    try:
+        # Get all master_ids rated by the user
+        master_ids_query = """
+            SELECT item_id
+            FROM ratings
+            WHERE user_id = %s AND item_type = 'master'
+        """
+        master_ids_result = db_utils(dbname='users_db', user='postgres').read_data(master_ids_query, (user_id,))
+        
+        if not master_ids_result:
+            return jsonify([]), 200  # Return empty list if no ratings
+            
+        # Extract the master_ids
+        master_ids = [r['item_id'] for r in master_ids_result]
+        
+        # Query for genres
+        genres_query = """
+            SELECT genre, COUNT(*) as count
+            FROM master_genre
+            WHERE master_id = ANY(%s::integer[])
+            GROUP BY genre
+            ORDER BY count DESC
+            LIMIT 5;
+        """
+        genres_result = db_utils(dbname='discogs_db', user='postgres').read_data(genres_query, (master_ids,))
+        
+        # Calculate percentages
+        total_count = sum(genre['count'] for genre in genres_result) if genres_result else 1
+        
+        top_genres = [
+            {
+                'name': genre['genre'],
+                'percentage': round((genre['count'] / total_count) * 100)
+            }
+            for genre in genres_result
+        ]
+        
+        return jsonify(top_genres), 200
+        
+    except Exception as e:
+        print(f"Error fetching top genres: {e}")
+        return jsonify({'error': 'Server error'}), 500
     
 if __name__ == "__main__":
     if authenticate_discogs_API:
         authenticate_discogs()
     app.run(port=5001, debug=True)
+
