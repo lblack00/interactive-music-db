@@ -1678,8 +1678,7 @@ def get_recent_user_activity():
                 'forum_thread' AS action_type,
                 ft.created_at,
                 ft.id AS action_id,
-                NULL AS thread_id,
-                'Created new thread titled ' || ft.title AS description,
+                'Created new thread titled "' || ft.title || '"' AS description,
                 '/forum/thread/' || ft.id AS relevant_url
             FROM forum_threads ft
             WHERE ft.user_id = %s
@@ -1690,8 +1689,7 @@ def get_recent_user_activity():
                 'forum_reply' AS action_type,
                 fr.created_at,
                 fr.id AS action_id,
-                NULL AS thread_id,
-                'Made a reply on thread ' || ft.title AS description,
+                'Made a reply on the thread "' || ft.title || '"' AS description,
                 '/forum/thread/' || fr.thread_id AS relevant_url
             FROM forum_replies fr
             JOIN forum_threads ft ON fr.thread_id = ft.id
@@ -1703,8 +1701,7 @@ def get_recent_user_activity():
                 'rating' AS action_type,
                 r.created_at,
                 r.id AS action_id,
-                NULL AS thread_id,
-                'Rated ' || r.item_type || '/' || r.item_id || ' ' || ROUND(r.rating)::INTEGER || ' stars' AS description,
+                r.item_type || ' ' || r.item_id || ' ' || ROUND(r.rating)::INTEGER AS description,
                 CASE
                     WHEN r.item_type = 'master' THEN '/master/' || r.item_id
                     WHEN r.item_type = 'artist' THEN '/artist/' || r.item_id
@@ -1718,6 +1715,35 @@ def get_recent_user_activity():
         """
 
         result = db_utils(dbname='users_db', user='postgres').read_data(query, (user_id, user_id, user_id, limit))
+
+        # Now process the description and replace item_id with title
+        for activity in result:
+            if activity['action_type'] == 'rating':
+                # Extract item_type and item_id from description
+                description_parts = activity['description'].split(' ')
+
+                item_type = description_parts[0]
+                item_id = description_parts[1]
+
+                # Fetch the title based on item_type and item_id
+                if item_type == 'master':
+                    item_info = master.get_master(item_id)
+                    title = item_info[0].get('title', 'Unknown Master')
+                    action_type = "master_rating"
+                elif item_type == 'artist':
+                    item_info = artist.get_artist(item_id)
+                    title = item_info[0].get('name', 'Unknown Artist')
+                    action_type = "artist_rating"
+                else:
+                    title = 'Unknown Item'
+                    action_type = "unknown_Rating"
+                    print("Rating type unknown")
+
+                # Add quotes around the title in the description
+                activity['description'] = f"Rated \"{title}\" {description_parts[2]} stars"
+
+                # Update the action_type to differentiate between master and artist
+                activity['action_type'] = action_type
 
         return jsonify(result), 200
     except Exception as e:
@@ -1795,7 +1821,7 @@ def create_forum_thread():
             thread_id = result[0][0]
 
             thread_data = forum.get_thread(thread_id)
-
+    
             if thread_data:
                 formatted_thread = {
                     "id": thread_data[0]['id'],
@@ -1895,6 +1921,7 @@ def add_thread_reply(thread_id):
             new_reply = next((r for r in replies if r['id'] == reply_id), None)
             
             if new_reply:
+                reply_author_image_url = get_profile_image_path(new_reply['author_id'])
                 formatted_reply = {
                     "id": new_reply['id'],
                     "content": new_reply['content'],
@@ -1903,7 +1930,8 @@ def add_thread_reply(thread_id):
                     "parentId": new_reply['parent_id'],
                     "author": {
                         "id": new_reply['author_id'],
-                        "name": new_reply['author_name']
+                        "name": new_reply['author_name'],
+                        "pfp": reply_author_image_url
                     }
                 }
                 return jsonify(formatted_reply), 201

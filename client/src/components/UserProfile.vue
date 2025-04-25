@@ -123,31 +123,37 @@
 										<v-col cols="12" md="6">
 											<v-card class="activity-card pa-4" elevation="2">
 												<v-card-title class="text-h6">
-													<v-icon start color="primary" class="mr-2"
-														>mdi-history</v-icon
-													>
+													<v-icon start color="primary" class="mr-2">mdi-history</v-icon>
 													Recent Activity
 												</v-card-title>
 												<v-card-text class="pa-0">
 													<v-timeline density="compact" align="start">
 														<v-timeline-item
-															v-for="(
-																activity, index
-															) in userMetrics.recentActivity"
+															v-for="(activity, index) in userMetrics.recentActivity"
 															:key="index"
 															:dot-color="getActivityColor(activity.type)"
 															size="small"
+															class="w-100"
 														>
-															<template v-slot:opposite>
-																<div class="text-caption">
-																	{{ formatDate(activity.date) }}
+															<div class="timeline-content w-100">
+																<!-- Title and time on the same line -->
+																<div class="d-flex justify-space-between align-center w-100">
+																	<div class="text-subtitle-2 font-weight-medium">
+																		<router-link
+																			:to="activity.url"
+																			class="text-decoration-none text-primary"
+																			style="color: inherit;"
+																		>
+																			{{ activity.title }}
+																		</router-link>
+																	</div>
+																	<div class="text-caption text-medium-emphasis">
+																		{{ timeAgo(activity.date) }}
+																	</div>
 																</div>
-															</template>
-															<div class="timeline-content">
-																<div class="text-subtitle-2 font-weight-medium">
-																	{{ activity.title }}
-																</div>
-																<div class="text-caption text-medium-emphasis">
+
+																<!-- Description below -->
+																<div class="text-caption text-medium-emphasis mt-1">
 																	{{ activity.description }}
 																</div>
 															</div>
@@ -199,36 +205,14 @@
 					recentActivity: [
 						{
 							type: "rating",
-							date: "2024-03-15",
+							date: "Thu, 24 Apr 2025 21:47:05 GMT",
 							title: "New Rating",
-							description: "Gave 'Bohemian Rhapsody' 5 stars",
-						},
-						{
-							type: "listen",
-							date: "2024-03-14",
-							title: "Album Completed",
-							description: "Finished 'Dark Side of the Moon'",
-						},
-						{
-							type: "discovery",
-							date: "2024-03-13",
-							title: "New Discovery",
-							description: "Added Jazz Fusion to favorite genres",
-						},
-						{
-							type: "discovery",
-							date: "2024-03-13",
-							title: "New Discovery",
-							description: "Added Jazz Fusion to favorite genres",
-						},
-						{
-							type: "discovery",
-							date: "2024-03-13",
-							title: "New Discovery",
-							description: "Added Jazz Fusion to favorite genres",
+							description: "Gave '/master/5' 5 stars",
+							url: "/master/5"
 						},
 					],
 				},
+				currentTime: null,
 				clientId: import.meta.env.VITE_SPOTIFY_CLIENT_ID,
 				redirectUri: "http://localhost:5173/",
 				accessToken: "",
@@ -261,36 +245,40 @@
 		methods: {
 			async getProfile() {
 				try {
-					const response = await axios.get(`http://localhost:5001/get-user-id/${this.user.username}`);
-					this.user.id = response.data.id;
+						const response = await axios.get(`http://localhost:5001/get-user-id/${this.user.username}`);
+						this.user.id = response.data.id;
 				} catch (error) {
-					console.error("Error finding user:", error);
-					this.$router.push('/404');
-					return; // stop here if the user doesn't exist
+						console.error("Error finding user:", error);
+						this.$router.push('/404');
+						return; // stop here if the user doesn't exist
 				}
 
 				// Attempt to load profile image (fail gracefully)
 				try {
-					const imageResponse = await axios.get(
-						`http://localhost:5001/get-profile-image/${this.user.id}`
-					);
-					this.user.profileImage = `http://localhost:5001${imageResponse.data.image_url}`;
+						const imageResponse = await axios.get(
+								`http://localhost:5001/get-profile-image/${this.user.id}`
+						);
+						this.user.profileImage = `http://localhost:5001${imageResponse.data.image_url}`;
 				} catch (error) {
-					console.warn("Failed to load profile image:", error);
-					this.user.profileImage = null; // or a default placeholder if you'd like
+						console.warn("Failed to load profile image:", error);
+						this.user.profileImage = null; // or a default placeholder if you'd like
 				}
 
 				// Attempt to load bio (fail gracefully)
 				try {
-					const bioResponse = await axios.get(`http://localhost:5001/get-bio/${this.user.id}`);
-					this.user.bio = bioResponse.data.bio;
+						const bioResponse = await axios.get(`http://localhost:5001/get-bio/${this.user.id}`);
+						this.user.bio = bioResponse.data.bio;
 				} catch (error) {
-					console.warn("Failed to load bio:", error);
-					this.user.bio = ""; // or a default message like "No bio available"
+						console.warn("Failed to load bio:", error);
+						this.user.bio = ""; // or a default message like "No bio available"
 				}
+
 				this.fetchUserRatingStats(this.user.id);
-				const activities = await this.getRecentUserActivity(this.user.id, 5);  // Fetch top 5 recent activities
-    		console.log(activities);  // Log or handle the activities as needed
+
+				// Fetch the top 5 recent activities and store them in recentActivity
+				const activities = await this.getRecentUserActivity(this.user.id, 10);
+				this.recentActivity = activities;  // Store the activities in recentActivity
+				console.log(this.recentActivity);  // Log the recent activities for debugging
 			},
 			async fetchUserRatingStats(userId) {
 				try {
@@ -311,20 +299,44 @@
 				}
 			},
 			async getRecentUserActivity(userId, limit = 10) {
-					try {
-							const response = await axios.get('http://localhost:5001/user-recent-activity', {
-									params: { user_id: userId, limit: limit },
-									withCredentials: true
-							});
-							
-							if (response.status === 200) {
-									return response.data;  // Returns the recent activity list
-							} else {
-									console.log('No activity found');
+				try {
+					const response = await axios.get('http://localhost:5001/user-recent-activity', {
+						params: { user_id: userId, limit: limit },
+						withCredentials: true
+					});
+
+					if (response.status === 200) {
+						console.log('Raw API Response:', response.data);
+
+						const processedActivities = response.data.map(activity => {
+							let title = '';
+							if (activity.action_type === 'artist_rating') {
+								title = 'New Artist Rating';
+							} else if (activity.action_type === 'master_rating') {
+								title = 'New Album Rating';
+							} else if (activity.action_type === 'forum_thread') {
+								title = 'New Thread Created';
+							} else if (activity.action_type === 'forum_reply') {
+								title = 'New Reply';
 							}
-					} catch (error) {
-							console.error('Error fetching recent activity:', error);
+
+							return {
+								type: activity.action_type,
+								date: activity.created_at,
+								title: title,
+								description: activity.description,
+								url: activity.relevant_url
+							};
+						});
+
+						this.userMetrics.recentActivity = processedActivities;
+						console.log('Processed Recent Activity:', this.userMetrics.recentActivity);
+					} else {
+						console.log('No activity found');
 					}
+				} catch (error) {
+					console.error('Error fetching recent activity:', error);
+				}
 			},
 			async initiateSpotifyAuth() {
 				try {
@@ -392,17 +404,44 @@
 			},
 			getActivityColor(type) {
 				const colors = {
-					rating: "#3cba92",
-					listen: "#2c7a7b",
-					discovery: "#3cba92",
-				};
-				return colors[type] || "#3cba92";
+					master_rating: "#ff6f61",  // Coral red for master ratings
+					artist_rating: "#f4a300",  // A warm amber for artist ratings
+					forum_reply: "#2c7a7b",
+					forum_thread: "#3cba92",
+			};
+				return colors[type] || "#000000";
 			},
 			formatDate(dateString) {
 				return format(new Date(dateString), "MMM d");
 			},
+			timeAgo(dateString) {
+  const itemTime = new Date(Date.parse(dateString)).getTime();
+  const currentTime = this.currentTime.getTime();
+  const diffInSeconds = Math.floor((currentTime - itemTime) / 1000);
+
+  console.log(`[timeAgo] Now: ${currentTime} (${new Date(currentTime).toISOString()}) | Item: ${itemTime} (${new Date(itemTime).toISOString()}) | Diff: ${diffInSeconds}s`);
+
+  const intervals = [
+    { label: 'year', seconds: 31536000 },
+    { label: 'month', seconds: 2592000 },
+    { label: 'day', seconds: 86400 },
+    { label: 'hour', seconds: 3600 },
+    { label: 'minute', seconds: 60 },
+    { label: 'second', seconds: 1 },
+  ];
+
+  for (const interval of intervals) {
+    const count = Math.floor(diffInSeconds / interval.seconds);
+    if (count > 0) {
+      return `${count} ${interval.label}${count > 1 ? 's' : ''} ago`;
+    }
+  }
+
+  return 'just now';
+},
 		},
 		created() {
+			this.currentTime = new Date();
 			this.getProfile();
 		},
 	};
