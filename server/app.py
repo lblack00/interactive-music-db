@@ -1665,6 +1665,64 @@ def get_user_rating_stats():
     except Exception as e:
         print(f"Error getting rating stats: {e}")
         return jsonify({'error': 'Server error'}), 500
+    
+# Written by Matthew Stenvold
+@app.route('/user-recent-activity', methods=['GET'])
+def get_recent_user_activity():
+    user_id = request.args.get('user_id')
+    limit = request.args.get('limit', 10)  # Default to 10 if no limit provided
+
+    try:
+        query = """
+            SELECT
+                'forum_thread' AS action_type,
+                ft.created_at,
+                ft.id AS action_id,
+                NULL AS thread_id,
+                'Created new thread titled ' || ft.title AS description,
+                '/forum/thread/' || ft.id AS relevant_url
+            FROM forum_threads ft
+            WHERE ft.user_id = %s
+
+            UNION ALL
+
+            SELECT
+                'forum_reply' AS action_type,
+                fr.created_at,
+                fr.id AS action_id,
+                NULL AS thread_id,
+                'Made a reply on thread ' || ft.title AS description,
+                '/forum/thread/' || fr.thread_id AS relevant_url
+            FROM forum_replies fr
+            JOIN forum_threads ft ON fr.thread_id = ft.id
+            WHERE fr.user_id = %s
+
+            UNION ALL
+
+            SELECT
+                'rating' AS action_type,
+                r.created_at,
+                r.id AS action_id,
+                NULL AS thread_id,
+                'Rated ' || r.item_type || '/' || r.item_id || ' ' || ROUND(r.rating)::INTEGER || ' stars' AS description,
+                CASE
+                    WHEN r.item_type = 'master' THEN '/master/' || r.item_id
+                    WHEN r.item_type = 'artist' THEN '/artist/' || r.item_id
+                    ELSE '/item/' || r.item_id
+                END AS relevant_url
+            FROM ratings r
+            WHERE r.user_id = %s
+
+            ORDER BY created_at DESC
+            LIMIT %s;
+        """
+
+        result = db_utils(dbname='users_db', user='postgres').read_data(query, (user_id, user_id, user_id, limit))
+
+        return jsonify(result), 200
+    except Exception as e:
+        print(f"Error fetching recent activity: {e}")
+        return jsonify({'error': 'Server error'}), 500
 
 
 # Written by Lucas Black

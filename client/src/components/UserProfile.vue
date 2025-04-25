@@ -13,10 +13,7 @@
 								<v-col cols="12" sm="auto" class="text-center text-sm-left">
 									<v-avatar size="120" class="profile-avatar">
 										<v-img
-											:src="
-												user.profileImage ||
-												'https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png'
-											"
+											:src="user.profileImage"
 											alt="Profile"
 										></v-img>
 									</v-avatar>
@@ -29,6 +26,15 @@
 										{{ user.bio }}
 									</p>
 									<div class="d-flex flex-wrap gap-2">
+										<router-link :to="'/musiclist/' + this.user.username">
+											<v-chip
+												color="deep-purple"
+												prepend-icon="mdi-format-list-bulleted"
+												variant="elevated"
+											>
+												Music List
+											</v-chip>
+										</router-link>
 										<v-chip
 											v-if="user.spotifyConnected"
 											color="success"
@@ -181,8 +187,8 @@
 				},
 				userMetrics: {
 					totalHours: 247,
-					totalRatings: 543,
-					averageRating: 4.2,
+					totalRatings: null,
+					averageRating: null,
 					topGenres: [
 						{ name: "Rock", percentage: 35 },
 						{ name: "Pop", percentage: 25 },
@@ -283,6 +289,8 @@
 					this.user.bio = ""; // or a default message like "No bio available"
 				}
 				this.fetchUserRatingStats(this.user.id);
+				const activities = await this.getRecentUserActivity(this.user.id, 5);  // Fetch top 5 recent activities
+    		console.log(activities);  // Log or handle the activities as needed
 			},
 			async fetchUserRatingStats(userId) {
 				try {
@@ -301,6 +309,22 @@
 				} catch (error) {
 					console.error('Failed to fetch user rating stats:', error);
 				}
+			},
+			async getRecentUserActivity(userId, limit = 10) {
+					try {
+							const response = await axios.get('http://localhost:5001/user-recent-activity', {
+									params: { user_id: userId, limit: limit },
+									withCredentials: true
+							});
+							
+							if (response.status === 200) {
+									return response.data;  // Returns the recent activity list
+							} else {
+									console.log('No activity found');
+							}
+					} catch (error) {
+							console.error('Error fetching recent activity:', error);
+					}
 			},
 			async initiateSpotifyAuth() {
 				try {
