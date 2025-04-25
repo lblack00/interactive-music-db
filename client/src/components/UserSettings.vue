@@ -37,6 +37,11 @@
 									label="Bio"
 									outlined
 									rows="3"
+<<<<<<< Updated upstream
+=======
+									:counter="500"
+									maxlength="500"
+>>>>>>> Stashed changes
 								></v-textarea>
 
 								<!-- Profile Picture Section -->
@@ -197,6 +202,7 @@
 				}
 			},
 		},
+<<<<<<< Updated upstream
 		watch: {
 			// Add watcher for colorblindMode
 			colorblindMode: {
@@ -221,6 +227,60 @@
 						root.style.removeProperty("--link-color");
 					}
 				},
+=======
+		methods: {
+			async getCurrentSettings() {
+				try {
+					const response = await axios.get(
+						"http://localhost:5001/check-session",
+						{
+							withCredentials: true,
+						}
+					);
+
+					this.loggedIn = response.data.logged_in;
+					if (response.data.logged_in) {
+						this.user.username = response.data.user.username;
+						this.user.id = response.data.user.id;
+						this.user.email = response.data.user.email;
+
+						this.originalUser.username = response.data.user.username;
+
+						const imageResponse = await axios.get(
+							`http://localhost:5001/get-profile-image/${this.user.id}`
+						);
+						this.originalUser.profileImage = `http://localhost:5001${imageResponse.data.image_url}`;
+
+						const bioResponse = await axios.get(
+							`http://localhost:5001/get-bio/${this.user.id}`
+						);
+						this.user.bio = bioResponse.data.bio;
+						this.originalUser.bio = this.user.bio;
+
+						try {
+							const spotifyResponse = await axios.get(
+								`http://localhost:5001/get-spotify-status`,
+								{ withCredentials: true }
+							);
+							this.user.spotifyConnected = spotifyResponse.data.connected;
+
+							if (
+								this.user.spotifyConnected &&
+								localStorage.getItem("spotify_access_token")
+							) {
+								this.accessToken = localStorage.getItem("spotify_access_token");
+							}
+						} catch (error) {}
+					} else {
+						// Redirect to 404
+						this.$router.push("/404");
+					}
+				} catch (error) {
+					console.error("Error checking session:", error);
+					this.loggedIn = false;
+					this.user = null;
+				}
+>>>>>>> Stashed changes
 			},
 		},
 		methods: {
@@ -228,8 +288,87 @@
 				// Apply accessibility settings
 				this.applyAccessibilitySettings();
 
+<<<<<<< Updated upstream
 				alert("Profile updated successfully!");
 				// Needs to be implemented
+=======
+			async saveProfile() {
+				if (this.user.username !== this.originalUser.username) {
+					try {
+						const response = await axios.post(
+							"http://localhost:5001/update-username",
+							{
+								new_username: this.user.username,
+							},
+							{
+								withCredentials: true, // if you're using session cookies
+							}
+						);
+						console.log("Username has been updated!");
+						this.originalUser.username = this.user.username;
+					} catch (error) {
+						this.errorUpdating = true;
+						console.error("Error updating username:", error);
+						if (error.response && error.response.status === 409) {
+							alert("That username is already taken.");
+						} else {
+							alert("Error updating username");
+						}
+						// Revert the username on error if needed
+						this.user.username = this.originalUser.username;
+					}
+				}
+
+				if (this.user.bio !== this.originalUser.bio) {
+					try {
+						const response = await axios.post(
+							"http://localhost:5001/update-bio",
+							{ bio: this.user.bio },
+							{ withCredentials: true }
+						);
+
+						console.log("Bio updated successfully:", response.data.bio);
+						this.originalUser.bio = this.user.bio;
+					} catch (error) {
+						console.error("Error updating bio:", error);
+						alert("There was an error updating your bio.");
+					}
+				}
+
+				if (
+					this.user.profileImage !== this.originalUser.profileImage &&
+					this.user.profileImage
+				) {
+					try {
+						const formData = new FormData();
+						formData.append("image", this.profileFile); // file selected in handleFileUpload
+
+						await axios.post(
+							"http://localhost:5001/update-user-pfp",
+							formData,
+							{
+								withCredentials: true,
+								headers: {
+									"Content-Type": "multipart/form-data",
+								},
+							}
+						);
+
+						this.originalUser.profileImage = this.user.profileImage;
+						this.user.profileImage = null;
+						console.log("Profile picture uploaded successfully!");
+					} catch (error) {
+						this.errorUpdating = true;
+						console.error("Error uploading profile image:", error);
+						alert("Error uploading profile image");
+					}
+				}
+
+				if (!this.errorUpdating) {
+					alert("Profile updated successfully!");
+				}
+				this.errorUpdating = false;
+>>>>>>> Stashed changes
 			},
 			handleFileUpload(event) {
 				const file = event.target.files[0];
@@ -343,8 +482,28 @@
 						this.accessToken = data.access_token;
 						localStorage.setItem("spotify_access_token", data.access_token);
 						localStorage.setItem("spotify_refresh_token", data.refresh_token);
+<<<<<<< Updated upstream
 						this.user.spotifyConnected = true;
 						alert("Spotify connected successfully!");
+=======
+
+						try {
+							await axios.post(
+								"http://localhost:5001/update-spotify-tokens",
+								{
+									access_token: data.access_token,
+									refresh_token: data.refresh_token,
+									expires_in: data.expires_in,
+									connected: true,
+								},
+								{ withCredentials: true }
+							);
+							alert("Spotify connected successfully!");
+							this.user.spotifyConnected = true;
+						} catch (error) {
+							console.error("Error saving Spotify tokens:", error);
+						}
+>>>>>>> Stashed changes
 					} else {
 						alert("Failed to retrieve access token");
 					}
@@ -425,6 +584,12 @@
 		beforeDestroy() {
 			// Not needed anymore as App.vue manages the classes
 		},
+<<<<<<< Updated upstream
+=======
+		created() {
+			this.getCurrentSettings();
+		},
+>>>>>>> Stashed changes
 	};
 </script>
 <style scoped>

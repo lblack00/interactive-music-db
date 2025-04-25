@@ -48,6 +48,11 @@
 
 <script>
 	import Navbar from "./Navbar.vue";
+<<<<<<< Updated upstream
+=======
+	import { format } from "date-fns";
+	import axios from "axios";
+>>>>>>> Stashed changes
 
 	export default {
 		name: "UserSettings",
@@ -66,8 +71,44 @@
 			};
 		},
 		methods: {
+<<<<<<< Updated upstream
 			saveProfile() {
 				alert("Profile updated successfully!");
+=======
+			async getProfile() {
+				try {
+					const response = await axios.get(
+						`http://localhost:5001/get-user-id/${this.user.username}`
+					);
+					this.user.id = response.data.id;
+				} catch (error) {
+					console.error("Error finding user:", error);
+					this.$router.push("/404");
+					return; // stop here if the user doesn't exist
+				}
+
+				// Attempt to load profile image (fail gracefully)
+				try {
+					const imageResponse = await axios.get(
+						`http://localhost:5001/get-profile-image/${this.user.id}`
+					);
+					this.user.profileImage = `http://localhost:5001${imageResponse.data.image_url}`;
+				} catch (error) {
+					console.warn("Failed to load profile image:", error);
+					this.user.profileImage = null; // or a default placeholder if you'd like
+				}
+
+				// Attempt to load bio (fail gracefully)
+				try {
+					const bioResponse = await axios.get(
+						`http://localhost:5001/get-bio/${this.user.id}`
+					);
+					this.user.bio = bioResponse.data.bio;
+				} catch (error) {
+					console.warn("Failed to load bio:", error);
+					this.user.bio = ""; // or a default message like "No bio available"
+				}
+>>>>>>> Stashed changes
 			},
 			async initiateSpotifyAuth() {
 				try {
@@ -123,6 +164,60 @@
 					.replace(/\//g, "_")
 					.replace(/=+$/, "");
 			},
+<<<<<<< Updated upstream
+=======
+			async fetchUserMetrics() {
+				try {
+					const response = await axios.get(
+						`http://localhost:5001/api/users/${this.user.username}/metrics`
+					);
+					if (response.data) {
+						this.userMetrics = {
+							totalHours: response.data.totalHours,
+							songsRated: response.data.songsRated,
+							averageRating: response.data.averageRating,
+							topGenres: response.data.topGenres,
+							recentActivity: response.data.recentActivity,
+						};
+					}
+				} catch (error) {
+					console.error("Error fetching user metrics:", error);
+					// Fallback to default values if the API call fails
+					this.userMetrics = {
+						totalHours: 0,
+						songsRated: 0,
+						averageRating: 0,
+						topGenres: [],
+						recentActivity: [],
+					};
+				}
+			},
+			getGenreColor(genre) {
+				const colors = {
+					Rock: "#3cba92",
+					Pop: "#2c7a7b",
+					Jazz: "#3cba92",
+					Classical: "#2c7a7b",
+					Electronic: "#3cba92",
+				};
+				return colors[genre] || "#3cba92";
+			},
+			getActivityColor(type) {
+				const colors = {
+					rating: "#3cba92",
+					listen: "#2c7a7b",
+					discovery: "#3cba92",
+				};
+				return colors[type] || "#3cba92";
+			},
+			formatDate(dateString) {
+				return format(new Date(dateString), "MMM d");
+			},
+		},
+		created() {
+			this.getProfile();
+			this.fetchUserMetrics();
+>>>>>>> Stashed changes
 		},
 	};
 </script>

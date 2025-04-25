@@ -1402,6 +1402,153 @@ def report_forum_item():
         print(f"Error submitting report: {e}")
         return jsonify({"error": "Internal server error", "message": str(e)}), 500
     
+@app.route('/api/users/<username>/metrics', methods=['GET'])
+def get_user_metrics(username):
+    try:
+        print(f"Starting metrics fetch for user: {username}")
+        
+        # Get user ID from users_db
+        users_db = db_utils(dbname='users_db', user='postgres')
+        discogs_db = db_utils(dbname='discogs_db', user='postgres')
+        
+        user_query = "SELECT id FROM users WHERE username = %s;"
+        print(f"Executing user query: {user_query} with username: {username}")
+        user_result = users_db.read_data(user_query, (username,))
+        print(f"User query result: {user_result}")
+        
+        if not user_result:
+            print(f"User not found: {username}")
+            return jsonify({'error': 'User not found'}), 404
+            
+        user_id = user_result[0]['id']
+        print(f"Found user_id: {user_id}")
+        
+        # Get total listening hours from users_db
+        hours_query = """
+            SELECT COALESCE(SUM(duration_hours), 0) as total_hours
+            FROM listening_history
+            WHERE user_id = %s;
+        """
+        print(f"Executing hours query for user_id: {user_id}")
+        hours_result = users_db.read_data(hours_query, (user_id,))
+        print(f"Hours query result: {hours_result}")
+        total_hours = float(hours_result[0]['total_hours']) if hours_result else 0
+        print(f"Total hours: {total_hours}")
+        
+        # Get total songs rated from users_db
+        ratings_query = """
+            SELECT COUNT(*) as total_ratings
+            FROM ratings
+            WHERE user_id = %s;
+        """
+        print(f"Executing ratings query for user_id: {user_id}")
+        ratings_result = users_db.read_data(ratings_query, (user_id,))
+        print(f"Ratings query result: {ratings_result}")
+        total_ratings = ratings_result[0]['total_ratings'] if ratings_result else 0
+        print(f"Total ratings: {total_ratings}")
+        
+        # Get average rating from users_db
+        avg_rating_query = """
+            SELECT COALESCE(ROUND(AVG(rating)::numeric, 1), 0) as avg_rating
+            FROM ratings
+            WHERE user_id = %s;
+        """
+        print(f"Executing avg rating query for user_id: {user_id}")
+        avg_rating_result = users_db.read_data(avg_rating_query, (user_id,))
+        print(f"Avg rating query result: {avg_rating_result}")
+        avg_rating = float(avg_rating_result[0]['avg_rating']) if avg_rating_result else 0
+        print(f"Average rating: {avg_rating}")
+        
+        # Get top genres - first get the master_ids from users_db
+        master_ids_query = """
+            SELECT item_id, rating
+            FROM ratings
+            WHERE user_id = %s AND item_type = 'master'
+        """
+        master_ids_result = users_db.read_data(master_ids_query, (user_id,))
+        
+        if master_ids_result:
+            # Convert the results into a list of master_ids
+            master_ids = [r['item_id'] for r in master_ids_result]
+            
+            # Now query the genres in discogs_db
+            genres_query = """
+                SELECT genre, COUNT(*) as count
+                FROM master_genre
+                WHERE master_id = ANY(%s::integer[])
+                GROUP BY genre
+                ORDER BY count DESC
+                LIMIT 5;
+            """
+            genres_result = discogs_db.read_data(genres_query, (master_ids,))
+        else:
+            genres_result = []
+
+        # Calculate genre percentages
+        total_genre_count = sum(genre['count'] for genre in genres_result) if genres_result else 1
+        top_genres = [
+            {
+                'name': genre['genre'],
+                'percentage': round((genre['count'] / total_genre_count) * 100)
+            }
+            for genre in genres_result
+        ] if genres_result else []
+        print(f"Top genres: {top_genres}")
+        
+        # Get recent activity - first get the ratings from users_db
+        recent_ratings_query = """
+            SELECT item_id, rating, created_at
+            FROM ratings
+            WHERE user_id = %s AND item_type = 'master'
+            ORDER BY created_at DESC
+            LIMIT 3;
+        """
+        recent_ratings = users_db.read_data(recent_ratings_query, (user_id,))
+        
+        recent_activity = []
+        if recent_ratings:
+            # Get the master titles from discogs_db
+            master_ids = [r['item_id'] for r in recent_ratings]
+            titles_query = """
+                SELECT id, title
+                FROM master
+                WHERE id = ANY(%s::integer[]);
+            """
+            titles_result = discogs_db.read_data(titles_query, (master_ids,))
+            
+            # Create a mapping of master_id to title
+            titles_map = {str(r['id']): r['title'] for r in titles_result}
+            
+            # Build the recent activity list
+            recent_activity = [
+                {
+                    'type': 'rating',
+                    'date': rating['created_at'].strftime('%Y-%m-%d'),
+                    'title': f"Rated '{titles_map.get(rating['item_id'], 'Unknown')}' {rating['rating']} stars",
+                    'description': f"Gave '{titles_map.get(rating['item_id'], 'Unknown')}' {rating['rating']} stars"
+                }
+                for rating in recent_ratings
+                if rating['item_id'] in titles_map
+            ]
+        
+        response = {
+            'totalHours': total_hours,
+            'totalRatings': total_ratings,
+            'songsRated': total_ratings,  
+            'averageRating': avg_rating,
+            'topGenres': top_genres,
+            'recentActivity': recent_activity
+        }
+        print(f"Final response: {response}")
+        
+        return jsonify(response), 200
+        
+    except Exception as e:
+        print(f"Error getting user metrics: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': 'Internal server error'}), 500
+
 if __name__ == "__main__":
     if authenticate_discogs_API:
         authenticate_discogs()
