@@ -7,12 +7,18 @@ import time
 import redis
 import requests
 import sys
+import secrets
 from flask import Flask, jsonify, request, session, make_response
+from flask_mail import Mail, Message
 from flask_cors import CORS
+from flask_caching import Cache
 from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.utils import secure_filename
 from flask_jwt_extended import JWTManager, jwt_required, get_jwt_identity, create_access_token
 from datetime import timedelta, datetime
 from flask_cors import cross_origin
+from functools import wraps
+from PIL import Image
 
 app = Flask(__name__)
 app.secret_key = os.urandom(16)
@@ -24,6 +30,15 @@ app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 app.config['SESSION_COOKIE_DOMAIN'] = 'localhost'
 app.config['SESSION_COOKIE_PATH'] = '/'
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=7)  # Session lasts 7 days
+
+# Mail Configuration
+app.config['MAIL_SERVER'] = 'smtp.gmail.com'  
+app.config['MAIL_PORT'] = 587
+app.config['MAIL_USE_TLS'] = True
+app.config['MAIL_USERNAME'] = 'jax.395629@gmail.com'  
+app.config['MAIL_PASSWORD'] = 'enddzwbchwjiyzev'     # Set by us
+mail = Mail(app)
+CHECK_EMAIL_VERIFICATION = True
 
 # JWT Configuration
 app.config["JWT_SECRET_KEY"] = "your-secret-key"  # Change this to a secure secret key
@@ -51,6 +66,7 @@ token_file = "discogs_auth.json"
 
 authenticate_discogs_API = True
 discogs_client_instance = None
+cache = Cache(app, config={'CACHE_TYPE': 'simple'})
 
 # source: https://github.com/jesseward/discogs-oauth-example
 def save_tokens(token, secret):
@@ -402,9 +418,11 @@ class users:
     @staticmethod
     def create_new_user(username, email, hashpass):
         query = """INSERT INTO users (username, email, password)
-                          VALUES (%s, %s, %s);"""
+                   VALUES (%s, %s, %s)
+                   RETURNING id;"""
 
-        users.db.mutate_data(query, (username, email, hashpass))
+        result = users.db.mutate_data(query, (username, email, hashpass))
+        return result[0][0] if result else None
 
     @staticmethod
     def check_username_exists(username):
@@ -424,6 +442,12 @@ class users:
         query = "SELECT * FROM users WHERE username=%s;"
 
         return users.db.read_data(query, (username,))
+
+    @staticmethod
+    def is_user_admin(username):
+        query = "SELECT is_admin FROM users WHERE username=%s;"
+
+        return users.db.read_data(query, (username,))[0]['is_admin']
 
 class forum:
     db = db_utils(dbname='users_db', user='postgres')
@@ -528,6 +552,28 @@ class forum:
             ORDER BY r.created_at ASC;
         """
         return forum.db.read_data(query, (thread_id,))
+
+    @staticmethod
+    def get_thread_reply(reply_id):
+        query = """
+            SELECT
+                r.id,
+                r.thread_id,
+                r.content,
+                r.parent_id,
+                r.created_at,
+                r.is_edited,
+                r.is_deleted,
+                u.username as author_name,
+                t.title
+            FROM forum_replies r
+            JOIN users u
+            ON r.user_id = u.id
+            JOIN forum_threads t
+            ON r.thread_id = t.id
+            WHERE r.id = %s;
+        """
+        return forum.db.read_data(query, (reply_id,))
     
     @staticmethod
     def add_reply(user_id, thread_id, content, parent_id=None):
@@ -586,6 +632,110 @@ class forum:
             RETURNING id;
         """
         return forum.db.mutate_data(query, (user_id, item_type, item_id, reason))
+
+    @staticmethod
+    def get_reports():
+        query = """
+            SELECT *
+            FROM forum_reports
+            ORDER BY created_at DESC;
+        """
+        reports = forum.db.read_data(query)
+        content = []
+        for report in reports:
+            if report['item_type'] == 'thread':
+                thread_query = """
+                    SELECT 
+                        t.id,
+                        t.title,
+                        t.content,
+                        t.category,
+                        t.created_at,
+                        t.updated_at,
+                        t.is_deleted,
+                        u.id as author_id, 
+                        u.username as author_name
+                    FROM forum_threads t
+                    JOIN users u ON t.user_id = u.id
+                    WHERE t.id = %s;
+                """
+                thread_content = forum.db.read_data(thread_query, (report['item_id'],))
+                if thread_content and len(thread_content) > 0:
+                    content.append(thread_content[0])
+            else:
+                reply_content = forum.get_thread_reply(report['item_id'])
+                if reply_content and len(reply_content) > 0:
+                    content.append(reply_content[0])
+
+        return {
+            'reports': reports,
+            'content': content
+        }
+
+    @staticmethod
+    def resolve_report(report_id, is_resolved):
+        query = """
+            UPDATE forum_reports fr
+            SET resolved = %s, resolved_by = %s, resolved_at = CURRENT_TIMESTAMP
+            WHERE id = %s;
+        """
+        return forum.db.mutate_data(query, (is_resolved, session['user']['id'], report_id))
+
+    @staticmethod
+    def delete_report_reply(reply_id, is_deleted):
+        query = """
+            UPDATE forum_replies
+            SET is_deleted = %s
+            WHERE id = %s;
+        """
+        return forum.db.mutate_data(query, (is_deleted, reply_id))
+
+    @staticmethod
+    def delete_report_thread(thread_id, is_deleted):
+        query = """
+            UPDATE forum_threads
+            SET is_deleted = %s
+            WHERE id = %s;
+        """
+        return forum.db.mutate_data(query, (is_deleted, thread_id))
+
+    @staticmethod
+    def add_reference(item_type, item_id, reference_type, reference_id, name):
+        query = """
+            INSERT INTO forum_references(item_type, item_id, reference_type, reference_id, created_at, name)
+            VALUES(%s, %s, %s, %s, CURRENT_TIMESTAMP, %s)
+            RETURNING id;
+        """
+        return forum.db.mutate_data(query, (item_type, item_id, reference_type, reference_id, name))
+
+    @staticmethod
+    def delete_reference(_id, reference_id):
+        query = """
+            DELETE FROM forum_references fr
+            WHERE id=%s AND reference_id=%s
+            RETURNING id;
+        """
+        return forum.db.mutate_data(query, (_id, reference_id))
+
+    @staticmethod
+    def get_thread_references(item_id):
+        query = """
+            SELECT
+                *
+            FROM forum_references fr
+            WHERE fr.item_id = %s;
+        """
+        return forum.db.read_data(query, (item_id))
+
+    @staticmethod
+    def get_reference(reference_id):
+        query = """
+            SELECT
+                *
+            FROM forum_references fr
+            WHERE fr.reference_id = %s;
+        """
+        return forum.db.read_data(query, (reference_id))
 
 @app.route('/release/', methods=['GET'])
 def get_release():
@@ -671,6 +821,7 @@ def get_artist():
         return jsonify(data)
 
 @app.route('/artist-discography-images', methods=['GET'])
+@cache.cached(timeout=3600, query_string=True)
 def get_artist_discography_images():
     if request.method == 'GET':
         artist_id = int(request.args.get('artist_id'))
@@ -694,6 +845,7 @@ def get_artist_discography_images():
         return jsonify(data)
 
 @app.route('/get-master-image', methods=['GET'])
+@cache.cached(timeout=3600, query_string=True)
 def get_master_image():
     if request.method == 'GET':
         master_id = int(request.args.get('master_id'))
@@ -708,6 +860,7 @@ def get_master_image():
         return jsonify({})
 
 @app.route('/get-artist-image', methods=['GET'])
+@cache.cached(timeout=3600, query_string=True)
 def get_artist_image():
     if request.method == 'GET':
         artist_id = int(request.args.get('artist_id'))
@@ -782,53 +935,101 @@ def log_security_event(event_type, username, ip_address, details=None):
 @app.route('/signup', methods=['GET', 'POST', 'OPTIONS'])
 def user_signup():
     if request.method == 'POST':
+        print("1. Starting signup process...")
         resp = json.loads(request.data)
 
         username = resp['username']
         email = resp['email']
         password = resp['password']
+        print(f"2. Received data - username: {username}, email: {email}")
 
         if not username or not email or not password:
             return jsonify({'error': 'Missing fields'}), 400
 
         if users.check_username_exists(username):
             return jsonify({'error': 'Username already exists'}), 409
+            
+        print("3. Username check passed")
+        
+        # Check for existing email
+        query = "SELECT * FROM users WHERE email = %s;"
+        if len(db_utils(dbname='users_db', user='postgres').read_data(query, (email,))) > 0:
+            return jsonify({'error': 'Email address already registered'}), 409
 
-        hashed_pass = generate_password_hash(password)
+        print("4. Email check passed")
 
         try:
-            users.create_new_user(username, email, hashed_pass)
+            print("5. Starting user creation...")
+            verification_token = secrets.token_urlsafe(32)
+            token_expiry = datetime.now() + timedelta(hours=24)
 
-            results = users.get_user(username)
+            hashed_pass = generate_password_hash(password)
+            print("6. Password hashed")
 
-            session.clear()
-            session.modified = True
-            session.permanent = True  # Make the session permanent
-            session['user'] = {
-                'id': results[0]['id'],
-                'username': results[0]['username'],
-                'email': results[0]['email']
-            }
+            user_id = users.create_new_user(username, email, hashed_pass)
+            print(f"7. User created with ID: {user_id}")
 
-            log_security_event('user_signup', username, get_client_identifier())
+            if not user_id:
+                return jsonify({'error': 'Failed to create user'}), 500
 
-            return jsonify({'message': 'User created successfully'}), 201
+            if CHECK_EMAIL_VERIFICATION:
+                print("8. Storing verification token...")
+                store_verification_token_query = """
+                    INSERT INTO email_verification (user_id, verification_token, token_expiry)
+                    VALUES (%s, %s, %s);
+                """
+                db_utils(dbname='users_db', user='postgres').mutate_data(
+                    store_verification_token_query, 
+                    (user_id, verification_token, token_expiry)
+                )
+                print("9. Verification token stored")
+
+                print("10. Sending verification email...")
+                verification_url = f"http://localhost:5173/verify-email?token={verification_token}"
+                msg = Message(
+                    'Verify your email address',
+                    sender=app.config['MAIL_USERNAME'],
+                    recipients=[email]
+                )
+                msg.body = f"""
+                Welcome to Interactive Music DB!
+                Please click the following link to verify your email address:
+                {verification_url}
+                
+                This link will expire in 24 hours.
+                """
+                mail.send(msg)
+                print("11. Verification email sent")
+
+            return jsonify({
+                'message': 'User created successfully. Please check your email to verify your account.',
+                'requiresVerification': True
+            }), 201
+
         except Exception as e:
-            print(e)
-            return jsonify({'error': 'User signup failed'}), 500
+            print(f"ERROR at step: {str(e)}")
+            import traceback
+            traceback.print_exc()
+            return jsonify({'error': f'User signup failed: {str(e)}'}), 500
 
     return jsonify({}), 200
 
 @app.route('/login', methods=['POST'])
 def user_login():
+    print("1. Login attempt started")
     data = request.get_json()
     username = data.get('username')
     password = data.get('password')
+    print(f"2. Received login attempt for username: {username}")
 
     client_ip = get_client_identifier()
+    print(f"3. Client IP: {client_ip}")
 
     is_blocked, remaining_time = is_login_blocked(client_ip, username)
+    print(f"4. Login blocked status: {is_blocked}")
+    
     if is_blocked:
+        print("5. Login blocked due to too many attempts")
         log_security_event('login_blocked', username, client_ip, {
             'reason': 'too_many_attempts',
             'remaining_lockout_time': remaining_time
@@ -840,16 +1041,34 @@ def user_login():
         }), 429
     
     try:
+        print("6. Checking user credentials")
         results = users.get_user(username)
         
-        # User doesn't exist but still a failed login attempt
         if not results:
+            print("7. User not found")
             record_failed_login(client_ip, username)
             log_security_event('login_failure', username, client_ip, {'reason': 'user_not_found'})
             return jsonify({'error': 'Invalid credentials'}), 401
 
+        if CHECK_EMAIL_VERIFICATION:
+            print("8. Checking email verification")
+            # Check if email is verified
+            query = """
+                SELECT is_verified 
+                FROM email_verification 
+                WHERE user_id = %s;
+            """
+            verification_result = db_utils(dbname='users_db', user='postgres').read_data(query, (results[0]['id'],))
+            print(f"9. Verification result: {verification_result}")
+            
+            if not verification_result or not verification_result[0]['is_verified']:
+                print("10. Email not verified")
+                return jsonify({'error': 'Please verify your email before logging in'}), 403
+
+        print("11. Checking password")
         # Check password
         if check_password_hash(results[0]['password'], password):
+            print("12. Password correct, creating session")
             # Clear session and reset login attempts
             session.clear()
             session.permanent = True  # Make the session permanent
@@ -860,40 +1079,21 @@ def user_login():
             }
 
             reset_login_attempts(client_ip, username)
-
+            print("13. Login successful")
             log_security_event('login_success', username, client_ip)
             
             response = jsonify({'message': 'Login successful'})
             return response, 200
         else:
-            # Invalid password
+            print("12. Password incorrect")
             record_failed_login(client_ip, username)
+            return jsonify({'error': 'Invalid credentials'}), 401
 
-            # Get attempts made and attempts left
-            user_key = get_login_attempt_key(client_ip, username)
-            attempts = int(redis_client.get(user_key) or 0)
-            attempts_remaining = max(0, ALLOWED_LOGIN_ATTEMPTS - attempts)
-
-            log_security_event('login_failure', username, client_ip, {
-                'reason': 'invalid_password',
-                'attempts': attempts,
-                'attempts_remaining': attempts_remaining
-            })
-            
-            if attempts_remaining > 0:
-                return jsonify({
-                    'error': 'Invalid credentials',
-                    'attempts_remaining': attempts_remaining
-                }), 401
-            else:
-                return jsonify({
-                    'error': 'Account temporarily locked',
-                    'lockout_remaining': get_remaining_lockout_time(user_key)
-                }), 429
-            
     except Exception as e:
-        print(f"Login error: {e}")
-        return jsonify({'error': 'Server error'}), 500
+        print(f"Login error: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': 'Login failed'}), 500
 
 @app.route('/logout', methods=['POST'])
 def user_logout():
@@ -936,6 +1136,37 @@ def user_search():
             return jsonify({'results': results}), 200
 
     return jsonify({'results':[]}), 200
+
+@app.route('/search/reference', methods=['GET'])
+def forum_search_reference():
+    query = request.args.get('query', '')
+    type = request.args.get('type', 'all')
+
+    if not query:
+        return jsonify({'results': []}), 200
+
+    results = []
+
+    if type == 'artist' or type == 'all':
+        artists = search.search_artist(query)
+        for artist in artists:
+            results.append({
+                'id': artist['id'],
+                'name': artist['name'],
+                'type': 'artist'
+            })
+    if type == 'release' or type == 'all':
+        releases = search.search_release(query)
+        for release in releases:
+            results.append({
+                'id': release['id'],
+                'name': release['title'],
+                'artist': release['artists'],
+                'year': release['year'],
+                'type': 'release'
+            })
+
+    return jsonify({'results': results}), 200
 
 #written by jax hendrickson
 @app.route('/ratings', methods=['GET'])
@@ -1064,6 +1295,69 @@ def get_upcoming_releases():
         print(f"Error fetching releases: {e}")
         return jsonify({'error': str(e)}), 500
 
+@app.route('/update-spotify-tokens', methods=['POST'])
+def save_spotify_tokens():
+    if 'user' not in session:
+        return jsonify({"error": "Not authenticated"}), 401
+
+    data = request.get_json()
+    if not data:
+        return jsonify({"error": "No data provided"}), 400
+
+    access_token = data.get('access_token')
+    refresh_token = data.get('refresh_token')
+    expires_in = data.get('expires_in')
+    connected = data.get('connected')
+
+    if 'user' in session and not 'spotify' in session['user']:
+        session['user']['spotify'] = {}
+
+    if connected:
+        session['user']['spotify']['access_token'] = access_token
+        session['user']['spotify']['refresh_token'] = refresh_token
+        session['user']['spotify']['expires_in'] = expires_in
+    session['user']['spotify']['connected'] = connected
+    session.modified = True
+
+    return jsonify({"success": "Save Spotify OAuth tokens"}), 200
+
+@app.route('/get-spotify-status', methods=['GET'])
+@cross_origin(supports_credentials=True)
+def get_spotify_status():
+    if 'user' in session and 'spotify' in session['user']:
+        return jsonify({"connected": session['user']['spotify']['connected']}), 200
+    return jsonify({"error": "Error getting Spotify status"}), 204
+
+@app.route('/get-spotify-playlists', methods=['GET'])
+@cross_origin(supports_credentials=True)
+def get_spotify_playlists():
+    if 'user' not in session or 'spotify' not in session['user'] or \
+    not session['user']['spotify'].get('connected'):
+        return jsonify({"error": "Spotify not connected"}), 401
+
+    access_token = session['user']['spotify'].get('access_token')
+    if not access_token:
+        return jsonify({"error": "No access token found"}), 401
+
+    try:
+        response = requests.get(
+            'https://api.spotify.com/v1/me/playlists',
+            headers={
+                'Authorization': f'Bearer {access_token}',
+                'Content-Type': 'application/json'
+            },
+            params={'limit': 50}
+        )
+
+        if response.status_code == 401:
+            return jsonify({"error": "Spotify token expired"}), 401
+
+        return jsonify(response.json()), 200
+    
+    except Exception as e:
+        print(f"Error fetching Spotify playlists: {e}")
+        return jsonify({"error": f"Error fetching playlists: {str(e)}"}), 500
+
 # Written by Matthew Stenvold
 @app.route('/api/musiclist/<string:username>/<string:item_type>', methods=['GET'])
 def get_user_music_list(username, item_type):
@@ -1076,7 +1370,9 @@ def get_user_music_list(username, item_type):
         user_result = db.read_data(user_query, (username,))
 
         if not user_result:
+            print("testing")
             return jsonify({'error': 'User not found'}), 404
+            
 
         user_id = user_result[0]['id']
 
@@ -1097,10 +1393,12 @@ def get_user_music_list(username, item_type):
 
         # Different types of data have different names for "name"
         nameAlias = ""
-        if item_type == "master":
+        if item_type == "master": 
             nameAlias = "title"
         elif item_type == "artist":
             nameAlias = "name"
+        else:
+            return jsonify({'error': f'Invalid item_type: {item_type}'}), 400  # Error for unrecognized item_type
 
         # TODO Change created at to updated at
 
@@ -1128,6 +1426,199 @@ def get_user_music_list(username, item_type):
 
     except Exception as e:
         print(f"Error fetching music list: {e}")
+        return jsonify({'error': 'Server error'}), 500
+    
+# written by Matthew Stenvold
+@app.route('/delete-user-rating', methods=['DELETE'])
+def delete_user_rating():
+    if 'user' not in session:
+        return jsonify({'error': 'Not logged in'}), 401
+
+    item_type = request.args.get('item_type')
+    item_id = request.args.get('item_id')
+    user_id = session['user']['id']
+
+    # Define the delete query
+    delete_query = """
+        DELETE FROM ratings 
+        WHERE user_id = %s AND item_type = %s AND item_id = %s
+    """
+    print("as")
+    try:
+        # Use mutate_data method to execute the delete query
+        result = db_utils(dbname='users_db', user='postgres').mutate_data(delete_query, (user_id, item_type, item_id))
+
+        if result is None:
+            return jsonify({'message': 'Rating deleted successfully'}), 200
+        else:
+            return jsonify({'error': 'Rating not found or could not be deleted'}), 400
+
+    except Exception as e:
+        print(f"Error deleting rating: {e}")
+        return jsonify({'error': 'Server error'}), 500
+
+# Written by Matthew Stenvold
+@app.route('/update-username', methods=['POST'])
+def update_username():
+    print("Session contents:", session)  # Debug print
+    if 'user' not in session:
+        return jsonify({'error': 'Not logged in'}), 401
+
+    data = request.get_json()
+    new_username = data.get('new_username')
+    user_id = session['user']['id']
+
+    if not new_username:
+        return jsonify({'error': 'No username provided'}), 400
+
+    try:
+        db = db_utils(dbname='users_db', user='postgres')
+
+        update_query = """
+            UPDATE users
+            SET username = %s
+            WHERE id = %s
+            RETURNING id;
+        """
+        result = db.mutate_data(update_query, (new_username, user_id))
+
+        if not result:
+            return jsonify({'error': 'User not found or username not updated'}), 404
+
+        session['user']['username'] = new_username
+
+        return jsonify({'success': True}), 200
+
+    except psycopg.errors.UniqueViolation:
+        return jsonify({'error': 'Username already taken'}), 409  # 409 = Conflict
+
+    except Exception as e:
+        print(f"Error updating username: {e}")
+        return jsonify({'error': 'Server error'}), 500
+    
+# Written by Matthew Stenvold
+@app.route('/update-user-pfp', methods=['POST'])
+def update_user_pfp():
+    if 'user' not in session:
+        return jsonify({'error': 'Not logged in'}), 401
+
+    user_id = session['user']['id']
+    image_file = request.files.get('image')
+
+    if not image_file:
+        return jsonify({'error': 'No file uploaded'}), 400
+
+    original_filename = secure_filename(image_file.filename)
+    _, ext = os.path.splitext(original_filename)
+    
+    # Check if the uploaded file is an image and convert to PNG if not
+    if ext.lower() not in ['.jpg', '.jpeg', '.png']:
+        return jsonify({'error': 'Invalid file type. Only JPG, JPEG, and PNG are allowed.'}), 400
+
+    # Force the file to be saved as .png
+    filename = f"{user_id}profilepic.png"
+    upload_path = os.path.join('static', 'pfp', filename)
+
+    os.makedirs(os.path.dirname(upload_path), exist_ok=True)
+
+    # If the image isn't already a PNG, convert it
+    if ext.lower() != '.png':
+        try:
+            # Open the image using Pillow
+            image = Image.open(image_file)
+            # Save it as PNG
+            image.save(upload_path, 'PNG')
+
+        except Exception as e:
+            return jsonify({'error': f'Error processing image: {str(e)}'}), 500
+    else:
+        # If it's already PNG, just save it
+        image_file.save(upload_path)
+
+    return jsonify({'success': True, 'filename': filename})
+
+# Written by Matthew Stenvold
+def get_profile_image_path(user_id):
+    filename = f"{user_id}profilepic.png"
+    image_path = os.path.join("static", "pfp", filename)
+
+    if os.path.exists(image_path):
+        
+        return f"/static/pfp/{filename}"
+        
+    else:
+        # If the image doesn't exist, send unknown user pfp
+        return "/static/pfp/unknownPFP.png"
+    
+# Written by Matthew Stenvold
+@app.route('/get-profile-image/<int:user_id>', methods=['GET'])
+def get_profile_image(user_id):
+    image_url = get_profile_image_path(user_id)
+    print(image_url)
+    return jsonify({'image_url': image_url})
+
+# Written by Matthew Stenvold
+@app.route('/get-bio/<int:user_id>', methods=['GET'])
+def get_bio(user_id):
+    try:
+        db = db_utils(dbname='users_db', user='postgres')
+
+        query = "SELECT bio FROM users WHERE id = %s;"
+        result = db.read_data(query, (user_id,))
+
+        if result:
+            return jsonify({'bio': result[0]['bio']}), 200
+        else:
+            return jsonify({'error': 'User not found'}), 404
+
+    except Exception as e:
+        print(f"Error fetching bio: {e}")
+        return jsonify({'error': 'Server error'}), 500
+
+# Written by Matthew Stenvold
+@app.route('/update-bio', methods=['POST'])
+def update_bio():
+    if 'user' not in session:
+        return jsonify({'error': 'Not logged in'}), 401
+
+    user_id = session['user']['id']
+    new_bio = request.json.get('bio')
+
+    # Validate bio length
+    if new_bio and len(new_bio) > 500:
+        return jsonify({'error': 'Bio cannot be longer than 500 characters'}), 400
+
+    try:
+        db = db_utils(dbname='users_db', user='postgres')
+
+        update_query = """
+            UPDATE users
+            SET bio = %s
+            WHERE id = %s
+        """
+
+        db.mutate_data(update_query, (new_bio, user_id))
+
+        return jsonify({'success': True, 'bio': new_bio}), 200
+
+    except Exception as e:
+        print(f"Error updating bio: {e}")
+        return jsonify({'error': 'Server error'}), 500
+    
+# Written by Matthew Stenvold
+@app.route('/get-user-id/<string:username>', methods=['GET'])
+def get_user_id(username):
+    try:
+        db = db_utils(dbname='users_db', user='postgres')
+        query = "SELECT id FROM users WHERE username = %s;"
+        result = db.read_data(query, (username,))
+        
+        if result:
+            return jsonify({'id': result[0]['id']}), 200
+        else:
+            return jsonify({'error': 'User not found'}), 404
+    except Exception as e:
+        print(f"Error fetching user ID: {e}")
         return jsonify({'error': 'Server error'}), 500
 
 # Written by Lucas Black
@@ -1231,6 +1722,10 @@ def get_forum_thread(thread_id):
             return jsonify({"error": "Thread not found"}), 404
             
         replies = forum.get_thread_replies(thread_id)
+        references = forum.get_thread_references(thread_id)
+        
+        # Retrieve the author profile image URL for the thread author
+        thread_author_image_url = get_profile_image_path(thread_data[0]['author_id'])
         
         # Format the thread data
         formatted_thread = {
@@ -1241,13 +1736,16 @@ def get_forum_thread(thread_id):
             "isEdited": thread_data[0].get('is_edited', False),
             "author": {
                 "id": thread_data[0]['author_id'],
-                "name": thread_data[0]['author_name']
+                "name": thread_data[0]['author_name'],
+                "pfp": thread_author_image_url  # Add the profile image URL
             },
-            "replies": []
+            "replies": [],
+            "references": references
         }
         
-        # Format the replies
+        # Format the replies and include the author image URL for each reply author
         for reply in replies:
+            reply_author_image_url = get_profile_image_path(reply['author_id'])
             formatted_reply = {
                 "id": reply['id'],
                 "content": reply['content'],
@@ -1256,7 +1754,8 @@ def get_forum_thread(thread_id):
                 "parentId": reply['parent_id'],
                 "author": {
                     "id": reply['author_id'],
-                    "name": reply['author_name']
+                    "name": reply['author_name'],
+                    "pfp": reply_author_image_url  # Add the profile image URL for the reply author
                 }
             }
             formatted_thread["replies"].append(formatted_reply)
@@ -1266,6 +1765,7 @@ def get_forum_thread(thread_id):
     except Exception as e:
         print(f"Error fetching thread: {e}")
         return jsonify({"error": "Internal server error", "message": str(e)}), 500
+
 
 # Written by Lucas Black
 @app.route('/forum/thread/<int:thread_id>/reply', methods=['POST'])
@@ -1401,6 +1901,263 @@ def report_forum_item():
     except Exception as e:
         print(f"Error submitting report: {e}")
         return jsonify({"error": "Internal server error", "message": str(e)}), 500
+
+def admin_required(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        if 'user' not in session:
+            return jsonify({"error": "Admin access required"}), 403
+
+        user = session['user']
+        if not user or not users.is_user_admin(session['user']['username']):
+            return jsonify({"error": "Admin access required"}), 403
+        return f(*args, **kwargs)
+    return decorated
+
+@app.route('/admin/reports', methods=['GET'])
+@admin_required
+def get_forum_reports():
+    try:
+        forum_reports = forum.get_reports()
+        if forum_reports is not None:
+            return jsonify(forum_reports), 200
+        return jsonify({"error": "Database error fetching reports"}), 500
+    except Exception as e:
+        print(f"Error fetching reports: {e}")
+        return jsonify({"error": "Internal server error", "message": str(e)}), 500
+
+@app.route('/admin/reports/resolve/<int:report_id>', methods=['PUT'])
+@admin_required
+def resolve_forum_report(report_id):
+    try:
+        data = request.get_json()
+        is_resolved = data.get('isResolved')
+
+        if is_resolved is not None:
+            forum.resolve_report(report_id, is_resolved)
+
+            return jsonify({"success": "Updated report as resolved"}), 200
+        return jsonify({"error": "Database error resolving report"}), 500
+    except Exception as e:
+        print(f"Error fetching reports: {e}")
+        return jsonify({"error": "Internal server error", "message": str(e)}), 500
+
+@app.route('/admin/reports/delete-reply/<int:reply_id>', methods=['PUT'])
+@admin_required
+def delete_forum_report_reply(reply_id):
+    try:
+        data = request.get_json()
+        is_deleted = data.get('isDeleted')
+
+        if is_deleted is not None:
+            forum.delete_report_reply(reply_id, is_deleted)
+
+            return jsonify({"success": "Updated report reply as deleted"}), 200
+        return jsonify({"error": "Database error deleting reply"}), 500
+    except Exception as e:
+        print(f"Error fetching reports: {e}")
+        return jsonify({"error": "Internal server error", "message": str(e)}), 500
+
+@app.route('/admin/reports/delete-thread/<int:thread_id>', methods=['PUT'])
+@admin_required
+def delete_forum_report_thread(thread_id):
+    try:
+        data = request.get_json()
+        is_deleted = data.get('isDeleted')
+
+        if is_deleted is not None:
+            forum.delete_report_thread(thread_id, is_deleted)
+
+            return jsonify({"success": "Updated report thread as deleted"}), 200
+        return jsonify({"error": "Database error deleting thread"}), 500
+    except Exception as e:
+        print(f"Error fetching reports: {e}")
+        return jsonify({"error": "Internal server error", "message": str(e)}), 500
+
+@app.route('/forum/reference', methods=['POST'])
+def add_forum_reference():
+    if 'user' not in session:
+        return jsonify({'error': 'Not logged in'})
+
+    if request.method == 'POST':
+        data = request.get_json()
+        item_type = data.get('item_type')
+        item_id = data.get('item_id')
+        reference_type = data.get('reference_type')
+        reference_id = data.get('reference_id')
+        reference_name = data.get('reference_name')
+
+        if not all([item_type, item_id, reference_type, reference_id]):
+            return jsonify({'error'})
+
+        if item_type == 'thread':
+            thread = forum.get_thread(item_id)
+            if not thread or thread[0]['author_id'] != session['user']['id']:
+                return jsonify({'error': 'Not authorized'}), 402
+
+        try:
+            result = forum.add_reference(item_type,
+                                        item_id,
+                                        reference_type,
+                                        reference_id,
+                                        reference_name)
+            if result:
+                return jsonify({'success': True, 'reference': result}), 201
+            else:
+                return jsonify({'error': 'Failed to add reference'}), 500
+        except Exception as e:
+            print(f'Error adding reference: {e}')
+            return jsonify({'error': 'Internal server error'}), 500
+
+@app.route('/forum/delete-reference/<int:reference_id>', methods=['DELETE'])
+def delete_forum_reference(reference_id):
+    if 'user' not in session:
+        return jsonify({'error': 'Not logged in'})
+
+    if request.method == 'DELETE':
+        reference = forum.get_reference(reference_id)
+        try:
+            if not reference:
+                return jsonify({'error': 'Reference not found'}), 404
+
+            if reference[0]['item_type'] == 'thread':
+                thread = forum.get_thread(reference[0]['item_id'])
+                if not thread or thread[0]['author_id'] != session['user']['id']:
+                    return jsonify({'error': 'Not authorized'}), 403
+
+            result = forum.delete_reference(reference[0]['id'], reference_id)
+            if result:
+                return jsonify({'success': True}), 200
+            else:
+                return jsonify({'error': 'Failed to delete reference'}), 500
+        except Exception as e:
+            print(f'Error deleting reference: {e}')
+            return jsonify({'error': 'Internal server error'}), 500
+    
+@app.route('/verify-email', methods=['GET'])
+def verify_email():
+    token = request.args.get('token')
+    if not token:
+        return jsonify({'error': 'Missing verification token'}), 400
+
+    try:
+        # Check if token exists and is valid
+        query = """
+            UPDATE email_verification 
+            SET is_verified = TRUE 
+            WHERE verification_token = %s 
+            AND token_expiry > CURRENT_TIMESTAMP 
+            AND is_verified = FALSE 
+            RETURNING user_id;
+        """
+        result = db_utils(dbname='users_db', user='postgres').mutate_data(query, (token,))
+
+        if result:
+            return jsonify({'message': 'Email verified successfully'}), 200
+        else:
+            return jsonify({'error': 'Invalid or expired verification token'}), 400
+
+    except Exception as e:
+        print(f"Verification error: {e}")
+        return jsonify({'error': 'Verification failed'}), 500
+    
+@app.route('/request-password-reset', methods=['POST'])
+def request_password_reset():
+    data = request.get_json()
+    email = data.get('email')
+    
+    if not email:
+        return jsonify({'error': 'Email is required'}), 400
+        
+    try:
+        # Check if user exists
+        query = "SELECT id, username FROM users WHERE email = %s;"
+        result = db_utils(dbname='users_db', user='postgres').read_data(query, (email,))
+        
+        if result:
+            # Generate reset token
+            reset_token = secrets.token_urlsafe(32)
+            expiry = datetime.now() + timedelta(hours=1)
+            
+            # Store reset token
+            store_token_query = """
+                INSERT INTO password_reset_tokens (user_id, token, expiry)
+                VALUES (%s, %s, %s)
+                ON CONFLICT (user_id) DO UPDATE
+                SET token = EXCLUDED.token, expiry = EXCLUDED.expiry;
+            """
+            db_utils(dbname='users_db', user='postgres').mutate_data(
+                store_token_query, 
+                (result[0]['id'], reset_token, expiry)
+            )
+            
+            # Send reset email
+            reset_url = f"http://localhost:5173/reset-password?token={reset_token}"
+            msg = Message(
+                'Password Reset Request',
+                sender=app.config['MAIL_USERNAME'],
+                recipients=[email]
+            )
+            msg.body = f"""
+            Hello {result[0]['username']},
+            
+            You have requested to reset your password. Please click the following link to reset your password:
+            {reset_url}
+            
+            This link will expire in 1 hour.
+            
+            If you did not request this reset, please ignore this email.
+            """
+            mail.send(msg)
+        
+        # Always return success to prevent email enumeration
+        return jsonify({'message': 'If an account exists with this email, you will receive reset instructions.'}), 200
+        
+    except Exception as e:
+        print(f"Password reset error: {str(e)}")
+        return jsonify({'error': 'Failed to process reset request'}), 500
+    
+@app.route('/reset-password', methods=['POST'])
+def reset_password():
+    data = request.get_json()
+    token = data.get('token')
+    new_password = data.get('password')
+    
+    if not token or not new_password:
+        return jsonify({'error': 'Missing required fields'}), 400
+        
+    try:
+        # Verify token and get user
+        query = """
+            SELECT user_id 
+            FROM password_reset_tokens 
+            WHERE token = %s AND expiry > CURRENT_TIMESTAMP;
+        """
+        result = db_utils(dbname='users_db', user='postgres').read_data(query, (token,))
+        
+        if not result:
+            return jsonify({'error': 'Invalid or expired reset token'}), 400
+            
+        user_id = result[0]['user_id']
+        
+        # Update password
+        hashed_password = generate_password_hash(new_password)
+        update_query = """
+            UPDATE users 
+            SET password = %s 
+            WHERE id = %s;
+        """
+        db_utils(dbname='users_db', user='postgres').mutate_data(update_query, (hashed_password, user_id))
+        
+        # Delete used token
+        delete_query = "DELETE FROM password_reset_tokens WHERE token = %s;"
+        db_utils(dbname='users_db', user='postgres').mutate_data(delete_query, (token,))
+        
+        return jsonify({'message': 'Password reset successful'}), 200
+        
+    except Exception as e:
+        print(f"Password reset error: {str(e)}")
+        return jsonify({'error': 'Failed to reset password'}), 500
     
 @app.route('/api/users/<username>/metrics', methods=['GET'])
 def get_user_metrics(username):

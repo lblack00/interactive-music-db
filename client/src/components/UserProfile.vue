@@ -4,40 +4,155 @@
 			<Navbar />
 		</header>
 		<div class="content">
-			<!-- Todo: this is a mock user profile edit page which requires a user logged in -->
 			<v-container>
 				<v-row justify="center">
-					<v-col cols="12" md="6">
-						<v-card class="pa-4">
-							<h1 class="text-h4 font-weight-bold mb-4">User Profile</h1>
-							<p><strong>Username:</strong> {{ user.username }}</p>
-							<p><strong>Email:</strong> {{ user.email }}</p>
-							<p><strong>Bio:</strong> {{ user.bio }}</p>
+					<v-col cols="12" md="10" lg="8">
+						<!-- Profile Header -->
+						<v-card class="profile-header mb-6" elevation="3">
+							<v-row no-gutters align="center" class="pa-4">
+								<v-col cols="12" sm="auto" class="text-center text-sm-left">
+									<v-avatar size="120" class="profile-avatar">
+										<v-img
+											:src="
+												user.profileImage ||
+												'https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png'
+											"
+											alt="Profile"
+										></v-img>
+									</v-avatar>
+								</v-col>
+								<v-col class="pl-4">
+									<h1 class="text-h4 font-weight-bold mb-2">
+										{{ user.username }}
+									</h1>
+									<p class="text-subtitle-1 text-medium-emphasis mb-4">
+										{{ user.bio }}
+									</p>
+									<div class="d-flex flex-wrap gap-2">
+										<v-chip
+											v-if="user.spotifyConnected"
+											color="success"
+											prepend-icon="mdi-spotify"
+											variant="elevated"
+										>
+											Connected to Spotify
+										</v-chip>
+										<v-chip
+											color="primary"
+											prepend-icon="mdi-music-note"
+											variant="elevated"
+										>
+											{{ userMetrics.songsRated }} Songs Rated
+										</v-chip>
+										<v-chip
+											color="info"
+											prepend-icon="mdi-clock-outline"
+											variant="elevated"
+										>
+											{{ userMetrics.totalHours }}h Listened
+										</v-chip>
+									</div>
+								</v-col>
+							</v-row>
+						</v-card>
 
-							<v-divider class="my-4"></v-divider>
+						<!-- Main Content -->
+						<v-card elevation="3">
+							<v-window v-model="activeTab" class="pa-6">
+								<v-window-item value="metrics">
+									<v-row>
+										<!-- Quick Stats -->
+										<v-col
+											cols="12"
+											md="4"
+											v-for="stat in quickStats"
+											:key="stat.title"
+										>
+											<v-card
+												class="stat-card pa-4"
+												:elevation="2"
+												:color="stat.color"
+											>
+												<div class="text-overline mb-1">{{ stat.title }}</div>
+												<div class="text-h4 mb-2">{{ stat.value }}</div>
+												<div class="text-caption">{{ stat.subtitle }}</div>
+											</v-card>
+										</v-col>
 
-							<h2 class="text-h5 font-weight-bold mb-2">Spotify OAuth</h2>
-							<p v-if="user.spotifyConnected" style="color: green">
-								Connected to Spotify
-							</p>
-							<p v-else style="color: red">Not connected</p>
+										<!-- Top Genres -->
+										<v-col cols="12" md="6">
+											<v-card class="genre-card pa-4" elevation="2">
+												<v-card-title class="text-h6">
+													<v-icon start color="primary" class="mr-2"
+														>mdi-music</v-icon
+													>
+													Top Genres
+												</v-card-title>
+												<v-card-text>
+													<div
+														v-for="genre in userMetrics.topGenres"
+														:key="genre.name"
+														class="mb-4"
+													>
+														<div class="d-flex justify-space-between mb-1">
+															<span class="text-subtitle-2">{{
+																genre.name
+															}}</span>
+															<span class="text-subtitle-2"
+																>{{ genre.percentage }}%</span
+															>
+														</div>
+														<v-progress-linear
+															:model-value="genre.percentage"
+															:color="getGenreColor(genre.name)"
+															height="8"
+															rounded
+														></v-progress-linear>
+													</div>
+												</v-card-text>
+											</v-card>
+										</v-col>
 
-							<v-btn
-								v-if="!user.spotifyConnected"
-								color="green"
-								@click="initiateSpotifyAuth"
-								aria-label="Connect your Spotify account"
-							>
-								Connect Spotify
-							</v-btn>
-							<v-btn
-								v-else
-								color="red"
-								@click="disconnectSpotify"
-								aria-label="Disconnect your Spotify account"
-							>
-								Disconnect Spotify
-							</v-btn>
+										<!-- Recent Activity -->
+										<v-col cols="12" md="6">
+											<v-card class="activity-card pa-4" elevation="2">
+												<v-card-title class="text-h6">
+													<v-icon start color="primary" class="mr-2"
+														>mdi-history</v-icon
+													>
+													Recent Activity
+												</v-card-title>
+												<v-card-text class="pa-0">
+													<v-timeline density="compact" align="start">
+														<v-timeline-item
+															v-for="(
+																activity, index
+															) in userMetrics.recentActivity"
+															:key="index"
+															:dot-color="getActivityColor(activity.type)"
+															size="small"
+														>
+															<template v-slot:opposite>
+																<div class="text-caption">
+																	{{ formatDate(activity.date) }}
+																</div>
+															</template>
+															<div class="timeline-content">
+																<div class="text-subtitle-2 font-weight-medium">
+																	{{ activity.title }}
+																</div>
+																<div class="text-caption text-medium-emphasis">
+																	{{ activity.description }}
+																</div>
+															</div>
+														</v-timeline-item>
+													</v-timeline>
+												</v-card-text>
+											</v-card>
+										</v-col>
+									</v-row>
+								</v-window-item>
+							</v-window>
 						</v-card>
 					</v-col>
 				</v-row>
@@ -48,33 +163,96 @@
 
 <script>
 	import Navbar from "./Navbar.vue";
-<<<<<<< Updated upstream
-=======
 	import { format } from "date-fns";
 	import axios from "axios";
->>>>>>> Stashed changes
 
 	export default {
 		name: "UserSettings",
 		components: { Navbar },
 		data() {
 			return {
+				activeTab: "metrics",
 				user: {
-					username: "Username",
-					email: "username@example.com",
-					bio: "This is my bio!",
-					spotifyConnected: false,
+					username: this.$route.params.username,
+					id: null,
+					bio: null,
+					spotifyConnected: true,
+					profileImage: null,
+				},
+				userMetrics: {
+					totalHours: 247,
+					songsRated: 543,
+					averageRating: 4.2,
+					topGenres: [
+						{ name: "Rock", percentage: 35 },
+						{ name: "Pop", percentage: 25 },
+						{ name: "Jazz", percentage: 20 },
+						{ name: "Classical", percentage: 15 },
+						{ name: "Electronic", percentage: 5 },
+					],
+					recentActivity: [
+						{
+							type: "rating",
+							date: "2024-03-15",
+							title: "New Rating",
+							description: "Gave 'Bohemian Rhapsody' 5 stars",
+						},
+						{
+							type: "listen",
+							date: "2024-03-14",
+							title: "Album Completed",
+							description: "Finished 'Dark Side of the Moon'",
+						},
+						{
+							type: "discovery",
+							date: "2024-03-13",
+							title: "New Discovery",
+							description: "Added Jazz Fusion to favorite genres",
+						},
+						{
+							type: "discovery",
+							date: "2024-03-13",
+							title: "New Discovery",
+							description: "Added Jazz Fusion to favorite genres",
+						},
+						{
+							type: "discovery",
+							date: "2024-03-13",
+							title: "New Discovery",
+							description: "Added Jazz Fusion to favorite genres",
+						},
+					],
 				},
 				clientId: import.meta.env.VITE_SPOTIFY_CLIENT_ID,
 				redirectUri: "http://localhost:5173/",
 				accessToken: "",
 			};
 		},
+		computed: {
+			quickStats() {
+				return [
+					{
+						title: "LISTENING TIME",
+						value: `${this.userMetrics.totalHours}h`,
+						subtitle: "Total hours of music enjoyed",
+						color: "#3cba92",
+					},
+					{
+						title: "AVERAGE RATING",
+						value: this.userMetrics.averageRating,
+						subtitle: "Out of 5 stars",
+						color: "#2c7a7b",
+					},
+					{
+						title: "SONGS RATED",
+						value: this.userMetrics.songsRated,
+						subtitle: "Total ratings given",
+						color: "#3cba92",
+					},
+				];
+			},
+		},
 		methods: {
-<<<<<<< Updated upstream
-			saveProfile() {
-				alert("Profile updated successfully!");
-=======
 			async getProfile() {
 				try {
 					const response = await axios.get(
@@ -108,7 +286,6 @@
 					console.warn("Failed to load bio:", error);
 					this.user.bio = ""; // or a default message like "No bio available"
 				}
->>>>>>> Stashed changes
 			},
 			async initiateSpotifyAuth() {
 				try {
@@ -164,8 +341,6 @@
 					.replace(/\//g, "_")
 					.replace(/=+$/, "");
 			},
-<<<<<<< Updated upstream
-=======
 			async fetchUserMetrics() {
 				try {
 					const response = await axios.get(
@@ -217,10 +392,124 @@
 		created() {
 			this.getProfile();
 			this.fetchUserMetrics();
->>>>>>> Stashed changes
 		},
 	};
 </script>
+
 <style scoped>
 	@import "../../src/assets/background.css";
+
+	.profile-header {
+		border-radius: 24px;
+		background: linear-gradient(135deg, #3cba92, #2c7a7b);
+		box-shadow: none;
+		color: white;
+		position: relative;
+		overflow: hidden;
+		border: 1px solid rgba(255, 255, 255, 0.1);
+	}
+
+	.profile-header::before {
+		content: "";
+		position: absolute;
+		top: 0;
+		left: 0;
+		right: 0;
+		bottom: 0;
+		background: linear-gradient(
+			135deg,
+			rgba(255, 255, 255, 0.05) 0%,
+			rgba(255, 255, 255, 0) 100%
+		);
+		pointer-events: none;
+	}
+
+	.profile-avatar {
+		border: 4px solid rgba(255, 255, 255, 0.9);
+		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+	}
+
+	.text-medium-emphasis {
+		color: rgba(255, 255, 255, 0.85) !important;
+	}
+
+	.stat-card {
+		border-radius: 16px;
+		background: linear-gradient(135deg, #3cba92, #2c7a7b);
+		transition: all 0.2s ease;
+		border: 1px solid rgba(255, 255, 255, 0.1);
+		color: white;
+	}
+
+	.stat-card:hover {
+		transform: translateY(-4px);
+	}
+
+	.genre-card,
+	.activity-card {
+		border-radius: 12px;
+		height: 100%;
+	}
+
+	.timeline-content {
+		padding: 12px 16px;
+		background-color: rgba(67, 97, 238, 0.08);
+		border-radius: 12px;
+		margin-bottom: 12px;
+		border: 1px solid rgba(67, 97, 238, 0.1);
+	}
+
+	.timeline-content .text-subtitle-2 {
+		color: rgba(0, 0, 0, 0.87);
+		font-weight: 500;
+	}
+
+	.timeline-content .text-caption.text-medium-emphasis {
+		color: rgba(0, 0, 0, 0.6) !important;
+	}
+
+	.v-timeline .text-caption {
+		color: rgba(0, 0, 0, 0.6);
+	}
+
+	.gap-2 {
+		gap: 8px;
+	}
+
+	/* Custom scrollbar for timeline */
+	.activity-card ::-webkit-scrollbar {
+		width: 6px;
+	}
+
+	.activity-card ::-webkit-scrollbar-track {
+		background: #f1f1f1;
+		border-radius: 3px;
+	}
+
+	.activity-card ::-webkit-scrollbar-thumb {
+		background: rgba(67, 97, 238, 0.5);
+	}
+
+	.activity-card ::-webkit-scrollbar-thumb:hover {
+		background: rgba(67, 97, 238, 0.7);
+	}
+
+	/* Update Vuetify theme colors */
+	:deep(.v-timeline-item__dot) {
+		background-color: #4361ee;
+	}
+
+	:deep(.v-progress-linear__determinate) {
+		background-color: #4361ee;
+	}
+
+	:deep(.v-chip) {
+		background-color: rgba(67, 97, 238, 0.1);
+		color: #4361ee;
+	}
+
+	:deep(.v-chip--elevated) {
+		box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+		border: 1px solid rgba(255, 255, 255, 0.1);
+	}
 </style>

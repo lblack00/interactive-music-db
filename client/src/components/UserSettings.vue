@@ -31,17 +31,16 @@
 									label="Email"
 									outlined
 									required
+									readonly
 								></v-text-field>
 								<v-textarea
 									v-model="user.bio"
+									placeholder="It seems you have nothing written. Tell us something about yourself..."
 									label="Bio"
 									outlined
 									rows="3"
-<<<<<<< Updated upstream
-=======
 									:counter="500"
 									maxlength="500"
->>>>>>> Stashed changes
 								></v-textarea>
 
 								<!-- Profile Picture Section -->
@@ -56,7 +55,7 @@
 									<v-col cols="5" class="text-center">
 										<p class="font-weight-bold">Current</p>
 										<img
-											:src="user.profileImage"
+											:src="originalUser.profileImage"
 											height="200"
 											width="200"
 											class="mt-2 mx-auto"
@@ -65,10 +64,10 @@
 									</v-col>
 
 									<!-- New Profile Image Preview -->
-									<v-col cols="5" class="text-center" v-if="newProfileImage">
+									<v-col cols="5" class="text-center" v-if="user.profileImage">
 										<p class="font-weight-bold">New</p>
 										<img
-											:src="newProfileImage"
+											:src="user.profileImage"
 											height="200"
 											width="200"
 											class="mt-2 mx-auto"
@@ -86,7 +85,43 @@
 								<p v-if="profileFileError" style="color: red">
 									{{ profileFileError }}
 								</p>
+
 								<v-divider class="my-4"></v-divider>
+								<h2 class="text-h5 font-weight-bold mb-2">Accessibility</h2>
+								<v-card class="mb-4 pa-3">
+									<v-select
+										label="Color Vision Mode"
+										:items="[
+											'Default',
+											'Red-Blind (Protanopia)',
+											'Green-Blind (Deuteranopia)',
+											'Blue-Blind (Tritanopia)',
+											'Grayscale (achromatopsia)',
+											'High Contrast',
+										]"
+										variant="outlined"
+										@change="applyColorblindMode"
+									></v-select>
+
+									<v-switch
+										label="Enable Patterns on UI Elements"
+										hint="Adds textures to buttons to make them more distinguishable"
+										persistent-hint
+										@change="applyAccessibilitySettings"
+									></v-switch>
+
+									<v-switch
+										label="Show Text Labels on Icons"
+										hint="Displays text labels alongside icons for better clarity"
+										persistent-hint
+										@change="applyAccessibilitySettings"
+									></v-switch>
+
+									<div class="mt-3">
+										<v-btn> Preview Accessibility Changes </v-btn>
+									</div>
+								</v-card>
+
 								<h2 class="text-h5 font-weight-bold mb-2">
 									Accessibility Settings
 								</h2>
@@ -121,6 +156,14 @@
 									@change="applyAccessibilitySettings"
 								></v-switch>
 
+								<v-btn
+									color="primary"
+									@click="previewAccessibilityChanges"
+									class="mb-4"
+								>
+									Preview Changes
+								</v-btn>
+
 								<v-divider class="my-4"></v-divider>
 
 								<h2 class="text-h5 font-weight-bold mb-2">Spotify OAuth</h2>
@@ -133,23 +176,13 @@
 									v-if="!user.spotifyConnected"
 									color="green"
 									@click="initiateSpotifyAuth"
-									aria-label="Connect your Spotify account"
 									>Connect Spotify</v-btn
 								>
-								<v-btn
-									v-else
-									color="red"
-									@click="disconnectSpotify"
-									aria-label="Disconnect your Spotify account"
+								<v-btn v-else color="red" @click="disconnectSpotify"
 									>Disconnect Spotify</v-btn
 								>
 								<v-divider class="my-4"></v-divider>
-								<v-btn
-									type="submit"
-									color="primary"
-									aria-label="Save all profile changes"
-									>Save Changes</v-btn
-								>
+								<v-btn type="submit" color="primary">Save Changes</v-btn>
 							</v-form>
 						</v-card>
 					</v-col>
@@ -161,23 +194,33 @@
 
 <script>
 	import Navbar from "./Navbar.vue";
+	import axios from "axios";
 
 	export default {
 		name: "userSettings",
 		components: { Navbar },
 		data() {
 			return {
+				loggedIn: false,
 				user: {
-					username: "Username",
-					email: "username@example.com",
-					bio: "This is my bio!",
-					profileImage: "/images/UnknownPerson.png",
+					id: null,
+					username: null,
+					email: null,
+					bio: null,
+					profileImage: null,
 					spotifyConnected: false,
 				},
-				newProfileImage: null,
+				originalUser: {
+					username: null,
+					bio: null,
+					profileImage: null,
+				},
+				newProfileImage: null, // To store the preview of the new image
 				profileFileError: "",
+
+				errorUpdating: false,
 				clientId: import.meta.env.VITE_SPOTIFY_CLIENT_ID,
-				redirectUri: "http://localhost:5173/",
+				redirectUri: "http://localhost:5173/user-settings",
 				colorblindMode: localStorage.getItem("colorblindMode") || "Default",
 				enablePatterns: localStorage.getItem("enablePatterns") === "true",
 				showLabels: localStorage.getItem("showLabels") === "true",
@@ -202,32 +245,6 @@
 				}
 			},
 		},
-<<<<<<< Updated upstream
-		watch: {
-			// Add watcher for colorblindMode
-			colorblindMode: {
-				immediate: true,
-				handler(newMode) {
-					// Update localStorage
-					localStorage.setItem("colorblindMode", newMode);
-
-					// Apply the style to the root element
-					document.documentElement.setAttribute(
-						"data-colorblind-mode",
-						newMode === "Default" ? "" : this.colorblindClass
-					);
-
-					// Update CSS custom properties based on the mode
-					const root = document.documentElement;
-					if (newMode === "Default") {
-						root.style.removeProperty("--primary-color");
-						root.style.removeProperty("--secondary-color");
-						root.style.removeProperty("--background-color");
-						root.style.removeProperty("--text-color");
-						root.style.removeProperty("--link-color");
-					}
-				},
-=======
 		methods: {
 			async getCurrentSettings() {
 				try {
@@ -280,18 +297,8 @@
 					this.loggedIn = false;
 					this.user = null;
 				}
->>>>>>> Stashed changes
 			},
-		},
-		methods: {
-			saveProfile() {
-				// Apply accessibility settings
-				this.applyAccessibilitySettings();
 
-<<<<<<< Updated upstream
-				alert("Profile updated successfully!");
-				// Needs to be implemented
-=======
 			async saveProfile() {
 				if (this.user.username !== this.originalUser.username) {
 					try {
@@ -368,8 +375,8 @@
 					alert("Profile updated successfully!");
 				}
 				this.errorUpdating = false;
->>>>>>> Stashed changes
 			},
+
 			handleFileUpload(event) {
 				const file = event.target.files[0];
 
@@ -381,45 +388,63 @@
 				}
 
 				this.profileFileError = "";
+				this.profileFile = file; // <-- Save the file for later upload
 
 				const reader = new FileReader();
 				reader.onload = (e) => {
-					this.newProfileImage = e.target.result;
+					this.user.profileImage = e.target.result; // For preview
 				};
 				reader.readAsDataURL(file);
 			},
 
 			applyColorblindMode() {
+				const appElement = document.getElementById("app");
+				if (appElement) {
+					// Remove existing classes
+					appElement.classList.remove(
+						"protanopia",
+						"deuteranopia",
+						"tritanopia",
+						"achromatopsia",
+						"high-contrast"
+					);
+
+					// Add new class based on selected mode
+					if (this.colorblindMode !== "Default") {
+						appElement.classList.add(this.colorblindClass);
+					}
+				}
 				// Save setting to localStorage for persistence
 				localStorage.setItem("colorblindMode", this.colorblindMode);
-
-				// Dispatch storage event to notify App.vue
-				window.dispatchEvent(
-					new StorageEvent("storage", {
-						key: "colorblindMode",
-						newValue: this.colorblindMode,
-					})
-				);
 			},
 
 			applyAccessibilitySettings() {
+				const appElement = document.getElementById("app");
+				if (appElement) {
+					// Toggle pattern class
+					if (this.enablePatterns) {
+						appElement.classList.add("enable-patterns");
+					} else {
+						appElement.classList.remove("enable-patterns");
+					}
+
+					// Toggle labels class
+					if (this.showLabels) {
+						appElement.classList.add("show-labels");
+					} else {
+						appElement.classList.remove("show-labels");
+					}
+				}
 				// Save settings to localStorage
 				localStorage.setItem("enablePatterns", this.enablePatterns);
 				localStorage.setItem("showLabels", this.showLabels);
+			},
 
-				// Dispatch storage events to notify App.vue
-				window.dispatchEvent(
-					new StorageEvent("storage", {
-						key: "enablePatterns",
-						newValue: String(this.enablePatterns),
-					})
-				);
-				window.dispatchEvent(
-					new StorageEvent("storage", {
-						key: "showLabels",
-						newValue: String(this.showLabels),
-					})
-				);
+			previewAccessibilityChanges() {
+				this.applyColorblindMode();
+				this.applyAccessibilitySettings();
+				// Show a notification that changes are applied
+				alert("Accessibility settings have been applied");
 			},
 
 			// For Spotify
@@ -482,10 +507,6 @@
 						this.accessToken = data.access_token;
 						localStorage.setItem("spotify_access_token", data.access_token);
 						localStorage.setItem("spotify_refresh_token", data.refresh_token);
-<<<<<<< Updated upstream
-						this.user.spotifyConnected = true;
-						alert("Spotify connected successfully!");
-=======
 
 						try {
 							await axios.post(
@@ -503,7 +524,6 @@
 						} catch (error) {
 							console.error("Error saving Spotify tokens:", error);
 						}
->>>>>>> Stashed changes
 					} else {
 						alert("Failed to retrieve access token");
 					}
@@ -563,7 +583,17 @@
 					.replace(/\//g, "_")
 					.replace(/=+$/, "");
 			},
-			disconnectSpotify() {
+			async disconnectSpotify() {
+				try {
+					await axios.post(
+						"http://localhost:5001/update-spotify-tokens",
+						{ connected: false },
+						{ withCredentials: true }
+					);
+				} catch (error) {
+					console.error("Error saving Spotify tokens:", error);
+				}
+
 				this.user.spotifyConnected = false;
 				this.accessToken = "";
 				localStorage.removeItem("spotify_access_token");
@@ -582,14 +612,23 @@
 			this.applyAccessibilitySettings();
 		},
 		beforeDestroy() {
-			// Not needed anymore as App.vue manages the classes
+			// Clean up any applied filters
+			const appElement = document.getElementById("app");
+			if (appElement) {
+				appElement.classList.remove(
+					"protanopia",
+					"deuteranopia",
+					"tritanopia",
+					"achromatopsia",
+					"high-contrast",
+					"enable-patterns",
+					"show-labels"
+				);
+			}
 		},
-<<<<<<< Updated upstream
-=======
 		created() {
 			this.getCurrentSettings();
 		},
->>>>>>> Stashed changes
 	};
 </script>
 <style scoped>
