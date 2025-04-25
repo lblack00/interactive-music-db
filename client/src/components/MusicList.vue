@@ -87,7 +87,11 @@
 												</v-btn>
 
 												<!-- Delete Button -->
-												<v-btn variant="plain" @click="confirmDelete(song, 'master', index)">
+												<v-btn 
+													v-if="isListOwner"
+													variant="plain" 
+													@click="confirmDelete(song, 'master', index)"
+												>
 													<v-icon>mdi-delete</v-icon>
 												</v-btn>
 
@@ -144,7 +148,11 @@
 												</v-btn>
 
 												<!-- Delete Button -->
-												<v-btn variant="plain" @click="confirmDelete(artist, 'artist', index)">
+												<v-btn
+													v-if="isListOwner"
+													variant="plain"
+													@click="confirmDelete(artist, 'artist', index)"
+												>
 													<v-icon>mdi-delete</v-icon>
 												</v-btn>
 
@@ -316,7 +324,12 @@
 		<v-card>
 			<v-card-title>Edit Rating</v-card-title>
 			<v-card-text>
-				<!-- Pass the current itemType and itemId to the RatingSystem component -->
+				<!-- Ownership Note -->
+				<div v-if="!isListOwner" class="text-caption text-grey mb-2">
+					Note: This will update your own rating, not the list owner's.
+				</div>
+
+				<!-- Rating System -->
 				<RatingSystem
 					:itemType="currentItemType"
 					:itemId="currentItemId"
@@ -355,6 +368,7 @@
 				currentPlaylistId: null,
 				currentPlaylist: null,
 				userNotFound: false,
+				isListOwner: false,
 				deleteDialog: false,        // Controls the visibility of the dialog
 				ratingDialog: false,
 				itemToDelete: null,         // Holds the item data to delete
@@ -373,23 +387,48 @@
 			},
 		},
 		watch: {
-			"$route.params.username"(newUsername) {
-				this.username = newUsername;
-			},
-		},
-		async created() {
-			await this.fetchMusicList();
-			await this.fetchSpotifyPlaylists();
-
-			const savedPlaylistId = localStorage.getItem('lastPlayedPlaylistId');
-			const savedPlaylistData = localStorage.getItem('lastPlayedPlaylistData');
-
-			if (savedPlaylistId && savedPlaylistData) {
-				this.currentPlaylistId = savedPlaylistId;
-				this.currentPlaylist = JSON.parse(savedPlaylistData);
+			'$route.params.username': {
+				immediate: true,
+				handler(newUsername) {
+					this.username = newUsername;
+					this.initPage(); // Re-run your setup logic here
+				}
 			}
 		},
+		async created() {
+			this.initPage()
+		},
 		methods: {
+			async initPage() {
+				await this.fetchMusicList();
+				await this.fetchSpotifyPlaylists();
+
+				this.isListOwner = await this.isSessionUser(this.username, 'username');
+
+				const savedPlaylistId = localStorage.getItem('lastPlayedPlaylistId');
+				const savedPlaylistData = localStorage.getItem('lastPlayedPlaylistData');
+
+				if (savedPlaylistId && savedPlaylistData) {
+					this.currentPlaylistId = savedPlaylistId;
+					this.currentPlaylist = JSON.parse(savedPlaylistData);
+				}
+			},
+			async isSessionUser(identifier, type = 'id') {
+				try {
+					const response = await axios.get('http://localhost:5001/is-session-user', {
+						params: {
+							identifier: identifier,
+							type: type
+						},
+						withCredentials: true
+					});
+
+					return response.data.match;
+				} catch (error) {
+					console.error('Error checking session user:', error);
+					return false;
+				}
+			},
 			async fetchMusicList() {
 				try {
 					const username = this.username; // Get username from data

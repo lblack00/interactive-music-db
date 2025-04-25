@@ -1119,6 +1119,26 @@ def user_check_session():
         }), 200
     return jsonify({'logged_in': False}), 200
 
+@app.route('/is-session-user', methods=['GET'])
+def is_session_user():
+    if 'user' not in session:
+        return jsonify({'match': False, 'logged_in': False}), 200
+
+    # Extract input from query parameters
+    identifier = request.args.get('identifier')
+    identifier_type = request.args.get('type', 'id')  # Default to 'id'
+
+    session_user = session['user']
+
+    if identifier_type == 'username':
+        match = str(session_user.get('username')) == str(identifier)
+    else:  # Default is 'id'
+        match = str(session_user.get('id')) == str(identifier)
+
+    print(match)
+
+    return jsonify({'match': match, 'logged_in': True}), 200
+
 @app.route('/search', methods=['POST'])
 def user_search():
     datum = json.loads(request.data)
