@@ -129,107 +129,112 @@
 										Replies
 									</h2>
 									<v-list dense aria-label="Thread replies">
-										<v-list-item
-											v-for="reply in paginatedReplies"
-											:key="reply.id"
-											:class="
-												reply.parentId ? 'nested-reply' : 'top-level-reply'
-											"
-										>
-											<div
-												class="reddit-reply-header d-flex justify-space-between align-center"
+										<template v-for="reply in paginatedReplies" :key="reply.id">
+											<v-list-item
+												:class="[
+													reply.depth > 0 ? 'nested-reply' : 'top-level-reply',
+													`depth-${reply.depth}`,
+												]"
+												:style="{
+													marginLeft: `${reply.depth * 24}px`,
+													maxWidth: `calc(100% - ${reply.depth * 24}px)`,
+												}"
 											>
-												<div class="d-flex align-center">
-													<router-link
-														:to="`/user/${reply.author.name}`"
-														class="text-decoration-none"
-													>
-														<img
-															:src="`http://localhost:5001${reply.author.pfp}`"
-															alt="Profile Image"
-															width="40"
-															height="40"
-															class="mr-2 rounded-md"
-														/>
-													</router-link>
-													<router-link
-														:to="`/user/${reply.author.name}`"
-														class="reply-username text-decoration-none"
-													>
-														{{ reply.author.name }}
-													</router-link>
-													<span class="reply-date">{{ reply.date }}</span>
+												<div
+													class="reddit-reply-header d-flex justify-space-between align-center"
+												>
+													<div class="d-flex align-center">
+														<router-link
+															:to="`/user/${reply.author.name}`"
+															class="text-decoration-none"
+														>
+															<img
+																:src="`http://localhost:5001${reply.author.pfp}`"
+																alt="Profile Image"
+																width="40"
+																height="40"
+																class="mr-2 rounded-md"
+															/>
+														</router-link>
+														<router-link
+															:to="`/user/${reply.author.name}`"
+															class="reply-username text-decoration-none"
+														>
+															{{ reply.author.name }}
+														</router-link>
+														<span class="reply-date">{{ reply.date }}</span>
+													</div>
+													<v-menu offset-y>
+														<template v-slot:activator="{ props }">
+															<v-btn
+																icon
+																density="compact"
+																v-bind="props"
+																aria-label="Reply actions"
+															>
+																<v-icon small>mdi-dots-vertical</v-icon>
+															</v-btn>
+														</template>
+														<v-list>
+															<v-list-item @click="replyToComment(reply)">
+																<v-list-item-title>Reply</v-list-item-title>
+															</v-list-item>
+															<v-list-item
+																v-if="!isCurrentUserAuthor(reply.author)"
+																@click.stop="reportItem(reply, 'reply')"
+															>
+																<v-list-item-title>Report</v-list-item-title>
+															</v-list-item>
+															<v-list-item
+																v-if="isCurrentUserAuthor(reply.author)"
+																@click="editReply(reply)"
+															>
+																<v-list-item-title>Edit</v-list-item-title>
+															</v-list-item>
+															<v-list-item
+																v-if="isCurrentUserAuthor(reply.author)"
+																@click="confirmDeleteReply(reply)"
+															>
+																<v-list-item-title>Delete</v-list-item-title>
+															</v-list-item>
+														</v-list>
+													</v-menu>
 												</div>
-												<v-menu offset-y>
-													<template v-slot:activator="{ props }">
+												<div v-if="reply.parentId" class="replying-to-context">
+													Replying to {{ getReplyAuthorName(reply.parentId) }}
+												</div>
+												<v-list-item-text v-if="editingReplyId === reply.id">
+													<v-textarea
+														v-model="editedReplyContent"
+														outlined
+														rows="3"
+														hide-details
+														class="mt-2"
+													></v-textarea>
+													<div class="d-flex justify-end mt-4 mb-2">
 														<v-btn
-															icon
-															density="compact"
-															v-bind="props"
-															aria-label="Reply actions"
+															text
+															small
+															@click="cancelEditReply"
+															class="mr-2"
+															aria-label="Cancel your edit"
+															>Cancel</v-btn
 														>
-															<v-icon small>mdi-dots-vertical</v-icon>
-														</v-btn>
-													</template>
-													<v-list>
-														<v-list-item @click="replyToComment(reply)">
-															<v-list-item-title>Reply</v-list-item-title>
-														</v-list-item>
-														<v-list-item
-															v-if="!isCurrentUserAuthor(reply.author)"
-															@click.stop="reportItem(reply, 'reply')"
+														<v-btn
+															color="primary"
+															small
+															@click="saveReplyEdit(reply)"
+															aria-label="Save your edits"
+															>Save</v-btn
 														>
-															<v-list-item-title>Report</v-list-item-title>
-														</v-list-item>
-														<v-list-item
-															v-if="isCurrentUserAuthor(reply.author)"
-															@click="editReply(reply)"
-														>
-															<v-list-item-title>Edit</v-list-item-title>
-														</v-list-item>
-														<v-list-item
-															v-if="isCurrentUserAuthor(reply.author)"
-															@click="confirmDeleteReply(reply)"
-														>
-															<v-list-item-title>Delete</v-list-item-title>
-														</v-list-item>
-													</v-list>
-												</v-menu>
-											</div>
-											<div v-if="reply.parentId" class="replying-to-context">
-												Replying to {{ getReplyAuthorName(reply.parentId) }}
-											</div>
-											<v-list-item-text v-if="editingReplyId === reply.id">
-												<v-textarea
-													v-model="editedReplyContent"
-													outlined
-													rows="3"
-													hide-details
-													class="mt-2"
-												></v-textarea>
-												<div class="d-flex justify-end mt-4 mb-2">
-													<v-btn
-														text
-														small
-														@click="cancelEditReply"
-														class="mr-2"
-														aria-label="Cancel your edit"
-														>Cancel</v-btn
-													>
-													<v-btn
-														color="primary"
-														small
-														@click="saveReplyEdit(reply)"
-														aria-label="Save your edits"
-														>Save</v-btn
-													>
-												</div>
-											</v-list-item-text>
-											<v-list-item-text v-else>{{
-												reply.content
-											}}</v-list-item-text>
-										</v-list-item>
-										<v-list-item v-if="thread.replies.length === 0">
+													</div>
+												</v-list-item-text>
+												<v-list-item-text v-else>{{
+													reply.content
+												}}</v-list-item-text>
+											</v-list-item>
+										</template>
+										<v-list-item v-if="flattenedReplies.length === 0">
 											<v-list-item-content>
 												<v-list-item-text class="text-center"
 													>No replies yet. Be the first to
@@ -251,54 +256,62 @@
 								</section>
 								<v-divider class="my-4" aria-hidden="true"></v-divider>
 								<section role="region" aria-labelledby="reply-form-heading">
-									<h2
-										id="reply-form-heading"
-										class="text-h5 font-weight-bold mb-4"
-									>
-										{{ replyingTo ? `Reply to ${replyingTo}` : "Add a Reply" }}
-									</h2>
-									<v-form @submit.prevent="addReply" aria-label="Reply form">
-										<div role="group" aria-labelledby="reply-form-heading">
-											<div v-if="replyingTo" class="mb-2 d-flex align-center">
-												<v-chip color="primary" text-color="white" class="mr-2">
-													Replying to {{ replyingTo }}
-												</v-chip>
-											</div>
-											<label for="reply-textarea" class="sr-only"
-												>Your Reply</label
-											>
-											<v-textarea
-												id="reply-textarea"
-												v-model="newReplyContent"
-												label="Your Reply"
-												outlined
-												rows="4"
-												required
-												@click.stop
-												aria-required="true"
-											></v-textarea>
-											<div class="d-flex">
-												<v-btn
-													v-if="replyingTo"
-													text
-													@click="cancelReplyingTo"
-													class="mr-2"
-													color="grey darken-1"
-													aria-label="Cancel reply"
+									<v-card class="reply-form-card">
+										<h2
+											id="reply-form-heading"
+											class="text-h5 font-weight-bold mb-4"
+										>
+											{{
+												replyingTo ? `Reply to ${replyingTo}` : "Add a Reply"
+											}}
+										</h2>
+										<v-form @submit.prevent="addReply" aria-label="Reply form">
+											<div role="group" aria-labelledby="reply-form-heading">
+												<div v-if="replyingTo" class="mb-2 d-flex align-center">
+													<v-chip
+														color="primary"
+														text-color="white"
+														class="mr-2"
+													>
+														Replying to {{ replyingTo }}
+													</v-chip>
+												</div>
+												<label for="reply-textarea" class="sr-only"
+													>Your Reply</label
 												>
-													<v-icon small left>mdi-close</v-icon>
-													Cancel
-												</v-btn>
-												<v-btn
-													type="submit"
-													color="primary"
-													aria-label="Post your reply"
-												>
-													Post Reply
-												</v-btn>
+												<v-textarea
+													id="reply-textarea"
+													v-model="newReplyContent"
+													label="Your Reply"
+													outlined
+													rows="4"
+													required
+													@click.stop
+													aria-required="true"
+												></v-textarea>
+												<div class="d-flex mt-3">
+													<v-btn
+														v-if="replyingTo"
+														text
+														@click="cancelReplyingTo"
+														class="mr-2"
+														color="grey darken-1"
+														aria-label="Cancel reply"
+													>
+														<v-icon small left>mdi-close</v-icon>
+														Cancel
+													</v-btn>
+													<v-btn
+														type="submit"
+														color="primary"
+														aria-label="Post your reply"
+													>
+														Post Reply
+													</v-btn>
+												</div>
 											</div>
-										</div>
-									</v-form>
+										</v-form>
+									</v-card>
 								</section>
 							</v-card>
 
@@ -581,14 +594,22 @@
 		computed: {
 			totalPages() {
 				return this.thread
-					? Math.ceil(this.thread.replies.length / this.itemsPerPage)
+					? Math.ceil(this.flattenedReplies.length / this.itemsPerPage)
 					: 0;
 			},
 			paginatedReplies() {
 				if (!this.thread) return [];
 				const start = (this.currentPage - 1) * this.itemsPerPage;
 				const end = start + this.itemsPerPage;
-				return this.thread.replies.slice(start, end);
+				return this.flattenedReplies.slice(start, end);
+			},
+			replyTree() {
+				if (!this.thread || !this.thread.replies) return [];
+				return this.buildReplyTree(this.thread.replies);
+			},
+			flattenedReplies() {
+				if (!this.thread || !this.thread.replies) return [];
+				return this.flattenTree(this.replyTree);
 			},
 		},
 		created() {
@@ -685,9 +706,6 @@
 							parentId: this.replyingToId,
 						},
 						{
-							headers: {
-								Authorization: `Bearer ${localStorage.getItem("token")}`,
-							},
 							withCredentials: true,
 						}
 					);
@@ -698,8 +716,10 @@
 					this.replyingToId = null;
 					this.replyingTo = null;
 
-					// Move to last page to show the new comment
-					this.currentPage = this.totalPages;
+					// Move to last page
+					this.$nextTick(() => {
+						this.currentPage = this.totalPages;
+					});
 				} catch (error) {
 					console.error("Error adding reply:", error);
 					alert("Failed to add reply. Please try again.");
@@ -1053,6 +1073,44 @@
 						return "#";
 				}
 			},
+
+			buildReplyTree(replies) {
+				// Create a map of id to reply with children array
+				const replyMap = new Map();
+				replies.forEach((reply) => {
+					replyMap.set(reply.id, { ...reply, children: [] });
+				});
+
+				// Build the tree structure
+				const rootReplies = [];
+				replies.forEach((reply) => {
+					const replyWithChildren = replyMap.get(reply.id);
+					if (reply.parentId) {
+						const parent = replyMap.get(reply.parentId);
+						if (parent) {
+							parent.children.push(replyWithChildren);
+						} else {
+							rootReplies.push(replyWithChildren);
+						}
+					} else {
+						rootReplies.push(replyWithChildren);
+					}
+				});
+
+				return rootReplies;
+			},
+
+			flattenTree(tree) {
+				const flattened = [];
+
+				function traverse(node, depth = 0) {
+					flattened.push({ ...node, depth });
+					node.children.forEach((child) => traverse(child, depth + 1));
+				}
+
+				tree.forEach((node) => traverse(node));
+				return flattened;
+			},
 		},
 		watch: {
 			searchQuery: {
@@ -1390,5 +1448,92 @@
 		background: transparent;
 		border: none;
 		margin-bottom: 18px;
+	}
+
+	/* Three dots button as a gradient circle (for both reply and thread actions) */
+	.v-btn[aria-label="Reply actions"],
+	.v-btn[aria-label="Thread actions"] {
+		background: linear-gradient(90deg, #14a085 60%, #7fd8c2 100%) !important;
+		border-radius: 50%;
+		box-shadow: 0 2px 8px rgba(20, 160, 133, 0.08);
+		width: 38px;
+		height: 38px;
+		min-width: 38px;
+		min-height: 38px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		transition: background 0.2s, box-shadow 0.2s;
+	}
+	.v-btn[aria-label="Reply actions"]:hover,
+	.v-btn[aria-label="Thread actions"]:hover {
+		background: linear-gradient(90deg, #11967a 60%, #5fd8b2 100%) !important;
+		box-shadow: 0 4px 16px rgba(20, 160, 133, 0.13);
+	}
+	.v-btn[aria-label="Reply actions"] .v-icon,
+	.v-btn[aria-label="Thread actions"] .v-icon {
+		color: #fff !important;
+	}
+
+	/* Add a Reply section improvements */
+	.reply-form-card {
+		background: transparent;
+		border-radius: 12px;
+		box-shadow: 0 2px 8px rgba(20, 160, 133, 0.06);
+		padding: 32px 24px 24px 24px;
+		margin-top: 32px;
+		margin-bottom: 0;
+	}
+	.reply-form-card .v-btn[type="submit"] {
+		background: linear-gradient(90deg, #14a085 60%, #7fd8c2 100%);
+		color: #fff;
+		font-weight: 600;
+		border-radius: 8px;
+		box-shadow: 0 2px 8px rgba(20, 160, 133, 0.1);
+		padding: 0.7rem 2.2rem;
+		font-size: 1.08rem;
+		letter-spacing: 0.2px;
+		transition: background 0.2s, box-shadow 0.2s;
+	}
+	.reply-form-card .v-btn[type="submit"]:hover {
+		background: linear-gradient(90deg, #11967a 60%, #5fd8b2 100%);
+		box-shadow: 0 4px 16px rgba(20, 160, 133, 0.18);
+	}
+	.reply-form-card .v-textarea {
+		background: #fff;
+		border-radius: 8px;
+	}
+
+	/* Replies section spacing */
+	.replies-section {
+		padding-bottom: 0;
+	}
+
+	/* Add new styles for nested replies */
+	.depth-1 {
+		border-left: 2px solid rgba(20, 160, 133, 0.2);
+	}
+	.depth-2 {
+		border-left: 2px solid rgba(20, 160, 133, 0.3);
+	}
+	.depth-3 {
+		border-left: 2px solid rgba(20, 160, 133, 0.4);
+	}
+	.depth-4 {
+		border-left: 2px solid rgba(20, 160, 133, 0.5);
+	}
+	.depth-5 {
+		border-left: 2px solid rgba(20, 160, 133, 0.6);
+	}
+
+	.nested-reply {
+		background: rgba(245, 247, 250, 0.5);
+		margin-bottom: 8px;
+		border-radius: 8px;
+		transition: all 0.2s ease;
+	}
+
+	.nested-reply:hover {
+		background: rgba(245, 247, 250, 0.8);
 	}
 </style>
