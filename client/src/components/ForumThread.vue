@@ -10,48 +10,56 @@
 				<v-container>
 					<v-row justify="center">
 						<v-col cols="12" md="8">
-							<v-card class="pa-4">
+							<!-- Thread Header Card -->
+							<v-card class="thread-header mb-6">
 								<article role="region" aria-labelledby="thread-title">
-									<header>
-										<div class="d-flex justify-space-between align-center">
-											<h1
-												id="thread-title"
-												class="text-h4 font-weight-bold mb-4"
-											>
+									<header class="thread-header-content">
+										<div
+											class="d-flex justify-space-between align-center mb-4 thread-title-row"
+										>
+											<h1 id="thread-title" class="text-h4 font-weight-bold">
 												{{ thread.title }}
+												<span class="original-post-badge">Original Post</span>
 											</h1>
 
-											<div class="d-flex align-center">
-												<!-- report a thread -->
-												<v-btn
-													icon
-													class="mr-2"
-													@click.stop.prevent="reportItem(thread, 'thread')"
-													aria-label="Report this thread"
-												>
-													<v-icon color="warning">mdi-flag</v-icon>
-												</v-btn>
-
-												<!-- edit/delete thread if user posted it -->
-												<div v-if="isCurrentUserAuthor(thread.author)">
+											<!-- Dropdown for thread actions -->
+											<v-menu offset-y>
+												<template v-slot:activator="{ props }">
 													<v-btn
 														icon
+														density="compact"
+														v-bind="props"
+														aria-label="Thread actions"
+													>
+														<v-icon small>mdi-dots-vertical</v-icon>
+													</v-btn>
+												</template>
+												<v-list>
+													<v-list-item
+														@click.stop.prevent="reportItem(thread, 'thread')"
+													>
+														<v-list-item-title>Report</v-list-item-title>
+													</v-list-item>
+													<v-list-item
+														v-if="isCurrentUserAuthor(thread.author)"
 														@click="editThread"
-														aria-label="Edit thread"
-														class="mr-2"
 													>
-														<v-icon>mdi-pencil</v-icon>
-													</v-btn>
-													<v-btn
-														icon
+														<v-list-item-title>Edit</v-list-item-title>
+													</v-list-item>
+													<v-list-item
+														v-if="isCurrentUserAuthor(thread.author)"
+														@click="showAddReferenceDialog = true"
+													>
+														<v-list-item-title>Add Reference</v-list-item-title>
+													</v-list-item>
+													<v-list-item
+														v-if="isCurrentUserAuthor(thread.author)"
 														@click="confirmDeleteThread"
-														aria-label="Delete thread"
-														color="error"
 													>
-														<v-icon>mdi-delete</v-icon>
-													</v-btn>
-												</div>
-											</div>
+														<v-list-item-title>Delete</v-list-item-title>
+													</v-list-item>
+												</v-list>
+											</v-menu>
 										</div>
 
 										<!-- display author and date published -->
@@ -63,8 +71,8 @@
 												<img
 													:src="`http://localhost:5001${thread.author.pfp}`"
 													alt="Profile Image"
-													width="40"
-													height="40"
+													width="48"
+													height="48"
 													class="mr-3 rounded-md"
 												/>
 											</router-link>
@@ -83,7 +91,7 @@
 											</div>
 										</div>
 									</header>
-									<div class="mb-4">
+									<div class="thread-content mb-4">
 										<v-textarea
 											v-if="isEditingThread"
 											v-model="editedThreadContent"
@@ -91,7 +99,7 @@
 											rows="4"
 											hide-details
 										></v-textarea>
-										<p v-else>{{ thread.content }}</p>
+										<p v-else class="thread-text">{{ thread.content }}</p>
 									</div>
 									<div v-if="isEditingThread" class="d-flex justify-end">
 										<v-btn text @click="cancelEditThread" class="mr-2"
@@ -102,149 +110,17 @@
 										>
 									</div>
 								</article>
+							</v-card>
 
-								<!-- add references to artist/release page section -->
-								<section v-if="isCurrentUserAuthor(thread.author)" class="mb-4">
-									<v-divider class="my-4"></v-divider>
+							<!-- Decorative divider -->
+							<div class="decorative-divider">
+								<span class="divider-line"></span>
+								<v-icon class="divider-icon">mdi-forum</v-icon>
+								<span class="divider-line"></span>
+							</div>
 
-									<h3 class="text-h6 font-weight-bold mb-2">Add References</h3>
-									<p class="text-body-2 mb-3">
-										Link this thread to an artist or release.
-									</p>
-
-									<v-row align="start">
-										<v-col align="center" cols="12" sm="7">
-											<v-autocomplete
-												v-model="selectedReference"
-												:items="searchResults"
-												:loading="isSearching"
-												v-model:search="searchQuery"
-												item-title="displayName"
-												item-value="id"
-												label="Search artists or releases"
-												placeholder="Type to search"
-												outlined
-												dense
-												return-object
-												no-filter
-												:custom-filter="() => true"
-												:menu-props="{ closeOnContentClick: true }"
-											>
-												<template v-slot:selection="{ item }">
-													{{ item.raw.name }}
-													<span
-														v-if="item.raw.type === 'release'"
-														class="text-caption ms-1"
-													>
-														(Release)
-													</span>
-													<span v-else class="text-caption ms-1">
-														(Artist)
-													</span>
-												</template>
-
-												<template v-slot:item="{ props, item }">
-													<v-list-item v-bind="props">
-														<template v-slot:title>
-															<span v-if="item.raw.type === 'release'">
-																"{{ item.raw.name }}" {{ item.raw.artist }} [{{
-																	item.raw.year
-																}}]
-															</span>
-															<span v-else>{{ item.raw.name }}</span>
-														</template>
-														<template v-slot:subtitle>
-															<span v-if="item.raw.type === 'release'"
-																>Release</span
-															>
-															<span v-else>Artist</span>
-														</template>
-													</v-list-item>
-												</template>
-
-												<!-- <template v-slot:append>
-													<v-btn
-														color="primary"
-														icon
-														density="compact"
-														:disabled="!selectedReference"
-														@click="addReference(selectedReference)"
-													>
-														<v-icon>mdi-plus</v-icon>
-													</v-btn>
-												</template> -->
-											</v-autocomplete>
-										</v-col>
-										<v-col align="center" cols="12" sm="3">
-											<v-select
-												v-model="referenceType"
-												hint="Filter type"
-												:items="referenceTypes"
-												item-title="text"
-												item-value="value"
-												label="Filter type"
-												outlined
-												return-object
-												single-line
-												dense
-											></v-select>
-										</v-col>
-										<v-col
-											align="center"
-											cols="12"
-											sm="2"
-											class="d-flex justify-center"
-										>
-											<v-btn
-												color="primary"
-												icon
-												density="compact"
-												:disabled="!selectedReference"
-												@click="addReference(selectedReference)"
-												style="margin: 10px"
-											>
-												<v-icon>mdi-plus</v-icon>
-											</v-btn>
-										</v-col>
-									</v-row>
-								</section>
-
-								<!-- existing references -->
-								<section
-									v-if="
-										thread && thread.references && thread.references.length > 0
-									"
-									class="mb-4"
-								>
-									<v-divider class="my-4"></v-divider>
-
-									<h3 class="text-h6 font-weight-bold mb-2">References</h3>
-									<v-chip-group>
-										<v-chip
-											v-for="ref in thread.references"
-											:key="ref.id"
-											:to="getReferenceLink(ref)"
-											color="primary"
-											outlined
-											class="mr-2"
-										>
-											<v-icon small left>{{
-												getReferenceIcon(ref.reference_type)
-											}}</v-icon>
-											{{ ref.name }}
-											<v-icon
-												v-if="isCurrentUserAuthor(thread.author)"
-												right
-												x-small
-												class="ml-1"
-												@click.stop.prevent="confirmDeleteReference(ref)"
-											>
-												mdi-close
-											</v-icon>
-										</v-chip>
-									</v-chip-group>
-								</section>
-
+							<!-- Replies Section -->
+							<v-card class="replies-section">
 								<section role="region" aria-labelledby="replies-heading">
 									<h2
 										id="replies-heading"
@@ -256,129 +132,102 @@
 										<v-list-item
 											v-for="reply in paginatedReplies"
 											:key="reply.id"
+											:class="
+												reply.parentId ? 'nested-reply' : 'top-level-reply'
+											"
 										>
-											<v-list-item-content>
-												<article :aria-labelledby="`reply-author-${reply.id}`">
-													<div class="d-flex justify-space-between">
-														<v-list-item class="pa-0">
-															<!-- Container for image and text, not wrapped in a router-link -->
-															<div class="d-flex align-center">
-																<!-- Profile Image (Clickable if you want it) -->
-																<router-link
-																	:to="`/user/${reply.author.name}`"
-																	class="text-decoration-none"
-																>
-																	<img
-																		:src="`http://localhost:5001${reply.author.pfp}`"
-																		alt="Profile Image"
-																		width="40"
-																		height="40"
-																		class="mr-3 rounded-md"
-																	/>
-																</router-link>
-
-																<!-- Text Content (Name + Date) -->
-																<div class="d-flex flex-column">
-																	<!-- Name (Clickable) -->
-																	<router-link
-																		:to="`/user/${reply.author.name}`"
-																		class="font-weight-bold text--primary text-decoration-none"
-																		style="color: black"
-																	>
-																		{{ reply.author.name }}
-																	</router-link>
-
-																	<!-- Date (Not clickable) -->
-																	<v-list-item-subtitle
-																		class="text-caption text--secondary"
-																	>
-																		{{ reply.date }}
-																	</v-list-item-subtitle>
-																</div>
-															</div>
-														</v-list-item>
-														<!-- buttons for replies -->
-														<div class="d-flex">
-															<v-btn
-																icon
-																small
-																@click="replyToComment(reply)"
-																aria-label="Reply to this comment"
-															>
-																<v-icon small>mdi-reply</v-icon>
-															</v-btn>
-															<v-btn
-																v-if="!isCurrentUserAuthor(reply.author)"
-																icon
-																small
-																@click.stop="reportItem(reply, 'reply')"
-																aria-label="Report this comment"
-															>
-																<v-icon small color="warning">mdi-flag</v-icon>
-															</v-btn>
-															<div v-if="isCurrentUserAuthor(reply.author)">
-																<v-btn
-																	icon
-																	small
-																	@click="editReply(reply)"
-																	aria-label="Edit your reply"
-																	class="ml-2"
-																>
-																	<v-icon small>mdi-pencil</v-icon>
-																</v-btn>
-																<v-btn
-																	icon
-																	small
-																	@click="confirmDeleteReply(reply)"
-																	aria-label="Delete your reply"
-																	color="error"
-																	class="ml-2"
-																>
-																	<v-icon small>mdi-delete</v-icon>
-																</v-btn>
-															</div>
-														</div>
-													</div>
-
-													<v-list-item-text v-if="editingReplyId === reply.id">
-														<v-textarea
-															v-model="editedReplyContent"
-															outlined
-															rows="3"
-															hide-details
-															class="mt-2"
-														></v-textarea>
-														<div class="d-flex justify-end mt-4 mb-2">
-															<v-btn
-																text
-																small
-																@click="cancelEditReply"
-																class="mr-2"
-																aria-label="Cancel your edit"
-																>Cancel</v-btn
-															>
-															<v-btn
-																color="primary"
-																small
-																@click="saveReplyEdit(reply)"
-																aria-label="Save your edits"
-																>Save</v-btn
-															>
-														</div>
-													</v-list-item-text>
-													<v-list-item-text v-else>{{
-														reply.content
-													}}</v-list-item-text>
-
-													<!-- show parent reference if it's a reply to another comment -->
-													<v-list-item-text
-														v-if="reply.parentId"
-														class="text-caption font-italic pl-4 my-1"
+											<div
+												class="reddit-reply-header d-flex justify-space-between align-center"
+											>
+												<div class="d-flex align-center">
+													<router-link
+														:to="`/user/${reply.author.name}`"
+														class="text-decoration-none"
 													>
-														Replying to {{ getReplyAuthorName(reply.parentId) }}
-													</v-list-item-text>
-												</article>
-											</v-list-item-content>
+														<img
+															:src="`http://localhost:5001${reply.author.pfp}`"
+															alt="Profile Image"
+															width="40"
+															height="40"
+															class="mr-2 rounded-md"
+														/>
+													</router-link>
+													<router-link
+														:to="`/user/${reply.author.name}`"
+														class="reply-username text-decoration-none"
+													>
+														{{ reply.author.name }}
+													</router-link>
+													<span class="reply-date">{{ reply.date }}</span>
+												</div>
+												<v-menu offset-y>
+													<template v-slot:activator="{ props }">
+														<v-btn
+															icon
+															density="compact"
+															v-bind="props"
+															aria-label="Reply actions"
+														>
+															<v-icon small>mdi-dots-vertical</v-icon>
+														</v-btn>
+													</template>
+													<v-list>
+														<v-list-item @click="replyToComment(reply)">
+															<v-list-item-title>Reply</v-list-item-title>
+														</v-list-item>
+														<v-list-item
+															v-if="!isCurrentUserAuthor(reply.author)"
+															@click.stop="reportItem(reply, 'reply')"
+														>
+															<v-list-item-title>Report</v-list-item-title>
+														</v-list-item>
+														<v-list-item
+															v-if="isCurrentUserAuthor(reply.author)"
+															@click="editReply(reply)"
+														>
+															<v-list-item-title>Edit</v-list-item-title>
+														</v-list-item>
+														<v-list-item
+															v-if="isCurrentUserAuthor(reply.author)"
+															@click="confirmDeleteReply(reply)"
+														>
+															<v-list-item-title>Delete</v-list-item-title>
+														</v-list-item>
+													</v-list>
+												</v-menu>
+											</div>
+											<div v-if="reply.parentId" class="replying-to-context">
+												Replying to {{ getReplyAuthorName(reply.parentId) }}
+											</div>
+											<v-list-item-text v-if="editingReplyId === reply.id">
+												<v-textarea
+													v-model="editedReplyContent"
+													outlined
+													rows="3"
+													hide-details
+													class="mt-2"
+												></v-textarea>
+												<div class="d-flex justify-end mt-4 mb-2">
+													<v-btn
+														text
+														small
+														@click="cancelEditReply"
+														class="mr-2"
+														aria-label="Cancel your edit"
+														>Cancel</v-btn
+													>
+													<v-btn
+														color="primary"
+														small
+														@click="saveReplyEdit(reply)"
+														aria-label="Save your edits"
+														>Save</v-btn
+													>
+												</div>
+											</v-list-item-text>
+											<v-list-item-text v-else>{{
+												reply.content
+											}}</v-list-item-text>
 										</v-list-item>
 										<v-list-item v-if="thread.replies.length === 0">
 											<v-list-item-content>
@@ -389,7 +238,6 @@
 											</v-list-item-content>
 										</v-list-item>
 									</v-list>
-
 									<!-- pagination -->
 									<div class="d-flex justify-center mt-4">
 										<v-pagination
@@ -401,7 +249,6 @@
 										></v-pagination>
 									</div>
 								</section>
-
 								<v-divider class="my-4" aria-hidden="true"></v-divider>
 								<section role="region" aria-labelledby="reply-form-heading">
 									<h2
@@ -412,13 +259,11 @@
 									</h2>
 									<v-form @submit.prevent="addReply" aria-label="Reply form">
 										<div role="group" aria-labelledby="reply-form-heading">
-											<!-- replying to indicator -->
 											<div v-if="replyingTo" class="mb-2 d-flex align-center">
 												<v-chip color="primary" text-color="white" class="mr-2">
 													Replying to {{ replyingTo }}
 												</v-chip>
 											</div>
-
 											<label for="reply-textarea" class="sr-only"
 												>Your Reply</label
 											>
@@ -456,6 +301,42 @@
 									</v-form>
 								</section>
 							</v-card>
+
+							<!-- existing references -->
+							<section
+								v-if="
+									thread && thread.references && thread.references.length > 0
+								"
+								class="references-section"
+							>
+								<v-divider class="my-4"></v-divider>
+
+								<h3 class="text-h6 font-weight-bold mb-2">References</h3>
+								<v-chip-group>
+									<v-chip
+										v-for="ref in thread.references"
+										:key="ref.id"
+										:to="getReferenceLink(ref)"
+										color="primary"
+										outlined
+										class="mr-2"
+									>
+										<v-icon small left>{{
+											getReferenceIcon(ref.reference_type)
+										}}</v-icon>
+										{{ ref.name }}
+										<v-icon
+											v-if="isCurrentUserAuthor(thread.author)"
+											right
+											x-small
+											class="ml-1"
+											@click.stop.prevent="confirmDeleteReference(ref)"
+										>
+											mdi-close
+										</v-icon>
+									</v-chip>
+								</v-chip-group>
+							</section>
 						</v-col>
 					</v-row>
 				</v-container>
@@ -505,6 +386,102 @@
 					<v-btn color="warning" text @click="submitReport"
 						>Submit Report</v-btn
 					>
+				</v-card-actions>
+			</v-card>
+		</v-dialog>
+
+		<!-- Add Reference dialog -->
+		<v-dialog v-model="showAddReferenceDialog" max-width="500">
+			<v-card class="reference-card pa-4">
+				<div class="mb-2">
+					<h3 class="reference-title mb-1">Add Reference</h3>
+					<div class="reference-subtitle mb-4">
+						Link this thread to an artist or release.
+					</div>
+				</div>
+				<v-row align="center" class="reference-row" no-gutters>
+					<v-col cols="12" sm="7" class="pr-sm-2 mb-2 mb-sm-0">
+						<v-autocomplete
+							v-model="selectedReference"
+							:items="searchResults"
+							:loading="isSearching"
+							v-model:search="searchQuery"
+							item-title="displayName"
+							item-value="id"
+							placeholder="Search artists or releases"
+							outlined
+							dense
+							return-object
+							no-filter
+							:custom-filter="() => true"
+							:menu-props="{ closeOnContentClick: true }"
+							hide-details
+						>
+							<template v-slot:selection="{ item }">
+								{{ item.raw.name }}
+								<span
+									v-if="item.raw.type === 'release'"
+									class="text-caption ms-1"
+									>(Release)</span
+								>
+								<span v-else class="text-caption ms-1">(Artist)</span>
+							</template>
+							<template v-slot:item="{ props, item }">
+								<v-list-item v-bind="props">
+									<template v-slot:title>
+										<span v-if="item.raw.type === 'release'">
+											"{{ item.raw.name }}" {{ item.raw.artist }} [{{
+												item.raw.year
+											}}]
+										</span>
+										<span v-else>{{ item.raw.name }}</span>
+									</template>
+									<template v-slot:subtitle>
+										<span v-if="item.raw.type === 'release'">Release</span>
+										<span v-else>Artist</span>
+									</template>
+								</v-list-item>
+							</template>
+							<template v-slot:append-inner>
+								<v-progress-circular
+									v-if="isSearching"
+									indeterminate
+									size="18"
+									color="primary"
+									class="mr-2"
+								/>
+							</template>
+						</v-autocomplete>
+					</v-col>
+					<v-col cols="12" sm="3" class="pr-sm-2 mb-2 mb-sm-0">
+						<v-select
+							v-model="referenceType"
+							:items="referenceTypes"
+							item-title="text"
+							item-value="value"
+							placeholder="Type"
+							outlined
+							dense
+							return-object
+							single-line
+							hide-details
+						></v-select>
+					</v-col>
+					<v-col cols="12" sm="2" class="d-flex justify-center align-center">
+						<v-btn
+							color="primary"
+							icon
+							density="compact"
+							:disabled="!selectedReference"
+							@click="addReference(selectedReference)"
+							class="reference-add-btn"
+						>
+							<v-icon>mdi-plus</v-icon>
+						</v-btn>
+					</v-col>
+				</v-row>
+				<v-card-actions class="justify-end mt-4">
+					<v-btn text @click="showAddReferenceDialog = false">Cancel</v-btn>
 				</v-card-actions>
 			</v-card>
 		</v-dialog>
@@ -598,6 +575,7 @@
 					{ text: "Artists", value: "artist" },
 					{ text: "Releases", value: "release" },
 				],
+				showAddReferenceDialog: false,
 			};
 		},
 		computed: {
@@ -1094,30 +1072,134 @@
 
 <style scoped>
 	@import "../../src/assets/background.css";
-	/* Add explicit z-index to ensure report button remains clickable */
-	.v-btn[aria-label="Report this thread"] {
-		position: relative;
-		z-index: 500;
+
+	.grid-container {
+		overflow: visible !important;
+		background-color: #f8f9fa;
+		min-height: 100vh;
 	}
 
-	.v-btn.v-btn--icon {
+	.content {
+		padding-top: 80px;
+	}
+
+	.thread-header {
+		border-radius: 12px;
+		box-shadow: 0 8px 32px rgba(20, 160, 133, 0.13),
+			0 4px 20px rgba(0, 0, 0, 0.08);
+		margin-bottom: 0;
+		background: #f5f7fa;
+	}
+
+	.thread-header-content {
+		padding: 24px;
+	}
+
+	.thread-header .thread-title-row {
+		display: flex;
+		align-items: center;
+		gap: 0.75rem;
+	}
+
+	.original-post-badge {
+		background: #e0e3e7;
+		color: #636e72;
+		font-size: 0.85rem;
+		font-weight: 600;
+		border-radius: 6px;
+		padding: 2px 10px;
+		letter-spacing: 0.5px;
+		margin-left: 0.5rem;
+		user-select: none;
+	}
+
+	.thread-content {
+		padding: 0 24px 24px;
+	}
+
+	.thread-text {
+		font-size: 1.1rem;
+		line-height: 1.6;
+		color: #333;
+	}
+
+	.references-section {
+		padding: 0 24px 24px;
+	}
+
+	.replies-section {
+		border-radius: 12px;
+		box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+		background: white;
+		padding: 24px;
+		margin-top: 0;
+	}
+
+	.decorative-divider {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		margin: 0 0 32px 0;
+		gap: 0.5rem;
+	}
+	.decorative-divider .divider-line {
+		flex: 1;
+		height: 1.5px;
+		background: linear-gradient(90deg, #eafaf7 0%, #b2bec3 100%);
+		border: none;
+	}
+	.decorative-divider .divider-icon {
+		color: #14a085;
+		font-size: 1.3rem;
+		margin: 0 8px;
+	}
+
+	.v-btn {
+		text-transform: none;
+		letter-spacing: 0.3px;
+		font-weight: 500;
+		border-radius: 8px;
+		transition: all 0.2s ease;
+	}
+
+	.v-btn--icon {
 		width: 38px;
 		height: 38px;
 		margin: 0 4px;
 	}
 
-	.v-btn {
-		margin: 0 4px;
+	.v-list-item {
+		border-radius: 8px;
+		margin-bottom: 8px;
+		transition: all 0.2s ease;
 	}
 
-	.grid-container {
-		overflow: visible !important;
+	.v-list-item:hover {
+		background-color: rgba(0, 0, 0, 0.02);
 	}
 
-	.content {
-		padding-top: 60px;
+	.v-textarea {
+		border-radius: 8px;
 	}
 
+	.v-textarea .v-input__control {
+		border-radius: 8px;
+	}
+
+	.v-chip {
+		border-radius: 6px;
+		transition: all 0.2s ease;
+	}
+
+	.v-chip:hover {
+		transform: translateY(-1px);
+	}
+
+	.v-divider {
+		opacity: 0.1;
+	}
+
+	/* Rest of the existing styles remain unchanged */
 	.login-prompt-overlay {
 		position: fixed;
 		top: 0;
@@ -1209,5 +1291,104 @@
 	.fade-enter,
 	.fade-leave-to {
 		opacity: 0;
+	}
+
+	.reference-card {
+		background: #f7fafc;
+		border-radius: 12px;
+		box-shadow: 0 2px 8px rgba(20, 160, 133, 0.04);
+		border: 1px solid #eafaf7;
+	}
+	.reference-title {
+		font-size: 1.18rem;
+		font-weight: 700;
+		color: #1a1a1a;
+		letter-spacing: 0.1px;
+	}
+	.reference-subtitle {
+		font-size: 0.98rem;
+		color: #7fd8c2;
+		font-weight: 400;
+	}
+	.reference-row {
+		margin-left: 0;
+		margin-right: 0;
+	}
+	.reference-add-btn {
+		min-width: 36px;
+		min-height: 36px;
+		border-radius: 50%;
+		box-shadow: 0 2px 8px rgba(20, 160, 133, 0.08);
+	}
+	@media (max-width: 600px) {
+		.reference-row {
+			flex-direction: column;
+		}
+		.reference-add-btn {
+			width: 100%;
+			border-radius: 8px;
+			margin-top: 8px;
+		}
+	}
+
+	img.rounded-md {
+		border-radius: 50%;
+		box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+		transition: transform 0.2s ease;
+	}
+
+	/* Reddit-style reply container */
+	.reddit-reply {
+		margin-left: 32px;
+		padding-left: 16px;
+		border-left: 2.5px solid #e0e3e7;
+		background: #fcfcfd;
+		border-radius: 8px;
+		margin-bottom: 18px;
+		transition: background 0.2s;
+	}
+
+	/* Compact reply header */
+	.reddit-reply-header {
+		display: flex;
+		align-items: center;
+		gap: 0.75rem;
+		margin-bottom: 2px;
+	}
+	.reddit-reply-header .reply-username {
+		font-weight: 600;
+		color: #222;
+	}
+	.reddit-reply-header .reply-date {
+		font-size: 0.95rem;
+		color: #888;
+	}
+
+	.replying-to-context {
+		font-style: italic;
+		color: #7fd8c2;
+		font-size: 0.97rem;
+		margin-left: 2.2rem;
+		margin-bottom: 2px;
+	}
+
+	/* Nested reply style for replies to replies */
+	.nested-reply {
+		margin-left: 40px;
+		padding-left: 16px;
+		border-left: 2.5px solid #e0e3e7;
+		background: #fcfcfd;
+		border-radius: 8px;
+		margin-bottom: 18px;
+		transition: background 0.2s;
+	}
+
+	/* Top-level reply style (no indent) */
+	.top-level-reply {
+		margin-left: 0;
+		padding-left: 0;
+		background: transparent;
+		border: none;
+		margin-bottom: 18px;
 	}
 </style>
