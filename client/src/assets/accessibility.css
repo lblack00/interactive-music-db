@@ -1,7 +1,8 @@
 /* Default (reset to app palette) */
 :root,
 .default {
-	--primary-color: #1976d2;
+	--primary-color: #14a085;
+	--teal-color: #14a085;
 	--secondary-color: #42a5f5;
 	--background-color: #ffffff;
 	--text-color: #000000;
