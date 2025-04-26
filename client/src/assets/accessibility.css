@@ -1,8 +1,8 @@
-/* Base color variables */
-:root {
-	/* Default theme colors */
+/* Default (reset to app palette) */
+:root,
+.default {
 	--primary-color: #1976d2;
-	--secondary-color: #424242;
+	--secondary-color: #42a5f5;
 	--background-color: #ffffff;
 	--text-color: #000000;
 	--link-color: #2196f3;
@@ -13,8 +13,8 @@
 	--primary-color: #74a8d2;
 	--secondary-color: #6b6b6b;
 	--link-color: #74a8d2;
-	background-color: var(--background-color);
-	color: var(--text-color);
+	--background-color: #ffffff;
+	--text-color: #000000;
 }
 
 .protanopia .v-btn.v-btn--elevated {
@@ -27,8 +27,8 @@
 	--primary-color: #7aa6d9;
 	--secondary-color: #6b6b6b;
 	--link-color: #7aa6d9;
-	background-color: var(--background-color);
-	color: var(--text-color);
+	--background-color: #ffffff;
+	--text-color: #000000;
 }
 
 .deuteranopia .v-btn.v-btn--elevated {
@@ -41,8 +41,8 @@
 	--primary-color: #d2741f;
 	--secondary-color: #6b6b6b;
 	--link-color: #d2741f;
-	background-color: var(--background-color);
-	color: var(--text-color);
+	--background-color: #ffffff;
+	--text-color: #000000;
 }
 
 .tritanopia .v-btn.v-btn--elevated {
@@ -58,6 +58,34 @@
 	--background-color: #ffffff;
 	--text-color: #000000;
 	filter: grayscale(100%) !important;
+}
+
+.achromatopsia .save-btn,
+.achromatopsia .spotify-btn {
+	font-weight: 900 !important;
+	text-shadow: 0 2px 6px #fff, 0 -2px 6px #000;
+	background-color: #bdbdbd !important;
+	color: #222 !important;
+	text-align: center !important;
+}
+
+.achromatopsia.enable-patterns .v-btn.v-btn--elevated::before,
+.achromatopsia.enable-patterns .save-btn::before,
+.achromatopsia.enable-patterns .spotify-btn::before {
+	content: "";
+	position: absolute;
+	inset: 0;
+	z-index: 2;
+	pointer-events: none;
+	border-radius: inherit;
+	background-image: repeating-linear-gradient(
+		45deg,
+		#bbb 0px,
+		#bbb 12px,
+		#eee 12px,
+		#eee 24px
+	);
+	opacity: 0.22;
 }
 
 /* High Contrast */
@@ -83,23 +111,28 @@
 }
 
 /* Enable Patterns for Color Differentiation */
-.enable-patterns .v-btn.v-btn--elevated {
-	background-image: repeating-linear-gradient(
-		45deg,
-		transparent,
-		transparent 10px,
-		rgba(255, 255, 255, 0.1) 10px,
-		rgba(255, 255, 255, 0.1) 20px
-	);
+.enable-patterns .v-btn.v-btn--elevated,
+.enable-patterns .save-btn,
+.enable-patterns .spotify-btn {
+	/* Overlay the pattern, but keep the underlying color/gradient */
+	position: relative;
+	z-index: 1;
 }
-
-.enable-patterns .v-card {
+.enable-patterns .v-btn.v-btn--elevated::before,
+.enable-patterns .save-btn::before,
+.enable-patterns .spotify-btn::before {
+	content: "";
+	position: absolute;
+	inset: 0;
+	z-index: 2;
+	pointer-events: none;
+	border-radius: inherit;
 	background-image: repeating-linear-gradient(
 		45deg,
-		transparent,
-		transparent 10px,
-		rgba(255, 255, 255, 0.05) 10px,
-		rgba(255, 255, 255, 0.05) 20px
+		rgba(0, 0, 0, 0.08) 0px,
+		rgba(0, 0, 0, 0.08) 10px,
+		rgba(255, 255, 255, 0.12) 10px,
+		rgba(255, 255, 255, 0.12) 20px
 	);
 }
 
@@ -145,4 +178,98 @@
 	clip: rect(0, 0, 0, 0);
 	white-space: nowrap;
 	border-width: 0;
+}
+
+/* Default mode (no colorblind class) */
+:root .save-btn,
+.default .save-btn {
+	background: linear-gradient(90deg, #1976d2 0%, #42a5f5 100%) !important;
+	color: #fff !important;
+	font-weight: 600;
+}
+:root .spotify-btn,
+.default .spotify-btn {
+	background: linear-gradient(90deg, #1db954 0%, #1ed760 100%) !important;
+	color: #fff !important;
+	font-weight: 600;
+}
+
+/* Protanopia */
+.protanopia .save-btn {
+	background: linear-gradient(
+		90deg,
+		var(--primary-color) 0%,
+		var(--secondary-color, #42a5f5) 100%
+	) !important;
+	color: var(--text-color) !important;
+	font-weight: 900 !important;
+}
+.protanopia .spotify-btn {
+	background: linear-gradient(
+		90deg,
+		var(--primary-color) 0%,
+		var(--secondary-color, #1ed760) 100%
+	) !important;
+	color: var(--text-color) !important;
+	font-weight: 900 !important;
+}
+
+/* Deuteranopia */
+.deuteranopia .save-btn {
+	background: linear-gradient(
+		90deg,
+		var(--primary-color) 0%,
+		var(--secondary-color, #42a5f5) 100%
+	) !important;
+	color: var(--text-color) !important;
+	font-weight: 900 !important;
+}
+.deuteranopia .spotify-btn {
+	background: linear-gradient(
+		90deg,
+		var(--primary-color) 0%,
+		var(--secondary-color, #1ed760) 100%
+	) !important;
+	color: var(--text-color) !important;
+	font-weight: 900 !important;
+}
+
+/* Tritanopia */
+.tritanopia .save-btn {
+	background: linear-gradient(
+		90deg,
+		var(--primary-color) 0%,
+		var(--secondary-color, #42a5f5) 100%
+	) !important;
+	color: var(--text-color) !important;
+	font-weight: 900 !important;
+}
+.tritanopia .spotify-btn {
+	background: linear-gradient(
+		90deg,
+		var(--primary-color) 0%,
+		var(--secondary-color, #1ed760) 100%
+	) !important;
+	color: var(--text-color) !important;
+	font-weight: 900 !important;
+}
+
+/* High Contrast */
+.high-contrast .save-btn {
+	background: linear-gradient(
+		90deg,
+		var(--primary-color) 0%,
+		var(--secondary-color, #42a5f5) 100%
+	) !important;
+	color: var(--text-color) !important;
+	font-weight: 900 !important;
+}
+.high-contrast .spotify-btn {
+	background: linear-gradient(
+		90deg,
+		var(--primary-color) 0%,
+		var(--secondary-color, #1ed760) 100%
+	) !important;
+	color: var(--text-color) !important;
+	font-weight: 900 !important;
 }

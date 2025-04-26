@@ -12,83 +12,88 @@
 		<header role="navigation">
 			<Navbar />
 		</header>
-		<div class="content">
-			<!-- Todo: this is a mock user profile edit page which requires a user logged in -->
-			<v-container>
+		<div class="content settings-content">
+			<v-container class="py-10">
 				<v-row justify="center">
-					<v-col cols="12" md="6">
-						<v-card class="pa-4">
-							<h1 class="text-h4 font-weight-bold mb-4">User Settings</h1>
-							<v-form @submit.prevent="saveProfile">
-								<v-text-field
-									v-model="user.username"
-									label="Username"
-									outlined
-									required
-								></v-text-field>
-								<v-text-field
-									v-model="user.email"
-									label="Email"
-									outlined
-									required
-									readonly
-								></v-text-field>
-								<v-textarea
-									v-model="user.bio"
-									placeholder="It seems you have nothing written. Tell us something about yourself..."
-									label="Bio"
-									outlined
-									rows="3"
-									:counter="500"
-									maxlength="500"
-								></v-textarea>
-
+					<v-col cols="12" md="8" lg="6">
+						<v-card class="settings-card" elevation="2">
+							<v-card-title class="settings-title">
+								User Settings
+							</v-card-title>
+							<v-form @submit.prevent="saveProfile" class="px-4">
+								<!-- Profile Section -->
+								<v-card class="section-card mb-6 pa-5" variant="outlined">
+									<h2 class="section-title">Profile Information</h2>
+									<v-text-field
+										v-model="user.username"
+										label="Username"
+										variant="outlined"
+										required
+										class="mb-4 rounded-input"
+									></v-text-field>
+									<v-text-field
+										v-model="user.email"
+										label="Email"
+										variant="outlined"
+										required
+										readonly
+										class="mb-4 rounded-input"
+									></v-text-field>
+									<v-textarea
+										v-model="user.bio"
+										label="Bio"
+										variant="outlined"
+										placeholder="Tell us something about yourself..."
+										rows="3"
+										:counter="500"
+										maxlength="500"
+										class="mb-4 rounded-input"
+									></v-textarea>
+								</v-card>
 								<!-- Profile Picture Section -->
-								<h2 class="text-h5 font-weight-bold mt-4">Profile Picture</h2>
-
-								<!-- 
-						TODO: Fix this so the size changes dynammically when window size is changed, as 
-						it currentyly is permanantly 200x200
-						-->
-								<v-row justify="center">
-									<!-- Current Profile Image -->
-									<v-col cols="5" class="text-center">
-										<p class="font-weight-bold">Current</p>
-										<img
-											:src="originalUser.profileImage"
-											height="200"
-											width="200"
-											class="mt-2 mx-auto"
-											style="object-fit: fill; display: block"
-										/>
-									</v-col>
-
-									<!-- New Profile Image Preview -->
-									<v-col cols="5" class="text-center" v-if="user.profileImage">
-										<p class="font-weight-bold">New</p>
-										<img
-											:src="user.profileImage"
-											height="200"
-											width="200"
-											class="mt-2 mx-auto"
-											style="object-fit: fill; display: block"
-										/>
-									</v-col>
-								</v-row>
-
-								<v-file-input
-									label="Upload New Profile Picture (No larger than 1MB)"
-									accept="image/*"
-									@change="handleFileUpload"
-									class="mt-4"
-								/>
-								<p v-if="profileFileError" style="color: red">
-									{{ profileFileError }}
-								</p>
-
-								<v-divider class="my-4"></v-divider>
-								<h2 class="text-h5 font-weight-bold mb-2">Accessibility</h2>
-								<v-card class="mb-4 pa-3">
+								<v-card class="section-card mb-6 pa-5" variant="outlined">
+									<h2 class="section-title">Profile Picture</h2>
+									<v-row class="mb-4" align="center" justify="center">
+										<v-col cols="6" class="text-center">
+											<p class="text-subtitle-2 mb-2">Current Picture</p>
+											<v-img
+												:src="originalUser.profileImage"
+												height="140"
+												width="140"
+												class="mx-auto rounded-img profile-img-shadow"
+												cover
+											></v-img>
+										</v-col>
+										<v-col
+											cols="6"
+											class="text-center"
+											v-if="user.profileImage"
+										>
+											<p class="text-subtitle-2 mb-2">New Picture</p>
+											<v-img
+												:src="user.profileImage"
+												height="140"
+												width="140"
+												class="mx-auto rounded-img profile-img-shadow"
+												cover
+											></v-img>
+										</v-col>
+									</v-row>
+									<v-file-input
+										label="Upload New Profile Picture"
+										accept="image/*"
+										@change="handleFileUpload"
+										variant="outlined"
+										prepend-icon="mdi-camera"
+										:hint="profileFileError || 'Maximum file size: 1MB'"
+										:persistent-hint="!!profileFileError"
+										:error-messages="profileFileError"
+										class="rounded-input"
+									></v-file-input>
+								</v-card>
+								<!-- Accessibility Section -->
+								<v-card class="section-card mb-6 pa-5" variant="outlined">
+									<h2 class="section-title">Accessibility Settings</h2>
 									<v-select
 										v-model="colorblindMode"
 										label="Color Vision Mode"
@@ -102,44 +107,76 @@
 										]"
 										variant="outlined"
 										@update:model-value="applyColorblindMode"
+										class="mb-4 rounded-input"
 									></v-select>
-
 									<v-switch
 										v-model="enablePatterns"
 										label="Enable Patterns on UI Elements"
 										hint="Adds textures to buttons to make them more distinguishable"
 										persistent-hint
 										@update:model-value="applyAccessibilitySettings"
-									></v-switch>
-
-									<v-switch
-										v-model="showLabels"
-										label="Show Text Labels on Icons"
-										hint="Displays text labels alongside icons for better clarity"
-										persistent-hint
-										@update:model-value="applyAccessibilitySettings"
+										class="mb-4 rounded-switch"
 									></v-switch>
 								</v-card>
-
-								<v-divider class="my-4"></v-divider>
-
-								<h2 class="text-h5 font-weight-bold mb-2">Spotify OAuth</h2>
-								<p v-if="user.spotifyConnected" style="color: green">
-									Connected to Spotify
-								</p>
-								<p v-else style="color: red">Not connected</p>
-
+								<!-- Spotify Section -->
+								<v-card class="section-card mb-6 pa-5" variant="outlined">
+									<h2 class="section-title">Spotify Integration</h2>
+									<div class="d-flex align-center mb-4">
+										<v-icon
+											:color="user.spotifyConnected ? 'success' : 'error'"
+											class="mr-2"
+										>
+											{{
+												user.spotifyConnected
+													? "mdi-check-circle"
+													: "mdi-close-circle"
+											}}
+										</v-icon>
+										<span
+											:class="
+												user.spotifyConnected ? 'text-success' : 'text-error'
+											"
+										>
+											{{
+												user.spotifyConnected
+													? "Connected to Spotify"
+													: "Not connected to Spotify"
+											}}
+										</span>
+									</div>
+									<v-btn
+										v-if="!user.spotifyConnected"
+										color="success"
+										prepend-icon="mdi-spotify"
+										@click="initiateSpotifyAuth"
+										block
+										class="spotify-btn"
+									>
+										Connect Spotify
+									</v-btn>
+									<v-btn
+										v-else
+										color="error"
+										prepend-icon="mdi-spotify"
+										@click="disconnectSpotify"
+										block
+										class="spotify-btn"
+									>
+										Disconnect Spotify
+									</v-btn>
+								</v-card>
+								<!-- Save Button -->
 								<v-btn
-									v-if="!user.spotifyConnected"
-									color="green"
-									@click="initiateSpotifyAuth"
-									>Connect Spotify</v-btn
+									type="submit"
+									color="primary"
+									size="x-large"
+									block
+									class="save-btn mt-8"
+									:loading="saving"
+									style="font-weight: bold; letter-spacing: 2px"
 								>
-								<v-btn v-else color="red" @click="disconnectSpotify"
-									>Disconnect Spotify</v-btn
-								>
-								<v-divider class="my-4"></v-divider>
-								<v-btn type="submit" color="primary">Save Changes</v-btn>
+									Save Changes
+								</v-btn>
 							</v-form>
 						</v-card>
 					</v-col>
@@ -189,7 +226,6 @@
 
 	const applyAccessibilitySettings = () => {
 		accessibilityStore.setEnablePatterns(enablePatterns.value);
-		accessibilityStore.setShowLabels(showLabels.value);
 	};
 
 	onMounted(() => {
@@ -557,4 +593,93 @@
 <style scoped>
 	@import "../assets/background.css";
 	@import "../assets/accessibility.css";
+	.settings-bg {
+		background: linear-gradient(135deg, #f7fafd 0%, #e3e9f3 100%);
+		min-height: 100vh;
+	}
+	.settings-content {
+		padding-top: 32px;
+		padding-bottom: 32px;
+	}
+	.settings-card {
+		border-radius: 22px;
+		box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08), 0 1.5px 6px rgba(0, 0, 0, 0.04);
+		background: var(--background-color);
+		color: var(--text-color);
+		padding-bottom: 32px;
+	}
+	.section-card {
+		border-radius: 16px;
+		background: #f8fafc;
+		box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+		border: 1px solid #e3e9f3;
+	}
+	.settings-title {
+		font-size: 2rem;
+		font-weight: 700;
+		letter-spacing: 1px;
+		color: #1a237e;
+		margin-bottom: 12px;
+		text-align: center;
+		padding-top: 24px;
+		padding-bottom: 8px;
+	}
+	.section-title {
+		font-size: 1.25rem;
+		font-weight: 600;
+		color: #26326a;
+		margin-bottom: 18px;
+		border-left: 4px solid #42a5f5;
+		padding-left: 12px;
+	}
+	.rounded-input .v-input__control,
+	.rounded-input .v-field {
+		border-radius: 12px !important;
+	}
+	.rounded-switch .v-input__control {
+		border-radius: 12px !important;
+	}
+	.rounded-img {
+		border-radius: 50% !important;
+		border: 3px solid #e3e9f3;
+	}
+	.profile-img-shadow {
+		box-shadow: 0 2px 12px rgba(66, 165, 245, 0.1);
+	}
+	.save-btn {
+		border-radius: 32px;
+		background: linear-gradient(90deg, var(--primary-color) 0%, #42a5f5 100%);
+		color: var(--text-color);
+		box-shadow: 0 2px 12px rgba(25, 118, 210, 0.15);
+		transition: background 0.2s, box-shadow 0.2s;
+	}
+	.save-btn:hover:not(:disabled) {
+		background: linear-gradient(90deg, #1565c0 0%, #1e88e5 100%);
+		box-shadow: 0 4px 24px rgba(25, 118, 210, 0.22);
+	}
+	.v-btn--block {
+		margin-left: 0;
+		margin-right: 0;
+	}
+	.spotify-btn {
+		border-radius: 24px;
+		font-weight: 600;
+		letter-spacing: 1px;
+		margin-top: 8px;
+		margin-bottom: 0;
+		background: linear-gradient(90deg, #1db954 0%, #1ed760 100%);
+		color: #fff;
+		box-shadow: 0 2px 8px rgba(30, 215, 96, 0.1);
+	}
+	.spotify-btn:hover:not(:disabled) {
+		filter: brightness(1.08);
+		background: linear-gradient(90deg, #169c46 0%, #1db954 100%);
+	}
+	.achromatopsia .save-btn,
+	.achromatopsia .spotify-btn {
+		font-weight: 900 !important;
+		text-shadow: 0 2px 6px #fff, 0 -2px 6px #000;
+		background-color: #bdbdbd !important;
+		color: #222 !important;
+	}
 </style>
