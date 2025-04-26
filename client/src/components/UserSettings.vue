@@ -227,6 +227,7 @@
 	});
 	const newProfileImage = ref(null); // To store the preview of the new image
 	const profileFileError = ref("");
+	const profileFile = ref(null);
 
 	const clientId = import.meta.env.VITE_SPOTIFY_CLIENT_ID;
 	const redirectUri = "http://localhost:5173/user-settings";
