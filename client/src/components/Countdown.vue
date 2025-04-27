@@ -126,7 +126,7 @@
 															</div>
 														</template>
 													</v-img>
-													<div class="album-overlay">
+													<div v-if="currentUser" class="album-overlay">
 														<v-btn
 															:icon="
 																album.isFavorite
@@ -204,6 +204,37 @@
 					</div>
 				</v-container>
 			</main>
+
+			<!-- Add login prompt dialog -->
+			<v-dialog v-model="showLoginPrompt" max-width="400px">
+				<v-card class="login-prompt-card">
+					<v-card-text class="text-center pa-6">
+						<v-icon size="48" color="primary" class="mb-4"
+							>mdi-account-lock</v-icon
+						>
+						<h3 class="text-h5 font-weight-bold mb-3">Please Log In</h3>
+						<p class="text-subtitle-1 text-medium-emphasis mb-6">
+							You need to log in to do that.
+						</p>
+						<div class="d-flex justify-center mb-4 gap-3">
+							<v-btn color="primary" class="action-btn" @click="goToLogin">
+								Log In
+							</v-btn>
+							<v-btn color="secondary" class="action-btn" @click="goToSignup">
+								Sign Up
+							</v-btn>
+						</div>
+						<v-btn
+							variant="text"
+							color="grey-darken-1"
+							@click="showLoginPrompt = false"
+							class="cancel-btn"
+						>
+							Cancel
+						</v-btn>
+					</v-card-text>
+				</v-card>
+			</v-dialog>
 		</div>
 	</div>
 </template>
@@ -222,6 +253,8 @@
 				albums: [],
 				loading: true,
 				error: null,
+				showLoginPrompt: false,
+				currentUser: null,
 			};
 		},
 		computed: {
@@ -283,7 +316,27 @@
 
 				return new Intl.DateTimeFormat("en-US", options[part]).format(date);
 			},
+			async checkUserSession() {
+				try {
+					const response = await axios.get(
+						"http://localhost:5001/check-session",
+						{
+							withCredentials: true,
+						}
+					);
+					if (response.data.logged_in) {
+						this.currentUser = response.data.user;
+					}
+				} catch (error) {
+					console.error("Error checking session:", error);
+				}
+			},
 			notifyUser(album) {
+				if (!this.currentUser) {
+					this.showLoginPrompt = true;
+					return;
+				}
+
 				this.$nextTick(() => {
 					alert(
 						`You'll be notified when "${album.title}" by ${album.artist} is released!`
@@ -298,8 +351,19 @@
 					album.title
 				)}`;
 			},
+			goToLogin() {
+				const returnTo = this.$route.fullPath;
+				this.showLoginPrompt = false;
+				this.$router.push(`/login?returnTo=${encodeURIComponent(returnTo)}`);
+			},
+			goToSignup() {
+				const returnTo = this.$route.fullPath;
+				this.showLoginPrompt = false;
+				this.$router.push(`/signup?returnTo=${encodeURIComponent(returnTo)}`);
+			},
 		},
 		async created() {
+			await this.checkUserSession();
 			await this.fetchReleases();
 		},
 	};
@@ -576,5 +640,66 @@
 			height: 1px;
 			margin: 0.5rem 0;
 		}
+	}
+
+	/* Login prompt dialog styles */
+	.login-prompt-card {
+		border-radius: 24px;
+		overflow: hidden;
+		background: white;
+		position: relative;
+	}
+
+	.login-prompt-card::before {
+		content: "";
+		position: absolute;
+		top: 0;
+		left: 0;
+		right: 0;
+		height: 4px;
+		background: linear-gradient(90deg, var(--primary-color) 0%, #1de9b6 100%);
+	}
+
+	.action-btn {
+		min-width: 120px;
+		font-weight: 600;
+		letter-spacing: 0.5px;
+		border-radius: 12px;
+		text-transform: none;
+	}
+
+	.cancel-btn {
+		font-weight: 500;
+		letter-spacing: 0.5px;
+		text-transform: none;
+	}
+
+	/* High contrast mode styles */
+	.high-contrast .login-prompt-card {
+		background: #000000 !important;
+		border: 2px solid #ffffff !important;
+	}
+
+	.high-contrast .login-prompt-card::before {
+		background: #ffffff !important;
+	}
+
+	.high-contrast .action-btn {
+		background: #000000 !important;
+		color: #ffffff !important;
+		border: 2px solid #ffffff !important;
+	}
+
+	.high-contrast .action-btn:hover {
+		background: #ffffff !important;
+		color: #000000 !important;
+	}
+
+	.high-contrast .cancel-btn {
+		color: #ffffff !important;
+	}
+
+	.high-contrast .cancel-btn:hover {
+		background: rgba(255, 255, 255, 0.1) !important;
 	}
 </style>

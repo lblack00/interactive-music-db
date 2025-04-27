@@ -217,14 +217,15 @@
 </script>
 
 <style scoped>
-	@import "../assets/background.css";
+	@import "../../src/assets/background.css";
 
 	.signup-wrapper {
 		min-height: calc(100vh - 64px);
 		display: flex;
 		align-items: center;
 		padding: 2rem;
-		transform: translateY(-11vh);
+		transform: translateY(-15vh);
+		animation: fade-in 0.6s ease-out;
 	}
 
 	.signup-card {
@@ -235,7 +236,28 @@
 		backdrop-filter: blur(10px);
 		box-shadow: 0 4px 24px -1px rgba(0, 0, 0, 0.1),
 			0 6px 10px -1px rgba(0, 0, 0, 0.04);
-		margin-top: -64px; /* Offset to account for the navbar height */
+		margin-top: -64px;
+		animation: fade-in-up 0.8s ease-out;
+	}
+
+	@keyframes fade-in {
+		from {
+			opacity: 0;
+		}
+		to {
+			opacity: 1;
+		}
+	}
+
+	@keyframes fade-in-up {
+		from {
+			opacity: 0;
+			transform: translateY(20px);
+		}
+		to {
+			opacity: 1;
+			transform: translateY(0);
+		}
 	}
 
 	.card-decoration {

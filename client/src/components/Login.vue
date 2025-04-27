@@ -157,8 +157,10 @@
 	.login-wrapper {
 		min-height: calc(100vh - 64px);
 		display: flex;
-		align-items: flex-start;
+		align-items: center;
 		padding: 2rem;
+		transform: translateY(-11vh);
+		animation: fade-in 0.6s ease-out;
 	}
 
 	.login-card {
@@ -169,6 +171,8 @@
 		backdrop-filter: blur(10px);
 		box-shadow: 0 4px 24px -1px rgba(0, 0, 0, 0.1),
 			0 6px 10px -1px rgba(0, 0, 0, 0.04);
+		margin-top: -64px;
+		animation: fade-in-up 0.8s ease-out;
 	}
 
 	.card-decoration {
@@ -286,6 +290,26 @@
 
 		.login-card {
 			border-radius: 20px;
+		}
+	}
+
+	@keyframes fade-in {
+		from {
+			opacity: 0;
+		}
+		to {
+			opacity: 1;
+		}
+	}
+
+	@keyframes fade-in-up {
+		from {
+			opacity: 0;
+			transform: translateY(20px);
+		}
+		to {
+			opacity: 1;
+			transform: translateY(0);
 		}
 	}
 </style>

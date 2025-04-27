@@ -9,7 +9,7 @@
 			<main role="main">
 				<v-container>
 					<!-- Gradient Header -->
-					<div class="forum-gradient-header">
+					<div class="forum-gradient-header fade-in">
 						<div class="forum-header-content">
 							<div class="d-flex align-center">
 								<div>
@@ -36,10 +36,13 @@
 						v-if="isLoading"
 						indeterminate
 						color="primary"
+						class="fade-in"
 					></v-progress-linear>
-					<v-alert v-if="error" type="error" dismissible>{{ error }}</v-alert>
+					<v-alert v-if="error" type="error" dismissible class="fade-in">{{
+						error
+					}}</v-alert>
 
-					<v-row>
+					<v-row class="fade-in-up">
 						<v-col cols="12" md="4">
 							<aside role="complementary" aria-labelledby="categories-heading">
 								<v-card class="pa-4">
@@ -1059,5 +1062,65 @@
 
 	.high-contrast .cancel-btn:hover {
 		background: rgba(255, 255, 255, 0.1) !important;
+	}
+
+	/* Add fade-in animations */
+	.fade-in {
+		animation: fadeIn 0.6s ease-out;
+	}
+
+	.fade-in-up {
+		animation: fadeInUp 0.8s ease-out;
+		animation-fill-mode: both;
+	}
+
+	@keyframes fadeIn {
+		from {
+			opacity: 0;
+		}
+		to {
+			opacity: 1;
+		}
+	}
+
+	@keyframes fadeInUp {
+		from {
+			opacity: 0;
+			transform: translateY(20px);
+		}
+		to {
+			opacity: 1;
+			transform: translateY(0);
+		}
+	}
+
+	/* Add staggered animations for list items */
+	.v-list-item {
+		animation: fadeInUp 0.5s ease-out;
+		animation-fill-mode: both;
+	}
+
+	.v-list-item:nth-child(1) {
+		animation-delay: 0.1s;
+	}
+	.v-list-item:nth-child(2) {
+		animation-delay: 0.2s;
+	}
+	.v-list-item:nth-child(3) {
+		animation-delay: 0.3s;
+	}
+	.v-list-item:nth-child(4) {
+		animation-delay: 0.4s;
+	}
+	.v-list-item:nth-child(5) {
+		animation-delay: 0.5s;
+	}
+	.v-list-item:nth-child(n + 6) {
+		animation-delay: 0.6s;
+	}
+
+	/* Ensure animations work smoothly */
+	.v-container {
+		overflow: hidden;
 	}
 </style>

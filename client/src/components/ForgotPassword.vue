@@ -134,28 +134,60 @@
 		min-height: calc(100vh - 64px);
 		display: flex;
 		align-items: center;
-		padding: 2rem;
+		justify-content: center;
 		transform: translateY(-11vh);
+		animation: fadeIn 0.6s ease-out;
 	}
 
 	.forgot-card {
-		border-radius: 24px;
-		background: white;
-		overflow: hidden;
+		width: 100%;
+		max-width: 480px;
+		border-radius: 16px;
+		box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1),
+			0 8px 10px -6px rgba(0, 0, 0, 0.1);
 		position: relative;
-		backdrop-filter: blur(10px);
-		box-shadow: 0 4px 24px -1px rgba(0, 0, 0, 0.1),
-			0 6px 10px -1px rgba(0, 0, 0, 0.04);
-		margin-top: -64px;
+		overflow: hidden;
+		animation: slideUp 0.6s ease-out;
 	}
 
-	.card-decoration {
+	.forgot-card::before {
+		content: "";
 		position: absolute;
 		top: 0;
 		left: 0;
-		right: 0;
+		width: 100%;
 		height: 4px;
-		background: linear-gradient(90deg, #3cba92, #2c7a7b);
+		background: linear-gradient(135deg, #3cba92 0%, #2c7a7b 100%);
+	}
+
+	@keyframes fadeIn {
+		from {
+			opacity: 0;
+		}
+		to {
+			opacity: 1;
+		}
+	}
+
+	@keyframes slideUp {
+		from {
+			transform: translateY(20px);
+			opacity: 0;
+		}
+		to {
+			transform: translateY(0);
+			opacity: 1;
+		}
+	}
+
+	.v-enter-active,
+	.v-leave-active {
+		transition: opacity 0.3s ease;
+	}
+
+	.v-enter-from,
+	.v-leave-to {
+		opacity: 0;
 	}
 
 	.text-medium-emphasis {
@@ -195,41 +227,23 @@
 	}
 
 	.forgot-button {
-		background: linear-gradient(135deg, #3cba92, #2c7a7b) !important;
-		color: white !important;
-		font-weight: 500;
-		height: 48px;
-		font-size: 1.1rem;
-		text-transform: none;
+		background: linear-gradient(135deg, #3cba92 0%, #2c7a7b 100%);
+		color: white;
+		font-weight: 600;
 		letter-spacing: 0.5px;
+		text-transform: none;
 		transition: all 0.3s ease;
-		border-radius: 12px;
 		position: relative;
 		overflow: hidden;
 	}
 
-	.forgot-button::before {
-		content: "";
-		position: absolute;
-		top: 0;
-		left: 0;
-		right: 0;
-		bottom: 0;
-		background: linear-gradient(
-			rgba(255, 255, 255, 0.1),
-			rgba(255, 255, 255, 0)
-		);
-		opacity: 0;
-		transition: opacity 0.3s ease;
-	}
-
 	.forgot-button:hover {
-		transform: translateY(-2px);
-		box-shadow: 0 4px 12px rgba(44, 122, 123, 0.2);
+		transform: translateY(-1px);
+		box-shadow: 0 7px 14px rgba(50, 50, 93, 0.1), 0 3px 6px rgba(0, 0, 0, 0.08);
 	}
 
-	.forgot-button:hover::before {
-		opacity: 1;
+	.forgot-button:active {
+		transform: translateY(1px);
 	}
 
 	.button-text {
@@ -238,51 +252,40 @@
 	}
 
 	.login-link {
-		color: #2c7a7b;
+		color: #3cba92;
 		text-decoration: none;
-		font-size: 0.9rem;
-		transition: all 0.3s ease;
-		padding: 4px 8px;
-		border-radius: 4px;
+		font-weight: 500;
+		transition: color 0.3s ease;
 	}
 
 	.login-link:hover {
-		color: #3cba92;
-		text-decoration: none;
-		background: rgba(44, 122, 123, 0.05);
+		color: #2c7a7b;
+	}
+
+	.error-alert,
+	.success-alert {
+		margin-bottom: 1rem;
+		border-radius: 12px;
 	}
 
 	.error-alert {
-		margin: 0;
-		border-radius: 24px 24px 0 0;
-		font-weight: 500;
-		position: relative;
+		background-color: #fee2e2 !important;
+		color: #991b1b !important;
 	}
 
 	.success-alert {
-		margin: 0;
-		border-radius: 24px 24px 0 0;
-		font-weight: 500;
-		position: relative;
-		background: #00a67e !important;
-		color: white !important;
-	}
-
-	:deep(.success-alert .v-alert__content) {
-		color: white;
-	}
-
-	:deep(.v-alert__close) {
-		color: white;
+		background-color: #dcfce7 !important;
+		color: #166534 !important;
 	}
 
 	@media (max-width: 600px) {
 		.forgot-wrapper {
 			padding: 1rem;
+			transform: translateY(-8vh);
 		}
 
 		.forgot-card {
-			border-radius: 20px;
+			margin-top: -32px;
 		}
 	}
 </style>
