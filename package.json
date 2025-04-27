@@ -1,6 +1,7 @@
 {
   "dependencies": {
     "date-fns": "^4.1.0",
+    "redis": "^4.7.0",
     "slick-carousel": "^1.8.1",
     "vue-slick-carousel": "^1.0.5",
     "vue3-carousel": "^0.8.1"
