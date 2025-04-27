@@ -1382,10 +1382,12 @@ def get_spotify_status():
 def get_spotify_playlists():
     if 'user' not in session or 'spotify' not in session['user'] or \
     not session['user']['spotify'].get('connected'):
+        print("[Spotify] Not connected: user or spotify session missing or not connected.")
         return jsonify({"error": "Spotify not connected"}), 401
 
     access_token = session['user']['spotify'].get('access_token')
     if not access_token:
+        print("[Spotify] No access token found in session.")
         return jsonify({"error": "No access token found"}), 401
 
     try:
@@ -1399,7 +1401,12 @@ def get_spotify_playlists():
         )
 
         if response.status_code == 401:
+            print(f"[Spotify] Token expired or invalid. Response: {response.text}")
             return jsonify({"error": "Spotify token expired"}), 401
+
+        if response.status_code != 200:
+            print(f"[Spotify] Unexpected error from Spotify API. Status: {response.status_code}, Response: {response.text}")
+            return jsonify({"error": f"Spotify API error: {response.text}"}), 500
 
         return jsonify(response.json()), 200
     

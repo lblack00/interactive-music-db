@@ -7,149 +7,146 @@
 		</header>
 		<div class="content">
 			<main role="main">
-				<div class="container mt-2" v-if="data && data.master">
-					<section role="region" aria-labelledby="album-title">
-						<div class="row">
-							<h1 id="album-title">
+				<!-- Hero Section with Blurred Background -->
+				<div
+					class="album-hero-vibrant"
+					:style="image_uri ? { backgroundImage: `url('${image_uri}')` } : {}"
+				>
+					<div class="album-hero-gradient-vibrant"></div>
+					<div class="album-info-float-glass">
+						<v-img
+							:src="image_uri || '/images/UnknownSong.png'"
+							width="160"
+							height="160"
+							class="album-cover-float-glass"
+							contain
+							alt="Image of master cover"
+						/>
+						<div class="album-info-card-glass">
+							<h1 class="album-title-glass">
 								<router-link
 									v-if="data.artist?.[0]"
 									:to="`/artist/${data.artist[0].artist_id}`"
 									:aria-label="`Artist: ${data.artist[0].artist_name}`"
+									class="artist-link-glass"
 								>
 									{{ data.artist[0].artist_name }}
 								</router-link>
 								- {{ data.master?.[0]?.title }}
 							</h1>
-
-							<div class="grid-container-no-min-height">
-								<div class="content">
-									<v-row>
-										<v-col cols="12" md="6">
-											<v-img
-												:src="image_uri || '/images/UnknownSong.png'"
-												width="400"
-												height="400"
-												contain
-												alt="Image of master cover"
-												class="justify-center"
-											/>
-										</v-col>
-										<v-col cols="12" md="6">
-											<br class="mt-16">
-											<section role="region" aria-label="Album details">
-												<p>Country: {{ data.release?.[0]?.country || "Unknown" }}</p>
-												<p>Released: {{ data.master?.[0]?.year || "Unknown" }}</p>
-												<p>
-													Genre:
-													{{
-														data.genre?.map((entry) => entry.genre).join(", ") ||
-														"Unknown"
-													}}
-												</p>
-												<p>
-													Style:
-													{{
-														data.style?.map((entry) => entry.style).join(", ") ||
-														"Unknown"
-													}}
-												</p>
-											</section>
-										</v-col>
-									</v-row>
-									<br>
-									<RatingSystem
-										itemType="master"
-										:itemId="$route.params.master_id"
-									/>
-								</div>
+							<div class="album-chips">
+								<span class="album-chip">{{
+									data.release?.[0]?.country || "Unknown"
+								}}</span>
+								<span class="album-chip">{{
+									data.master?.[0]?.year || "Unknown"
+								}}</span>
+								<span class="album-chip">{{
+									data.genre?.map((entry) => entry.genre).join(", ") ||
+									"Unknown"
+								}}</span>
+								<span class="album-chip">{{
+									data.style?.map((entry) => entry.style).join(", ") ||
+									"Unknown"
+								}}</span>
 							</div>
+							<RatingSystem
+								itemType="master"
+								:itemId="$route.params.master_id"
+							/>
+						</div>
+					</div>
+				</div>
+
+				<!-- Main Content Card -->
+				<div class="main-content-card-modern">
+					<!-- Tracklist Section -->
+					<section v-if="data.tracks?.length">
+						<div class="section-card-modern">
+							<h2 class="section-title-modern">Tracklist</h2>
+							<hr />
+							<table
+								class="table tracklist-table-modern"
+								aria-label="Album tracks"
+							>
+								<thead>
+									<tr>
+										<th scope="col">#</th>
+										<th scope="col">Title</th>
+										<th scope="col">Duration</th>
+									</tr>
+								</thead>
+								<tbody>
+									<tr
+										v-for="(track, index) in data.tracks"
+										:key="index"
+										class="track-row-modern"
+									>
+										<td>{{ index + 1 }}</td>
+										<td>{{ track.title }}</td>
+										<td>{{ track.duration || "--:--" }}</td>
+									</tr>
+								</tbody>
+							</table>
 						</div>
 					</section>
 
-					<br />
-
-					<section
-						role="region"
-						aria-labelledby="tracklist-heading"
-						v-if="data.tracks?.length"
-					>
-						<div class="row">
-							<div class="col-sm-10">
-								<h2 id="tracklist-heading">Tracklist</h2>
-								<hr aria-hidden="true" />
-								<table class="table table-hover" aria-label="Album tracks">
-									<thead>
-										<tr>
-											<th scope="col">Title</th>
-											<th scope="col">Duration</th>
-										</tr>
-									</thead>
-									<tbody>
-										<tr v-for="(track, index) in data.tracks" :key="index">
-											<td>{{ track.title }}</td>
-											<td>{{ track.duration || "--:--" }}</td>
-										</tr>
-									</tbody>
-								</table>
-							</div>
+					<!-- Notes Section -->
+					<section v-if="data.release?.[0]?.notes">
+						<div class="section-card-modern">
+							<h2 class="section-title-modern">Notes</h2>
+							<hr />
+							<pre class="notes-pre-modern">{{ data.release[0].notes }}</pre>
 						</div>
 					</section>
 
-					<br v-if="data.release?.[0]?.notes" />
-
-					<section
-						role="region"
-						aria-labelledby="notes-heading"
-						v-if="data.release?.[0]?.notes"
-					>
-						<div class="row">
-							<h2 id="notes-heading">Notes</h2>
-							<hr aria-hidden="true" />
-							<pre>{{ data.release[0].notes }}</pre>
-						</div>
-					</section>
-
-					<br v-if="hasCredits" />
-					<section
-						role="region"
-						aria-labelledby="credits-heading"
-						v-if="hasCredits"
-						class="credits-section"
-					>
-						<div class="row">
-							<h2 id="credits-heading">Credits</h2>
-							<hr aria-hidden="true" />
-							
-							<div class="credits-content">
-								<p v-for="(artists, role) in groupedByRole" :key="role" class="credit-line">
-									{{ role }} - {{ artists.join(', ') }}
+					<!-- Credits Section -->
+					<section v-if="hasCredits" class="credits-section">
+						<div class="section-card-modern">
+							<h2 class="section-title-modern">Credits</h2>
+							<hr />
+							<div class="credits-content-modern">
+								<p
+									v-for="(artists, role) in groupedByRole"
+									:key="role"
+									class="credit-line-modern"
+								>
+									<span class="credit-role-modern">{{ role }}</span>
+									<span class="credit-artists-modern">{{
+										artists.join(", ")
+									}}</span>
 								</p>
 							</div>
 						</div>
 					</section>
 
-					<br v-if="data.company?.length" />
-					<section
-						role="region"
-						aria-labelledby="companies-heading"
-						v-if="data.company?.length"
-						class="company-section"
-					>
-						<div class="row">
-							<h2 id="companies-heading">Companies</h2>
-							<hr aria-hidden="true" />
-							<div class="company-content">
-								<p v-for="(company_name, entity_type) in filteredCompanies"
-									:key="entity"
-									class="company-line">
-									{{ entity_type }} - {{ company_name.join(', ') }}
+					<!-- Companies Section -->
+					<section v-if="data.company?.length" class="company-section">
+						<div class="section-card-modern">
+							<h2 class="section-title-modern">Companies</h2>
+							<hr />
+							<div class="company-content-modern">
+								<p
+									v-for="(company_name, entity_type) in filteredCompanies"
+									:key="entity_type"
+									class="company-line-modern"
+								>
+									<span class="company-type-modern">{{ entity_type }}</span>
+									<span class="company-names-modern">{{
+										company_name.join(", ")
+									}}</span>
 								</p>
 							</div>
 						</div>
 					</section>
 				</div>
 
-				<div v-else class="container mt-2" role="status" aria-live="polite">
+				<div
+					v-if="loading"
+					class="container mt-2"
+					role="status"
+					aria-live="polite"
+				>
 					<div class="loading">Loading...</div>
 				</div>
 			</main>
@@ -191,7 +188,7 @@
 			filteredCompanies() {
 				const companyGroups = {};
 
-				this.data.company.forEach(company => {
+				this.data.company.forEach((company) => {
 					const name = company.company_name || "Unknown Company";
 					const entity_type = company.entity_type_name || "Unknown Entity";
 
@@ -201,7 +198,10 @@
 					if (companyGroups[entity_type] && entity_type !== "Unknown Entity") {
 						companyGroups[entity_type] = [];
 
-						if (!companyGroups[entity_type].includes(name) && name !== "Unknown Company") {
+						if (
+							!companyGroups[entity_type].includes(name) &&
+							name !== "Unknown Company"
+						) {
 							companyGroups[entity_type].push(name);
 						}
 					}
@@ -212,23 +212,25 @@
 			hasCredits() {
 				const allCredits = [
 					...(this.data.artist_credits?.artist || []),
-					...(this.data.artist_credits?.track_artist || [])
+					...(this.data.artist_credits?.track_artist || []),
 				];
-				
-				return allCredits.some(credit => credit.role && credit.role !== "Unknown Role");
+
+				return allCredits.some(
+					(credit) => credit.role && credit.role !== "Unknown Role"
+				);
 			},
 			groupedByRole() {
 				const allCredits = [
 					...(this.data.artist_credits?.artist || []),
-					...(this.data.artist_credits?.track_artist || [])
+					...(this.data.artist_credits?.track_artist || []),
 				];
 
 				const roleGroups = {};
-				
-				allCredits.forEach(credit => {
+
+				allCredits.forEach((credit) => {
 					const role = credit.role || "Unknown Role";
 					const artistName = credit.artist_name;
-					
+
 					if (!role || role === "Unknown Role") {
 						return;
 					}
@@ -241,18 +243,20 @@
 						roleGroups[role].push(artistName);
 					}
 				});
-				
+
 				for (const role in roleGroups) {
 					roleGroups[role].sort();
 				}
 
 				const orderedRoles = {};
-				Object.keys(roleGroups).sort().forEach(role => {
-					orderedRoles[role] = roleGroups[role];
-				});
-				
+				Object.keys(roleGroups)
+					.sort()
+					.forEach((role) => {
+						orderedRoles[role] = roleGroups[role];
+					});
+
 				return orderedRoles;
-			}
+			},
 		},
 		methods: {
 			async getMaster() {
@@ -264,7 +268,10 @@
 
 					if (this.data.api_data.images && this.data.api_data.images.length) {
 						this.image_uri = this.data.api_data.images[0].uri;
-						this.image_uri = this.image_uri === "" ? "/images/UnknownSong.png" : this.image_uri;
+						this.image_uri =
+							this.image_uri === ""
+								? "/images/UnknownSong.png"
+								: this.image_uri;
 
 						console.log(this.image_uri, this.data.api_data);
 					} else {
@@ -288,19 +295,203 @@
 	@import "../../src/assets/master.css";
 	@import "../../src/assets/background.css";
 
-	.credits-section .company-section {
-		margin-top: 20px;
+	.album-hero-vibrant {
+		position: relative;
+		min-height: 340px;
+		background-size: cover;
+		background-position: center;
+		margin-bottom: 32px;
+		max-width: 1250px;
+		margin-left: auto;
+		margin-right: auto;
+		border-radius: 28px;
+		overflow: hidden;
 	}
-
-	.credits-content .company-content {
+	.album-hero-gradient-vibrant {
+		position: absolute;
+		top: 0;
+		left: 0;
+		width: 100%;
+		height: 100%;
+		background: linear-gradient(120deg, #3cba92 0%, #2c7a7b 100%);
+		opacity: 0.82;
+		z-index: 1;
+	}
+	.album-info-float-glass {
+		position: relative;
+		z-index: 2;
+		display: flex;
+		align-items: center;
+		gap: 36px;
+		justify-content: flex-start;
+		margin-top: 56px;
+		padding: 48px;
+	}
+	.album-cover-float-glass {
+		background: transparent;
+		width: 300px;
+		height: 300px;
+		object-fit: cover;
+		flex-shrink: 0;
+		margin-bottom: 50px;
+		border-radius: 12px;
+	}
+	.album-info-card-glass {
+		background: rgba(255, 255, 255, 0.68);
+		backdrop-filter: blur(10px);
+		border-radius: 22px;
+		box-shadow: 0 4px 24px rgba(44, 122, 123, 0.13);
+		padding: 32px 36px;
+		color: #1e283c;
+		max-width: 520px;
+		display: flex;
+		flex-direction: column;
+		align-items: flex-start;
+		justify-content: center;
+		text-align: left;
+		height: 300px;
+	}
+	.album-title-glass {
+		font-size: 2.3rem;
+		font-weight: bold;
+		margin-bottom: 10px;
+		line-height: 1.2;
+		color: #2c7a7b;
+	}
+	.artist-link-glass {
+		color: #3cba92;
+		text-decoration: underline;
+		transition: color 0.2s;
+	}
+	.artist-link-glass:hover {
+		color: #2c7a7b;
+	}
+	.album-chips {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 10px;
+		margin: 12px 0 0 0;
+	}
+	.album-chip {
+		display: inline-flex;
+		align-items: center;
+		background: #f7f9fa;
+		color: #2c7a7b;
+		border-radius: 16px;
+		padding: 4px 14px;
+		font-size: 1rem;
+		font-weight: 500;
+		box-shadow: 0 1px 4px rgba(44, 122, 123, 0.04);
+		border: 1.5px solid #2c7a7b22;
+	}
+	.main-content-card-modern {
+		background: #fff;
+		border-radius: 28px;
+		box-shadow: 0 6px 32px rgba(44, 122, 123, 0.1);
+		padding: 48px 36px;
+		margin: 70px auto 36px auto;
+		max-width: 1100px;
+		color: #1e283c;
+	}
+	.section-card-modern {
+		background: #f7f9fa;
+		border-radius: 18px;
+		box-shadow: 0 2px 12px rgba(44, 122, 123, 0.06);
+		padding: 32px 24px;
+		margin-bottom: 36px;
+	}
+	.section-title-modern {
+		color: #2c7a7b;
+		font-size: 1.6rem;
+		font-weight: 700;
+		margin-bottom: 14px;
+		margin-top: 0;
+		letter-spacing: 0.5px;
+	}
+	hr {
+		border: none;
+		border-top: 2px solid #e0e0e0;
+		margin: 18px 0 26px 0;
+	}
+	.tracklist-table-modern {
+		width: 100%;
+		border-radius: 14px;
+		overflow: hidden;
+		background: #fff;
+		box-shadow: none;
+	}
+	.track-row-modern {
+		transition: background 0.2s;
+		cursor: pointer;
+	}
+	.track-row-modern:hover {
+		background: #e6f7f3;
+	}
+	.notes-pre-modern {
+		background: #fff;
+		border-radius: 10px;
+		padding: 18px;
+		color: #1e283c;
+		font-size: 1.05rem;
+		white-space: pre-wrap;
+		margin-bottom: 0;
+		box-shadow: 0 1px 4px rgba(44, 122, 123, 0.04);
+	}
+	.credits-content-modern,
+	.company-content-modern {
 		margin-left: 10px;
 	}
-
-	.credit-line .company-line {
-		margin: 8px 0;
+	.credit-line-modern,
+	.company-line-modern {
+		margin: 10px 0;
+		display: flex;
+		gap: 10px;
+		align-items: center;
 	}
-
-	pre {
-		background: #243d6b;
+	.credit-role-modern {
+		background: #3cba92;
+		color: #fff;
+		border-radius: 10px;
+		padding: 3px 12px;
+		font-size: 1rem;
+		font-weight: 500;
+		margin-right: 10px;
+	}
+	.credit-artists-modern {
+		color: #2c7a7b;
+	}
+	.company-type-modern {
+		background: #2c7a7b;
+		color: #fff;
+		border-radius: 10px;
+		padding: 3px 12px;
+		font-size: 1rem;
+		font-weight: 500;
+		margin-right: 10px;
+	}
+	.company-names-modern {
+		color: #2c7a7b;
+	}
+	.loading {
+		text-align: center;
+		font-size: 1.5rem;
+		color: #3cba92;
+		margin-top: 80px;
+	}
+	@media (max-width: 900px) {
+		.album-info-float-glass {
+			flex-direction: column;
+			align-items: center;
+			padding: 0 8px;
+			gap: 16px;
+			margin-top: 16px;
+		}
+		.album-info-card-glass {
+			padding: 16px 8px;
+			margin-left: 0;
+			max-width: 100%;
+			align-items: center;
+			text-align: center;
+		}
 	}
 </style>
