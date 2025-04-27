@@ -857,4 +857,200 @@
 	.forum-header-btn:hover {
 		background: #eafaf7 !important;
 	}
+
+	/* High Contrast Mode Styles */
+	.high-contrast .forum-gradient-header {
+		background: #000000 !important;
+		border: 2px solid #ffffff !important;
+		box-shadow: none !important;
+	}
+
+	.high-contrast .forum-title {
+		color: #ffffff !important;
+		text-shadow: none !important;
+	}
+
+	.high-contrast .forum-subtitle {
+		color: #ffffff !important;
+	}
+
+	.high-contrast .forum-header-btn {
+		background: #000000 !important;
+		color: #ffffff !important;
+		border: 2px solid #ffffff !important;
+		box-shadow: none !important;
+	}
+
+	.high-contrast .forum-header-btn:hover {
+		background: #ffffff !important;
+		color: #000000 !important;
+	}
+
+	.high-contrast .v-card {
+		background: #000000 !important;
+		border: 2px solid #ffffff !important;
+		box-shadow: none !important;
+	}
+
+	.high-contrast h2,
+	.high-contrast .text-h5 {
+		color: #ffffff !important;
+		border-left: 4px solid #ffffff !important;
+	}
+
+	.high-contrast .v-list-item {
+		background: #000000 !important;
+		border: 2px solid #ffffff !important;
+		box-shadow: none !important;
+		margin: 8px 0 !important;
+	}
+
+	.high-contrast .v-list-item:hover {
+		background: #ffffff !important;
+	}
+
+	.high-contrast .v-list-item:hover a,
+	.high-contrast .v-list-item:hover .router-link,
+	.high-contrast .v-list-item:hover .v-list-item-title,
+	.high-contrast .v-list-item:hover .v-list-item-subtitle {
+		color: #000000 !important;
+		text-decoration: underline !important;
+	}
+
+	.high-contrast .router-link,
+	.high-contrast .v-list-item-title,
+	.high-contrast a {
+		color: #ffffff !important;
+	}
+
+	.high-contrast .v-list-item-subtitle {
+		color: #ffffff !important;
+	}
+
+	.high-contrast .active-category {
+		background: #ffffff !important;
+		color: #000000 !important;
+		box-shadow: none !important;
+	}
+
+	.high-contrast .show-all-btn {
+		background: #000000 !important;
+		color: #ffffff !important;
+		border: 2px solid #ffffff !important;
+	}
+
+	.high-contrast .show-all-btn:hover {
+		background: #ffffff !important;
+		color: #000000 !important;
+	}
+
+	.high-contrast .forum-create-btn {
+		background: #000000 !important;
+		color: #ffffff !important;
+		border: 2px solid #ffffff !important;
+		box-shadow: none !important;
+	}
+
+	.high-contrast .forum-create-btn:hover {
+		background: #ffffff !important;
+		color: #000000 !important;
+	}
+
+	.high-contrast .v-dialog .v-card {
+		background: #000000 !important;
+		border: 2px solid #ffffff !important;
+	}
+
+	.high-contrast .v-dialog .v-card-title,
+	.high-contrast .v-dialog .v-card-text {
+		color: #ffffff !important;
+	}
+
+	.high-contrast .login-prompt-modal {
+		background: #000000 !important;
+		border: 2px solid #ffffff !important;
+		box-shadow: none !important;
+	}
+
+	.high-contrast .login-prompt-modal h3,
+	.high-contrast .login-prompt-modal p {
+		color: #ffffff !important;
+	}
+
+	.high-contrast .login-prompt-modal .buttons button {
+		background: #000000 !important;
+		color: #ffffff !important;
+		border: 2px solid #ffffff !important;
+	}
+
+	.high-contrast .login-prompt-modal .buttons button:hover {
+		background: #ffffff !important;
+		color: #000000 !important;
+	}
+
+	.high-contrast .v-list-item + .v-list-item {
+		border-top: 2px solid #ffffff !important;
+	}
+
+	/* Form elements in high contrast */
+	.high-contrast .v-text-field .v-field__input,
+	.high-contrast .v-textarea .v-field__input {
+		background: #000000 !important;
+		color: #ffffff !important;
+		border: 2px solid #ffffff !important;
+	}
+
+	.high-contrast .v-text-field .v-field__label,
+	.high-contrast .v-textarea .v-field__label {
+		color: #ffffff !important;
+	}
+
+	.high-contrast .v-text-field .v-field__outline {
+		--v-field-border-opacity: 1 !important;
+		border-color: #ffffff !important;
+	}
+
+	/* Remove white boxes and ensure black backgrounds */
+	.high-contrast .v-card[role="complementary"],
+	.high-contrast aside .v-card,
+	.high-contrast section .v-card {
+		background: #000000 !important;
+	}
+
+	/* Handle blue text links */
+	.high-contrast a:link,
+	.high-contrast a:visited,
+	.high-contrast a:hover,
+	.high-contrast a:active {
+		color: #ffffff !important;
+		text-decoration: underline !important;
+	}
+
+	.high-contrast a:hover {
+		color: #000000 !important;
+		background: #ffffff !important;
+	}
+
+	/* Ensure thread metadata is visible */
+	.high-contrast .v-list-item-subtitle,
+	.high-contrast .text-caption,
+	.high-contrast .text-medium-emphasis {
+		color: #ffffff !important;
+		opacity: 0.9 !important;
+	}
+
+	/* Keep black background for all cards and containers */
+	.high-contrast .v-card,
+	.high-contrast .v-list,
+	.high-contrast .v-list-item,
+	.high-contrast .forum-gradient-header,
+	.high-contrast .v-dialog,
+	.high-contrast .login-prompt-modal {
+		background: #000000 !important;
+	}
+
+	/* Ensure grid background remains visible */
+	.high-contrast.grid-container {
+		background-color: #000033 !important;
+	}
 </style>
