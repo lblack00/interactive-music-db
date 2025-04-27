@@ -499,43 +499,38 @@
 			</v-card>
 		</v-dialog>
 
-		<transition name="fade">
-			<div
-				class="login-prompt-overlay"
-				v-if="showLoginPrompt"
-				role="dialog"
-				aria-labelledby="login-prompt-title"
-				aria-modal="true"
-			>
-				<div class="login-prompt-modal">
-					<h3 id="login-prompt-title">Please Log In</h3>
-					<p>You need to be logged in to report, edit, delete, or reply.</p>
-					<div class="buttons" role="group" aria-label="Login options">
-						<button
-							class="cancel-btn"
-							@click="showLoginPrompt = false"
-							aria-label="Cancel and return to page"
-						>
-							Cancel
-						</button>
-						<button
-							class="login-btn"
-							@click="goToLogin"
-							aria-label="Go to login page"
-						>
+		<!-- Replace the login prompt overlay with v-dialog -->
+		<v-dialog v-model="showLoginPrompt" max-width="400px">
+			<v-card class="login-prompt-card">
+				<v-card-text class="text-center pa-6">
+					<v-icon size="48" color="primary" class="mb-4"
+						>mdi-account-lock</v-icon
+					>
+					<h3 class="text-h5 font-weight-bold mb-3 dialog-title">
+						Please Log In
+					</h3>
+					<p class="text-subtitle-1 text-medium-emphasis mb-6">
+						You need to log in to do that.
+					</p>
+					<div class="d-flex justify-center mb-4 gap-3">
+						<v-btn color="primary" class="action-btn" @click="goToLogin">
 							Log In
-						</button>
-						<button
-							class="signup-btn"
-							@click="goToSignup"
-							aria-label="Go to signup page"
-						>
+						</v-btn>
+						<v-btn color="secondary" class="action-btn" @click="goToSignup">
 							Sign Up
-						</button>
+						</v-btn>
 					</div>
-				</div>
-			</div>
-		</transition>
+					<v-btn
+						variant="text"
+						color="grey-darken-1"
+						@click="showLoginPrompt = false"
+						class="cancel-btn"
+					>
+						Cancel
+					</v-btn>
+				</v-card-text>
+			</v-card>
+		</v-dialog>
 	</div>
 </template>
 
@@ -954,17 +949,15 @@
 			},
 
 			goToLogin() {
-				const returnTo = window.location.pathname + window.location.search;
-				window.location.href = `/login?returnTo=${encodeURIComponent(
-					returnTo
-				)}`;
+				const returnTo = this.$route.fullPath;
+				this.showLoginPrompt = false;
+				this.$router.push(`/login?returnTo=${encodeURIComponent(returnTo)}`);
 			},
 
 			goToSignup() {
-				const returnTo = window.location.pathname + window.location.search;
-				window.location.href = `/signup?returnTo=${encodeURIComponent(
-					returnTo
-				)}`;
+				const returnTo = this.$route.fullPath;
+				this.showLoginPrompt = false;
+				this.$router.push(`/signup?returnTo=${encodeURIComponent(returnTo)}`);
 			},
 
 			debugSearch(value) {
@@ -1257,142 +1250,80 @@
 		opacity: 0.1;
 	}
 
-	/* Rest of the existing styles remain unchanged */
-	.login-prompt-overlay {
-		position: fixed;
+	/* Replace the login prompt overlay with v-dialog */
+	.login-prompt-card {
+		border-radius: 24px;
+		overflow: hidden;
+		background: white;
+		position: relative;
+	}
+
+	.login-prompt-card::before {
+		content: "";
+		position: absolute;
 		top: 0;
 		left: 0;
 		right: 0;
-		bottom: 0;
-		background: rgba(0, 0, 0, 0.7);
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		z-index: 9999;
-		backdrop-filter: blur(3px);
+		height: 4px;
+		background: linear-gradient(90deg, var(--primary-color) 0%, #1de9b6 100%);
 	}
 
-	.login-prompt-modal {
-		background: white;
-		padding: 2.5rem;
-		border-radius: 12px;
-		box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
-		min-width: 320px;
+	.dialog-title {
+		border-left: none !important;
+		padding-left: 0 !important;
 	}
 
-	.login-prompt-modal h3 {
-		margin: 0 0 1rem 0;
-		color: #1a1a1a;
-		font-size: 1.5rem;
+	.action-btn {
+		min-width: 120px;
 		font-weight: 600;
-	}
-
-	.login-prompt-modal p {
-		margin: 0 0 1.5rem 0;
-		color: #4a4a4a;
-		font-size: 1rem;
-		line-height: 1.5;
-	}
-
-	.buttons {
-		display: flex;
-		gap: 0.75rem;
-		justify-content: center;
-	}
-
-	.buttons button {
-		padding: 0.75rem 1.5rem;
-		border: none;
-		border-radius: 8px;
-		cursor: pointer;
-		font-weight: 500;
-		font-size: 0.95rem;
-		transition: all 0.2s ease;
+		letter-spacing: 0.5px;
+		border-radius: 12px;
+		text-transform: none;
 	}
 
 	.cancel-btn {
-		background: #f0f0f0;
-		color: #666;
+		font-weight: 500;
+		letter-spacing: 0.5px;
+		text-transform: none;
 	}
 
-	.cancel-btn:hover {
-		background: #e4e4e4;
+	/* High contrast mode styles */
+	.high-contrast .login-prompt-card {
+		background: #000000 !important;
+		border: 2px solid #ffffff !important;
 	}
 
-	.login-btn {
-		background: #007bff;
-		color: white;
+	.high-contrast .login-prompt-card::before {
+		background: #ffffff !important;
 	}
 
-	.login-btn:hover {
-		background: #0056b3;
-		transform: translateY(-1px);
-		box-shadow: 0 4px 12px rgba(0, 123, 255, 0.2);
+	.high-contrast .action-btn {
+		background: #000000 !important;
+		color: #ffffff !important;
+		border: 2px solid #ffffff !important;
 	}
 
+	.high-contrast .action-btn:hover {
+		background: #ffffff !important;
+		color: #000000 !important;
+	}
+
+	.high-contrast .cancel-btn {
+		color: #ffffff !important;
+	}
+
+	.high-contrast .cancel-btn:hover {
+		background: rgba(255, 255, 255, 0.1) !important;
+	}
+
+	/* Remove old login prompt styles */
+	.login-prompt-overlay,
+	.login-prompt-modal,
+	.buttons button,
+	.cancel-btn,
+	.login-btn,
 	.signup-btn {
-		background: #28a745;
-		color: white;
-	}
-
-	.signup-btn:hover {
-		background: #218838;
-		transform: translateY(-1px);
-		box-shadow: 0 4px 12px rgba(40, 167, 69, 0.2);
-	}
-
-	.fade-enter-active,
-	.fade-leave-active {
-		transition: opacity 0.3s;
-	}
-
-	.fade-enter,
-	.fade-leave-to {
-		opacity: 0;
-	}
-
-	.reference-card {
-		background: #f7fafc;
-		border-radius: 12px;
-		box-shadow: 0 2px 8px rgba(20, 160, 133, 0.04);
-		border: 1px solid #eafaf7;
-	}
-	.reference-title {
-		font-size: 1.18rem;
-		font-weight: 700;
-		color: #1a1a1a;
-		letter-spacing: 0.1px;
-	}
-	.reference-subtitle {
-		font-size: 0.98rem;
-		color: #7fd8c2;
-		font-weight: 400;
-	}
-	.reference-row {
-		margin-left: 0;
-		margin-right: 0;
-	}
-	.reference-add-btn {
-		min-width: 36px;
-		min-height: 36px;
-		border-radius: 50%;
-		box-shadow: 0 2px 8px rgba(20, 160, 133, 0.08);
-	}
-	@media (max-width: 600px) {
-		.reference-row {
-			flex-direction: column;
-		}
-		.reference-add-btn {
-			width: 100%;
-			border-radius: 8px;
-			margin-top: 8px;
-		}
-	}
-
-	img.rounded-md {
-		border-radius: 50%;
-		box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-		transition: transform 0.2s ease;
+		/* These styles will be removed */
 	}
 
 	/* Reddit-style reply container */

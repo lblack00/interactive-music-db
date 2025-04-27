@@ -219,43 +219,37 @@
 			</v-card>
 		</v-dialog>
 
-		<transition name="fade">
-			<div
-				class="login-prompt-overlay"
-				v-if="showLoginPrompt"
-				role="dialog"
-				aria-labelledby="login-prompt-title"
-				aria-modal="true"
-			>
-				<div class="login-prompt-modal">
-					<h3 id="login-prompt-title">Please Log In</h3>
-					<p>You need to be logged in to create a thread.</p>
-					<div class="buttons" role="group" aria-label="Login options">
-						<button
-							class="cancel-btn"
-							@click="showLoginPrompt = false"
-							aria-label="Cancel and return to page"
-						>
-							Cancel
-						</button>
-						<button
-							class="login-btn"
-							@click="goToLogin"
-							aria-label="Go to login page"
-						>
+		<v-dialog v-model="showLoginPrompt" max-width="400px">
+			<v-card class="login-prompt-card">
+				<v-card-text class="text-center pa-6">
+					<v-icon size="48" color="primary" class="mb-4"
+						>mdi-account-lock</v-icon
+					>
+					<h3 class="text-h5 font-weight-bold mb-3 dialog-title">
+						Please Log In
+					</h3>
+					<p class="text-subtitle-1 text-medium-emphasis mb-6">
+						You need to be logged in to create a thread.
+					</p>
+					<div class="d-flex justify-center mb-4 gap-3">
+						<v-btn color="primary" class="action-btn" @click="goToLogin">
 							Log In
-						</button>
-						<button
-							class="signup-btn"
-							@click="goToSignup"
-							aria-label="Go to signup page"
-						>
+						</v-btn>
+						<v-btn color="secondary" class="action-btn" @click="goToSignup">
 							Sign Up
-						</button>
+						</v-btn>
 					</div>
-				</div>
-			</div>
-		</transition>
+					<v-btn
+						variant="text"
+						color="grey-darken-1"
+						@click="showLoginPrompt = false"
+						class="cancel-btn"
+					>
+						Cancel
+					</v-btn>
+				</v-card-text>
+			</v-card>
+		</v-dialog>
 	</div>
 </template>
 
@@ -563,19 +557,15 @@
 			},
 
 			goToLogin() {
+				const returnTo = this.$route.fullPath;
 				this.showLoginPrompt = false;
-				const returnTo = window.location.pathname + window.location.search;
-				window.location.href = `/login?returnTo=${encodeURIComponent(
-					returnTo
-				)}`;
+				this.$router.push(`/login?returnTo=${encodeURIComponent(returnTo)}`);
 			},
 
 			goToSignup() {
+				const returnTo = this.$route.fullPath;
 				this.showLoginPrompt = false;
-				const returnTo = window.location.pathname + window.location.search;
-				window.location.href = `/signup?returnTo=${encodeURIComponent(
-					returnTo
-				)}`;
+				this.$router.push(`/signup?returnTo=${encodeURIComponent(returnTo)}`);
 			},
 		},
 	};
@@ -762,30 +752,40 @@
 		padding: 18px 36px 28px 36px;
 	}
 
-	.login-prompt-modal {
-		border-radius: 20px;
-		box-shadow: 0 6px 32px rgba(20, 160, 133, 0.13);
-		background: #fff;
-		padding: 36px 44px;
-		text-align: center;
+	.login-prompt-card {
+		border-radius: 24px;
+		overflow: hidden;
+		background: white;
+		position: relative;
 	}
-	.login-prompt-modal h3 {
-		color: var(--primary-color);
-		font-weight: 800;
-		margin-bottom: 14px;
+
+	.login-prompt-card::before {
+		content: "";
+		position: absolute;
+		top: 0;
+		left: 0;
+		right: 0;
+		height: 4px;
+		background: linear-gradient(90deg, var(--primary-color) 0%, #1de9b6 100%);
 	}
-	.login-prompt-modal .buttons button {
-		border-radius: 20px;
-		font-weight: 700;
-		margin: 0 10px;
-		padding: 10px 24px;
-		background: var(--primary-color);
-		color: #fff;
-		border: none;
-		transition: background 0.2s;
+
+	.dialog-title {
+		border-left: none !important;
+		padding-left: 0 !important;
 	}
-	.login-prompt-modal .buttons button:hover {
-		background: #1de9b6;
+
+	.action-btn {
+		min-width: 120px;
+		font-weight: 600;
+		letter-spacing: 0.5px;
+		border-radius: 12px;
+		text-transform: none;
+	}
+
+	.cancel-btn {
+		font-weight: 500;
+		letter-spacing: 0.5px;
+		text-transform: none;
 	}
 
 	/* No threads state */
@@ -966,24 +966,22 @@
 		color: #ffffff !important;
 	}
 
-	.high-contrast .login-prompt-modal {
+	.high-contrast .login-prompt-card {
 		background: #000000 !important;
 		border: 2px solid #ffffff !important;
-		box-shadow: none !important;
 	}
 
-	.high-contrast .login-prompt-modal h3,
-	.high-contrast .login-prompt-modal p {
-		color: #ffffff !important;
+	.high-contrast .login-prompt-card::before {
+		background: #ffffff !important;
 	}
 
-	.high-contrast .login-prompt-modal .buttons button {
+	.high-contrast .action-btn {
 		background: #000000 !important;
 		color: #ffffff !important;
 		border: 2px solid #ffffff !important;
 	}
 
-	.high-contrast .login-prompt-modal .buttons button:hover {
+	.high-contrast .action-btn:hover {
 		background: #ffffff !important;
 		color: #000000 !important;
 	}
@@ -1045,12 +1043,21 @@
 	.high-contrast .v-list-item,
 	.high-contrast .forum-gradient-header,
 	.high-contrast .v-dialog,
-	.high-contrast .login-prompt-modal {
+	.high-contrast .login-prompt-card {
 		background: #000000 !important;
 	}
 
 	/* Ensure grid background remains visible */
 	.high-contrast.grid-container {
 		background-color: #000033 !important;
+	}
+
+	/* Update high contrast styles */
+	.high-contrast .cancel-btn {
+		color: #ffffff !important;
+	}
+
+	.high-contrast .cancel-btn:hover {
+		background: rgba(255, 255, 255, 0.1) !important;
 	}
 </style>
