@@ -6,53 +6,88 @@
 			<Navbar />
 		</header>
 		<div class="content">
-			<main role="main">
-				<v-row no-gutters class="justify-center">
-					<v-col cols="4">
-						<v-alert v-if="loginError" type="error" class="mt-10" >
+			<div class="login-wrapper">
+				<v-row no-gutters class="justify-center align-start mt-16">
+					<v-col cols="12" sm="8" md="6" lg="4">
+						<v-alert
+							v-if="loginError"
+							type="error"
+							class="mb-4 error-alert"
+							elevation="2"
+						>
 							{{ loginError }}
 						</v-alert>
+
+						<v-card class="login-card" elevation="8">
+							<div class="card-decoration"></div>
+							<v-card-text class="pa-8">
+								<div class="text-center mb-8">
+									<h2 id="login-heading" class="text-h4 font-weight-bold mb-2">
+										Welcome Back
+									</h2>
+									<p class="text-subtitle-1 text-medium-emphasis">
+										Please sign in to continue
+									</p>
+								</div>
+
+								<section role="region" aria-labelledby="login-heading">
+									<form @submit.prevent="login" aria-label="Login form">
+										<v-text-field
+											v-model="username"
+											label="Username"
+											id="username"
+											prepend-inner-icon="mdi-account"
+											variant="outlined"
+											required
+											aria-required="true"
+											autocomplete="username"
+											class="mb-4 input-field"
+											:class="{ focused: username }"
+										/>
+
+										<v-text-field
+											v-model="password"
+											label="Password"
+											id="password"
+											prepend-inner-icon="mdi-lock"
+											:type="showPassword ? 'text' : 'password'"
+											:append-inner-icon="
+												showPassword ? 'mdi-eye' : 'mdi-eye-off'
+											"
+											@click:append-inner="showPassword = !showPassword"
+											variant="outlined"
+											required
+											aria-required="true"
+											autocomplete="current-password"
+											class="mb-6 input-field"
+											:class="{ focused: password }"
+										/>
+
+										<v-btn
+											type="submit"
+											size="large"
+											block
+											class="login-button mb-4"
+											elevation="2"
+										>
+											<span class="button-text">Sign In</span>
+										</v-btn>
+
+										<div class="text-center">
+											<router-link
+												to="/forgot-password"
+												class="forgot-password-link"
+											>
+												Forgot Password?
+											</router-link>
+										</div>
+									</form>
+								</section>
+							</v-card-text>
+						</v-card>
 					</v-col>
 				</v-row>
-
-				<div class="container mt-5">
-					<h2 id="login-heading">Login</h2>
-
-					<section role="region" aria-labelledby="login-heading">
-						<form @submit.prevent="login" aria-label="Login form">
-							<div class="row" role="form" aria-labelledby="username-label">
-								<label id="username-label" for="username">Username</label>
-								<input
-									type="username"
-									id="username"
-									v-model="username"
-									required
-									aria-required="true"
-									autocomplete="username"
-								/>
-							</div>
-
-							<div class="row" role="form" aria-labelledby="password-label">
-								<label id="password-label" for="password">Password</label>
-								<input
-									type="password"
-									id="password"
-									v-model="password"
-									required
-									aria-required="true"
-									autocomplete="current-password"
-								/>
-							</div>
-							<button type="submit">Login</button>
-						</form>
-						<div class="row">
-							<router-link to="/forgot-password" class="forgot-password-link">
-								Forgot Password?
-							</router-link>
-						</div>
-					</section>
-				</div>
-			</main>
+			</div>
 		</div>
 	</div>
 </template>
@@ -71,7 +106,8 @@
 				username: "",
 				password: "",
 				returnPath: "/",
-				loginError: null
+				loginError: null,
+				showPassword: false,
 			};
 		},
 		created() {
@@ -117,5 +153,139 @@
 
 <style scoped>
 	@import "../../src/assets/background.css";
-	@import "../../src/assets/login.css";
+
+	.login-wrapper {
+		min-height: calc(100vh - 64px);
+		display: flex;
+		align-items: flex-start;
+		padding: 2rem;
+	}
+
+	.login-card {
+		border-radius: 24px;
+		background: white;
+		overflow: hidden;
+		position: relative;
+		backdrop-filter: blur(10px);
+		box-shadow: 0 4px 24px -1px rgba(0, 0, 0, 0.1),
+			0 6px 10px -1px rgba(0, 0, 0, 0.04);
+	}
+
+	.card-decoration {
+		position: absolute;
+		top: 0;
+		left: 0;
+		right: 0;
+		height: 4px;
+		background: linear-gradient(90deg, #3cba92, #2c7a7b);
+	}
+
+	.text-medium-emphasis {
+		color: rgba(0, 0, 0, 0.6) !important;
+	}
+
+	.input-field {
+		transition: all 0.3s ease;
+	}
+
+	.input-field:hover :deep(.v-field__outline) {
+		--v-field-border-opacity: 0.4;
+	}
+
+	.input-field.focused :deep(.v-field__outline) {
+		--v-field-border-opacity: 1;
+		border-color: #3cba92;
+	}
+
+	:deep(.v-field__outline) {
+		--v-field-border-opacity: 0.25;
+		transition: all 0.3s ease;
+	}
+
+	:deep(.v-field) {
+		--v-field-border-opacity: 0.25;
+		border-radius: 12px;
+	}
+
+	:deep(.v-field__input) {
+		font-size: 1rem;
+		padding: 8px 0;
+	}
+
+	:deep(.v-field__prepend-inner) {
+		padding-inline-start: 12px;
+	}
+
+	.login-button {
+		background: linear-gradient(135deg, #3cba92, #2c7a7b) !important;
+		color: white !important;
+		font-weight: 500;
+		height: 48px;
+		font-size: 1.1rem;
+		text-transform: none;
+		letter-spacing: 0.5px;
+		transition: all 0.3s ease;
+		border-radius: 12px;
+		position: relative;
+		overflow: hidden;
+	}
+
+	.login-button::before {
+		content: "";
+		position: absolute;
+		top: 0;
+		left: 0;
+		right: 0;
+		bottom: 0;
+		background: linear-gradient(
+			rgba(255, 255, 255, 0.1),
+			rgba(255, 255, 255, 0)
+		);
+		opacity: 0;
+		transition: opacity 0.3s ease;
+	}
+
+	.login-button:hover {
+		transform: translateY(-2px);
+		box-shadow: 0 4px 12px rgba(44, 122, 123, 0.2);
+	}
+
+	.login-button:hover::before {
+		opacity: 1;
+	}
+
+	.button-text {
+		position: relative;
+		z-index: 1;
+	}
+
+	.forgot-password-link {
+		color: #2c7a7b;
+		text-decoration: none;
+		font-size: 0.9rem;
+		transition: all 0.3s ease;
+		padding: 4px 8px;
+		border-radius: 4px;
+	}
+
+	.forgot-password-link:hover {
+		color: #3cba92;
+		text-decoration: none;
+		background: rgba(44, 122, 123, 0.05);
+	}
+
+	.error-alert {
+		border-radius: 12px;
+		font-weight: 500;
+	}
+
+	@media (max-width: 600px) {
+		.login-wrapper {
+			padding: 1rem;
+		}
+
+		.login-card {
+			border-radius: 20px;
+		}
+	}
 </style>
