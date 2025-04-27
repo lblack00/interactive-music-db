@@ -160,7 +160,7 @@
 		align-items: center;
 		padding: 2rem;
 		transform: translateY(-11vh);
-		animation: fade-in 0.6s ease-out;
+		animation: cardSlideIn 0.7s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
 	}
 
 	.login-card {
@@ -171,8 +171,30 @@
 		backdrop-filter: blur(10px);
 		box-shadow: 0 4px 24px -1px rgba(0, 0, 0, 0.1),
 			0 6px 10px -1px rgba(0, 0, 0, 0.04);
-		margin-top: -64px;
-		animation: fade-in-up 0.8s ease-out;
+		opacity: 0;
+		animation: cardFadeIn 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+	}
+
+	@keyframes cardSlideIn {
+		0% {
+			opacity: 0;
+			transform: translateY(-5vh);
+		}
+		100% {
+			opacity: 1;
+			transform: translateY(-11vh);
+		}
+	}
+
+	@keyframes cardFadeIn {
+		0% {
+			opacity: 0;
+			transform: translateY(20px) scale(0.95);
+		}
+		100% {
+			opacity: 1;
+			transform: translateY(0) scale(1);
+		}
 	}
 
 	.card-decoration {
@@ -182,6 +204,103 @@
 		right: 0;
 		height: 4px;
 		background: linear-gradient(90deg, #3cba92, #2c7a7b);
+		transform-origin: left;
+		animation: decorationWidth 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) 0.3s forwards;
+		transform: scaleX(0);
+	}
+
+	@keyframes decorationWidth {
+		from {
+			transform: scaleX(0);
+		}
+		to {
+			transform: scaleX(1);
+		}
+	}
+
+	.text-h4,
+	.text-subtitle-1 {
+		opacity: 0;
+		animation: textFadeIn 0.6s ease-out forwards;
+	}
+
+	.text-h4 {
+		animation-delay: 0.4s;
+	}
+
+	.text-subtitle-1 {
+		animation-delay: 0.5s;
+	}
+
+	.input-field {
+		opacity: 0;
+		animation: inputSlideIn 0.5s ease-out forwards;
+	}
+
+	.input-field:nth-child(1) {
+		animation-delay: 0.6s;
+	}
+
+	.input-field:nth-child(2) {
+		animation-delay: 0.7s;
+	}
+
+	.login-button {
+		opacity: 0;
+		animation: buttonFadeIn 0.5s ease-out 0.8s forwards;
+	}
+
+	.forgot-password-link {
+		opacity: 0;
+		animation: textFadeIn 0.5s ease-out 0.9s forwards;
+	}
+
+	@keyframes textFadeIn {
+		from {
+			opacity: 0;
+			transform: translateY(10px);
+		}
+		to {
+			opacity: 1;
+			transform: translateY(0);
+		}
+	}
+
+	@keyframes inputSlideIn {
+		from {
+			opacity: 0;
+			transform: translateX(-20px);
+		}
+		to {
+			opacity: 1;
+			transform: translateX(0);
+		}
+	}
+
+	@keyframes buttonFadeIn {
+		from {
+			opacity: 0;
+			transform: translateY(10px);
+		}
+		to {
+			opacity: 1;
+			transform: translateY(0);
+		}
+	}
+
+	.error-alert {
+		animation: alertSlideIn 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+	}
+
+	@keyframes alertSlideIn {
+		from {
+			opacity: 0;
+			transform: translateY(-20px);
+		}
+		to {
+			opacity: 1;
+			transform: translateY(0);
+		}
 	}
 
 	.text-medium-emphasis {
@@ -290,26 +409,6 @@
 
 		.login-card {
 			border-radius: 20px;
-		}
-	}
-
-	@keyframes fade-in {
-		from {
-			opacity: 0;
-		}
-		to {
-			opacity: 1;
-		}
-	}
-
-	@keyframes fade-in-up {
-		from {
-			opacity: 0;
-			transform: translateY(20px);
-		}
-		to {
-			opacity: 1;
-			transform: translateY(0);
 		}
 	}
 </style>

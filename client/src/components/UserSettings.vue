@@ -602,6 +602,7 @@
 	.settings-content {
 		padding-top: 32px;
 		padding-bottom: 32px;
+		animation: fadeIn 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
 	}
 
 	.settings-card {
@@ -610,6 +611,8 @@
 		background: var(--background-color);
 		color: var(--text-color);
 		padding-bottom: 32px;
+		opacity: 0;
+		animation: slideUp 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) 0.2s forwards;
 	}
 
 	.section-card {
@@ -617,6 +620,22 @@
 		background: #f8fafc;
 		box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
 		border: 1px solid #e3e9f3;
+		opacity: 0;
+		transform: translateY(20px);
+		animation: sectionSlideIn 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+	}
+
+	.section-card:nth-child(1) {
+		animation-delay: 0.3s;
+	}
+	.section-card:nth-child(2) {
+		animation-delay: 0.4s;
+	}
+	.section-card:nth-child(3) {
+		animation-delay: 0.5s;
+	}
+	.section-card:nth-child(4) {
+		animation-delay: 0.6s;
 	}
 
 	.settings-title {
@@ -628,6 +647,8 @@
 		text-align: center;
 		padding-top: 24px;
 		padding-bottom: 8px;
+		opacity: 0;
+		animation: titleFadeIn 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) 0.1s forwards;
 	}
 
 	.section-title {
@@ -637,6 +658,163 @@
 		margin-bottom: 18px;
 		border-left: 4px solid #42a5f5;
 		padding-left: 12px;
+		opacity: 0;
+		animation: titleSlideIn 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+		animation-delay: inherit;
+	}
+
+	.rounded-input,
+	.rounded-switch {
+		opacity: 0;
+		animation: inputFadeIn 0.5s ease-out forwards;
+	}
+
+	.rounded-input:nth-child(1) {
+		animation-delay: calc(var(--section-delay) + 0.1s);
+	}
+	.rounded-input:nth-child(2) {
+		animation-delay: calc(var(--section-delay) + 0.2s);
+	}
+	.rounded-input:nth-child(3) {
+		animation-delay: calc(var(--section-delay) + 0.3s);
+	}
+
+	.profile-img-shadow {
+		opacity: 0;
+		transform: scale(0.9);
+		animation: imageFadeIn 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) 0.5s forwards;
+	}
+
+	.save-btn {
+		opacity: 0;
+		animation: buttonSlideUp 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) 0.7s forwards;
+	}
+
+	@keyframes fadeIn {
+		from {
+			opacity: 0;
+		}
+		to {
+			opacity: 1;
+		}
+	}
+
+	@keyframes slideUp {
+		from {
+			opacity: 0;
+			transform: translateY(30px);
+		}
+		to {
+			opacity: 1;
+			transform: translateY(0);
+		}
+	}
+
+	@keyframes sectionSlideIn {
+		from {
+			opacity: 0;
+			transform: translateY(20px);
+		}
+		to {
+			opacity: 1;
+			transform: translateY(0);
+		}
+	}
+
+	@keyframes titleFadeIn {
+		from {
+			opacity: 0;
+			transform: translateY(-10px);
+		}
+		to {
+			opacity: 1;
+			transform: translateY(0);
+		}
+	}
+
+	@keyframes titleSlideIn {
+		from {
+			opacity: 0;
+			transform: translateX(-20px);
+		}
+		to {
+			opacity: 1;
+			transform: translateX(0);
+		}
+	}
+
+	@keyframes inputFadeIn {
+		from {
+			opacity: 0;
+			transform: translateX(-15px);
+		}
+		to {
+			opacity: 1;
+			transform: translateX(0);
+		}
+	}
+
+	@keyframes imageFadeIn {
+		from {
+			opacity: 0;
+			transform: scale(0.9);
+		}
+		to {
+			opacity: 1;
+			transform: scale(1);
+		}
+	}
+
+	@keyframes buttonSlideUp {
+		from {
+			opacity: 0;
+			transform: translateY(20px);
+		}
+		to {
+			opacity: 1;
+			transform: translateY(0);
+		}
+	}
+
+	/* Spotify button animation */
+	.spotify-btn {
+		opacity: 0;
+		animation: buttonPop 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+		animation-delay: calc(var(--section-delay) + 0.2s);
+	}
+
+	@keyframes buttonPop {
+		from {
+			opacity: 0;
+			transform: scale(0.95);
+		}
+		to {
+			opacity: 1;
+			transform: scale(1);
+		}
+	}
+
+	/* Add animation for file input */
+	.v-file-input {
+		opacity: 0;
+		animation: inputFadeIn 0.5s ease-out forwards;
+		animation-delay: calc(var(--section-delay) + 0.3s);
+	}
+
+	/* Add animation for alerts and status messages */
+	.v-alert {
+		animation: alertSlideIn 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+	}
+
+	@keyframes alertSlideIn {
+		from {
+			opacity: 0;
+			transform: translateY(-20px);
+		}
+		to {
+			opacity: 1;
+			transform: translateY(0);
+		}
 	}
 
 	.rounded-input .v-input__control,
