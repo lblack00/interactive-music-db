@@ -7,31 +7,42 @@
 		</header>
 		<div class="content">
 			<div role="alert" v-if="error">
-				<v-alert v-if="error" type="error" class="ma-4">
+				<v-alert type="error" class="ma-4" variant="tonal">
 					{{ error }}
 				</v-alert>
 			</div>
 
 			<main>
-				<v-container>
-					<h1 id="page-title" class="text-h4 font-weight-bold mb-4">
-						Upcoming Album Releases
-					</h1>
+				<v-container class="py-4">
+					<!-- Header Card -->
+					<v-card class="header-card mb-8" elevation="0">
+						<div class="header-content pa-8">
+							<h1
+								id="page-title"
+								class="text-h3 font-weight-bold text-white mb-2"
+							>
+								Upcoming Releases
+							</h1>
+							<p class="text-subtitle-1 text-white text-opacity-70">
+								Stay updated with the latest music releases
+							</p>
+						</div>
+						<div class="header-pattern"></div>
+					</v-card>
 
 					<div
 						v-if="loading"
-						class="d-flex justify-center align-center"
-						style="height: 400px"
+						class="d-flex flex-column justify-center align-center min-vh-50"
 						role="status"
 						aria-label="Loading content"
 					>
 						<v-progress-circular
 							indeterminate
-							color="primary"
+							color="teal-accent-3"
 							size="64"
 							aria-hidden="true"
 						></v-progress-circular>
-						<span class="sr-only">Loading upcoming releases</span>
+						<span class="mt-4 text-h6">Loading releases...</span>
 					</div>
 
 					<div v-else>
@@ -39,66 +50,156 @@
 							<section
 								v-for="(albums, date) in groupedAlbums"
 								:key="date"
-								class="mb-6"
+								class="release-section mb-8"
 								role="region"
-								:aria-labelledby="`release-date`"
+								:aria-labelledby="`date-${date}`"
 							>
-								<h2 :id="`release-date`" class="text-h5 font-weight-bold mb-3">
-									{{ formatDate(date) }}
-									<span class="text-subtitle-1 font-weight-regular">
-										({{ calculateCountdown(date) }})
-									</span>
-								</h2>
+								<!-- Date Container -->
+								<v-card class="date-container mb-6" elevation="0">
+									<v-card-item class="py-5 px-6">
+										<div
+											class="d-flex align-center justify-space-between flex-wrap gap-4"
+										>
+											<div class="date-info">
+												<div class="date-display">
+													<div class="primary-date">
+														<span class="date-month">{{
+															formatDatePart(date, "month").toUpperCase()
+														}}</span>
+														<span class="date-day">{{
+															formatDatePart(date, "day")
+														}}</span>
+														<span class="date-year">{{
+															formatDatePart(date, "year")
+														}}</span>
+													</div>
+													<div class="date-divider"></div>
+													<div class="secondary-info">
+														<span class="date-weekday">{{
+															formatDatePart(date, "weekday")
+														}}</span>
+														<span class="releases-count"
+															>{{ albums.length }} release{{
+																albums.length !== 1 ? "s" : ""
+															}}</span
+														>
+													</div>
+												</div>
+											</div>
+											<v-chip
+												:color="getCountdownColor(date)"
+												variant="elevated"
+												size="large"
+												class="countdown-chip"
+											>
+												{{ calculateCountdown(date) }}
+											</v-chip>
+										</div>
+									</v-card-item>
 
-								<v-row>
-									<v-col
-										v-for="album in albums"
-										:key="album.id"
-										cols="12"
-										sm="6"
-										md="4"
-									>
-										<v-card>
-											<v-img
-											:src="getAlbumCover(album)"
-											height="200"
-											cover
-											class="bg-grey-lighten-2"
-											:alt="`Album cover for ${album.title}`"
-											/>
+									<v-row class="px-4 pb-6">
+										<v-col
+											v-for="album in albums"
+											:key="album.id"
+											cols="12"
+											sm="6"
+											md="4"
+											class="py-2"
+										>
+											<v-card class="album-card h-100" elevation="2">
+												<div class="album-image-container">
+													<v-img
+														:src="getAlbumCover(album)"
+														height="280"
+														cover
+														:alt="`Album cover for ${album.title}`"
+													>
+														<template v-slot:placeholder>
+															<div
+																class="d-flex align-center justify-center fill-height"
+															>
+																<v-progress-circular
+																	indeterminate
+																	color="teal-accent-3"
+																	size="32"
+																></v-progress-circular>
+															</div>
+														</template>
+													</v-img>
+													<div class="album-overlay">
+														<v-btn
+															:icon="
+																album.isFavorite
+																	? 'mdi-heart'
+																	: 'mdi-heart-outline'
+															"
+															:color="album.isFavorite ? 'error' : 'white'"
+															variant="text"
+															size="x-large"
+															@click="toggleFavorite(album)"
+															:aria-label="`${
+																album.isFavorite ? 'Remove from' : 'Add to'
+															} favorites`"
+															class="favorite-btn"
+														></v-btn>
+													</div>
+												</div>
 
-											<v-card-title>{{ album.title }}</v-card-title>
-											<v-card-subtitle>{{ album.artist }}</v-card-subtitle>
+												<v-card-item class="pt-4 pb-2">
+													<v-card-title
+														class="text-h6 font-weight-bold mb-1 text-truncate"
+													>
+														{{ album.title }}
+													</v-card-title>
+													<v-card-subtitle
+														class="text-subtitle-1 text-medium-emphasis"
+													>
+														{{ album.artist }}
+													</v-card-subtitle>
+												</v-card-item>
 
-											<v-card-actions>
-												<v-btn
-													prepend-icon="mdi-bell-ring-outline"
-													variant="text"
-													@click="notifyUser(album)"
-													:aria-label="`Get notified when released`"
-												>
-													Notify Me
-												</v-btn>
-												<v-spacer></v-spacer>
-												<v-btn
-													icon="mdi-heart-outline"
-													variant="text"
-													@click="toggleFavorite(album)"
-													:aria-label="`Add to favorites`"
-													aria-pressed="false"
-												></v-btn>
-											</v-card-actions>
-										</v-card>
-									</v-col>
-								</v-row>
+												<v-card-actions class="px-4 pb-4 pt-2">
+													<v-btn
+														block
+														color="teal"
+														variant="elevated"
+														prepend-icon="mdi-bell-ring-outline"
+														@click="notifyUser(album)"
+														:aria-label="`Get notified when ${album.title} is released`"
+														class="notify-btn"
+													>
+														Notify Me
+													</v-btn>
+												</v-card-actions>
+											</v-card>
+										</v-col>
+									</v-row>
+								</v-card>
 							</section>
 						</div>
 
-						<div v-else class="text-center pa-4" role="status">
-							<v-icon size="64" class="mb-4" aria-hidden="true"
-								>mdi-album</v-icon
-							>
-							<div class="text-h6">No upcoming releases found</div>
+						<div v-else class="empty-state" role="status">
+							<div class="empty-state-content">
+								<v-icon size="64" color="teal" class="mb-4"
+									>mdi-music-note-outline</v-icon
+								>
+								<h3 class="text-h4 font-weight-medium mb-2">
+									No Upcoming Releases
+								</h3>
+								<p class="text-subtitle-1 text-medium-emphasis mb-6">
+									Check back soon for new music releases
+								</p>
+								<v-btn
+									color="teal"
+									variant="elevated"
+									size="large"
+									prepend-icon="mdi-refresh"
+									@click="fetchReleases"
+									class="empty-state-btn"
+								>
+									Refresh
+								</v-btn>
+							</div>
 						</div>
 					</div>
 				</v-container>
@@ -126,25 +227,28 @@
 		computed: {
 			groupedAlbums() {
 				return this.albums.reduce((acc, album) => {
-					(acc[album.release_date] = acc[album.release_date] || []).push(album);
+					(acc[album.release_date] = acc[album.release_date] || []).push({
+						...album,
+						isFavorite: false,
+					});
 					return acc;
 				}, {});
 			},
 		},
 		methods: {
 			async fetchReleases() {
-				console.log("Starting fetch...");
+				this.loading = true;
+				this.error = null;
+
 				try {
 					const response = await axios.get(
 						"http://localhost:5001/upcoming-releases"
 					);
-					console.log("Response received:", response.data);
 					this.albums = response.data.releases || [];
 				} catch (error) {
 					console.error("Error fetching releases:", error);
-					this.error = "Failed to load upcoming releases";
+					this.error = "Unable to load releases. Please try again later.";
 				} finally {
-					console.log("Setting loading to false");
 					this.loading = false;
 				}
 			},
@@ -155,36 +259,47 @@
 				const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
 				if (diffDays < 0) return "Released";
-				if (diffDays === 0) return "Releasing today!";
-				if (diffDays === 1) return "Releasing tomorrow!";
-				return `${diffDays} days remaining`;
+				if (diffDays === 0) return "Out Today!";
+				if (diffDays === 1) return "Tomorrow!";
+				return `${diffDays} Days Left`;
 			},
-			formatDate(date) {
-				return new Date(date).toLocaleDateString(undefined, {
-					weekday: "long",
-					year: "numeric",
-					month: "long",
-					day: "numeric",
-				});
+			getCountdownColor(releaseDate) {
+				const diffDays = Math.ceil(
+					(new Date(releaseDate) - new Date()) / (1000 * 60 * 60 * 24)
+				);
+				if (diffDays < 0) return "grey";
+				if (diffDays === 0) return "teal-accent-3";
+				if (diffDays <= 7) return "teal-accent-2";
+				return "teal-accent-1";
+			},
+			formatDatePart(dateStr, part) {
+				const date = new Date(dateStr);
+				const options = {
+					month: { month: "short" },
+					day: { day: "numeric" },
+					year: { year: "numeric" },
+					weekday: { weekday: "long" },
+				};
+
+				return new Intl.DateTimeFormat("en-US", options[part]).format(date);
 			},
 			notifyUser(album) {
-				alert(
-					`You will be notified when "${album.title}" by ${album.artist} is released!`
-				);
+				this.$nextTick(() => {
+					alert(
+						`You'll be notified when "${album.title}" by ${album.artist} is released!`
+					);
+				});
 			},
 			toggleFavorite(album) {
-				console.log("Toggle favorite for:", album.title);
+				album.isFavorite = !album.isFavorite;
 			},
 			getAlbumCover(album) {
-				// Option 1: Using a placeholder service
-				return `https://placehold.co/400x400/1E1E1E/FFFFFF?text=${encodeURIComponent(album.title)}`;
-				
-				// Option 2: Using a local placeholder
-				// return '/src/assets/default-album-cover.png';
-			}
+				return `https://placehold.co/600x600/14B8A6/FFFFFF?text=${encodeURIComponent(
+					album.title
+				)}`;
+			},
 		},
 		async created() {
-			console.log("Component created");
 			await this.fetchReleases();
 		},
 	};
@@ -194,4 +309,272 @@
 	@import "../../src/assets/background.css";
 	@import "../../src/assets/accessibility.css";
 	@import "../../src/assets/v-card.css";
+
+	.min-vh-50 {
+		min-height: 50vh;
+	}
+
+	.header-card {
+		background: linear-gradient(135deg, #3cba92, #2c7a7b) !important;
+		border-radius: 24px;
+		position: relative;
+		overflow: hidden;
+		border: 1px solid rgba(255, 255, 255, 0.1);
+	}
+
+	.header-content {
+		position: relative;
+		z-index: 2;
+	}
+
+	.header-pattern {
+		position: absolute;
+		top: 0;
+		left: 0;
+		right: 0;
+		bottom: 0;
+		background: radial-gradient(
+				circle at 20% 150%,
+				rgba(255, 255, 255, 0.12) 0%,
+				transparent 50%
+			),
+			radial-gradient(
+				circle at 80% -50%,
+				rgba(255, 255, 255, 0.12) 0%,
+				transparent 50%
+			);
+		z-index: 1;
+	}
+
+	.date-container {
+		background: linear-gradient(
+			to bottom right,
+			rgba(255, 255, 255, 0.95),
+			rgba(255, 255, 255, 0.85)
+		) !important;
+		backdrop-filter: blur(10px);
+		-webkit-backdrop-filter: blur(10px);
+		border-radius: 20px;
+		overflow: hidden;
+		box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05),
+			inset 0 1px 0 rgba(255, 255, 255, 0.9) !important;
+		border: 1px solid rgba(255, 255, 255, 0.3);
+	}
+
+	.date-info {
+		flex: 1;
+		min-width: 300px;
+	}
+
+	.date-display {
+		display: flex;
+		align-items: center;
+		gap: 1.5rem;
+	}
+
+	.primary-date {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+	}
+
+	.date-month {
+		font-size: 2.5rem;
+		font-weight: 600;
+		color: #14b8a6;
+		letter-spacing: 0.5px;
+	}
+
+	.date-day {
+		font-size: 2.5rem;
+		font-weight: 600;
+		color: #334155;
+		margin-right: 0.5rem;
+	}
+
+	.date-year {
+		font-size: 2.5rem;
+		color: #64748b;
+		font-weight: 500;
+		margin-left: -0.25rem;
+	}
+
+	.date-divider {
+		width: 1px;
+		height: 2.5rem;
+		background: linear-gradient(to bottom, #64748b40, transparent);
+		margin: 0 1rem;
+	}
+
+	.secondary-info {
+		display: flex;
+		flex-direction: column;
+		gap: 0.25rem;
+		padding-top: 0.25rem;
+	}
+
+	.date-weekday {
+		font-size: 1.25rem;
+		color: #64748b;
+		font-weight: 400;
+	}
+
+	.releases-count {
+		font-size: 0.95rem;
+		color: #64748b;
+	}
+
+	.album-card {
+		background: linear-gradient(
+			135deg,
+			rgba(255, 255, 255, 0.95),
+			rgba(255, 255, 255, 0.9)
+		) !important;
+		backdrop-filter: blur(10px);
+		-webkit-backdrop-filter: blur(10px);
+		border-radius: 16px;
+		overflow: hidden;
+		transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+		display: flex;
+		flex-direction: column;
+		border: 1px solid rgba(255, 255, 255, 0.3);
+	}
+
+	.album-card:hover {
+		transform: translateY(-4px);
+		box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1),
+			inset 0 1px 0 rgba(255, 255, 255, 0.9) !important;
+		background: linear-gradient(
+			135deg,
+			rgba(255, 255, 255, 0.98),
+			rgba(255, 255, 255, 0.95)
+		) !important;
+	}
+
+	.album-image-container {
+		position: relative;
+		overflow: hidden;
+	}
+
+	.album-image-container::after {
+		content: "";
+		position: absolute;
+		top: 0;
+		left: 0;
+		right: 0;
+		bottom: 0;
+		background: linear-gradient(to bottom, transparent 60%, rgba(0, 0, 0, 0.2));
+		pointer-events: none;
+	}
+
+	.album-overlay {
+		position: absolute;
+		top: 0;
+		left: 0;
+		right: 0;
+		bottom: 0;
+		background: linear-gradient(to bottom, rgba(0, 0, 0, 0.4), transparent);
+		opacity: 0;
+		transition: opacity 0.3s ease;
+		display: flex;
+		justify-content: flex-end;
+		padding: 16px;
+		z-index: 2;
+	}
+
+	.album-card:hover .album-overlay {
+		opacity: 1;
+	}
+
+	.notify-btn {
+		background: linear-gradient(135deg, #14b8a6, #0d9488) !important;
+		border: 1px solid rgba(255, 255, 255, 0.1);
+		font-weight: 500;
+		letter-spacing: 0.5px;
+		transition: all 0.2s ease;
+		text-transform: none;
+		height: 44px;
+	}
+
+	.notify-btn:hover {
+		transform: translateY(-1px);
+		background: linear-gradient(135deg, #0d9488, #0f766e) !important;
+	}
+
+	.empty-state {
+		text-align: center;
+		padding: 4rem 2rem;
+		background: linear-gradient(
+			135deg,
+			rgba(255, 255, 255, 0.95),
+			rgba(255, 255, 255, 0.85)
+		) !important;
+		backdrop-filter: blur(10px);
+		-webkit-backdrop-filter: blur(10px);
+		border-radius: 20px;
+		box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05),
+			inset 0 1px 0 rgba(255, 255, 255, 0.9) !important;
+		border: 1px solid rgba(255, 255, 255, 0.3);
+	}
+
+	.empty-state-content {
+		max-width: 400px;
+		margin: 0 auto;
+	}
+
+	.empty-state-btn {
+		text-transform: none;
+		height: 48px;
+		min-width: 160px;
+	}
+
+	.countdown-chip {
+		background: linear-gradient(
+			135deg,
+			rgba(20, 184, 166, 0.15),
+			rgba(20, 184, 166, 0.1)
+		) !important;
+		backdrop-filter: blur(8px);
+		-webkit-backdrop-filter: blur(8px);
+		border: 1px solid rgba(20, 184, 166, 0.2);
+		color: #0f766e !important;
+		height: 40px;
+		font-size: 0.95rem;
+		box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+	}
+
+	.text-medium-emphasis {
+		color: rgba(0, 0, 0, 0.6) !important;
+	}
+
+	/* Add subtle animations */
+	@keyframes fadeIn {
+		from {
+			opacity: 0;
+			transform: translateY(10px);
+		}
+		to {
+			opacity: 1;
+			transform: translateY(0);
+		}
+	}
+
+	.release-section {
+		animation: fadeIn 0.3s ease-out;
+	}
+
+	/* Add responsive adjustments */
+	@media (max-width: 600px) {
+		.date-display {
+			flex-direction: column;
+			align-items: flex-start;
+			gap: 1rem;
+		}
+
+		.date-divider {
+			width: 100%;
+			height: 1px;
+			margin: 0.5rem 0;
+		}
+	}
 </style>

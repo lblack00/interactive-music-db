@@ -35,28 +35,34 @@
 											/>
 										</v-col>
 										<v-col cols="12" md="6">
-											<br class="mt-16">
+											<br class="mt-16" />
 											<section role="region" aria-label="Album details">
-												<p>Country: {{ data.release?.[0]?.country || "Unknown" }}</p>
-												<p>Released: {{ data.master?.[0]?.year || "Unknown" }}</p>
+												<p>
+													Country: {{ data.release?.[0]?.country || "Unknown" }}
+												</p>
+												<p>
+													Released: {{ data.master?.[0]?.year || "Unknown" }}
+												</p>
 												<p>
 													Genre:
 													{{
-														data.genre?.map((entry) => entry.genre).join(", ") ||
-														"Unknown"
+														data.genre
+															?.map((entry) => entry.genre)
+															.join(", ") || "Unknown"
 													}}
 												</p>
 												<p>
 													Style:
 													{{
-														data.style?.map((entry) => entry.style).join(", ") ||
-														"Unknown"
+														data.style
+															?.map((entry) => entry.style)
+															.join(", ") || "Unknown"
 													}}
 												</p>
 											</section>
 										</v-col>
 									</v-row>
-									<br>
+									<br />
 									<RatingSystem
 										itemType="master"
 										:itemId="$route.params.release_id"
@@ -186,7 +192,7 @@
 					company: [],
 				},
 				loading: true,
-				image_uri: ""
+				image_uri: "",
 			};
 		},
 		computed: {
@@ -218,7 +224,10 @@
 
 					if (this.data.api_data.images && this.data.api_data.images.length) {
 						this.image_uri = this.data.api_data.images[0].uri;
-						this.image_uri = this.image_uri === "" ? "/images/UnknownSong.png" : this.image_uri;
+						this.image_uri =
+							this.image_uri === ""
+								? "/images/UnknownSong.png"
+								: this.image_uri;
 
 						console.log(this.image_uri, this.data.api_data);
 					} else {
