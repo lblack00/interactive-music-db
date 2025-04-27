@@ -241,7 +241,7 @@
 				image: "/images/UnknownSong.png",
 				link: `/master/${id}`,
 				loading: false,
-				name				
+				name,
 			});
 
 			const createArtist = (id, name) => ({
@@ -249,7 +249,7 @@
 				image: "/images/UnknownPerson.png",
 				link: `/artist/${id}`,
 				loading: false,
-				name
+				name,
 			});
 
 			return {
@@ -358,9 +358,12 @@
 
 				try {
 					const masterId = song.id;
-					const response = await axios.get(`http://localhost:5001/get-master-image`, {
-						params: { master_id: masterId }
-					});
+					const response = await axios.get(
+						`http://localhost:5001/get-master-image`,
+						{
+							params: { master_id: masterId },
+						}
+					);
 
 					if (response.status === 200 && response.data.payload) {
 						song.image = response.data.payload;
@@ -379,9 +382,12 @@
 
 				try {
 					const artistId = artist.id;
-					const response = await axios.get(`http://localhost:5001/get-artist-image`, {
-						params: { artist_id: artistId }
-					});
+					const response = await axios.get(
+						`http://localhost:5001/get-artist-image`,
+						{
+							params: { artist_id: artistId },
+						}
+					);
 
 					if (response.status === 200 && response.data.payload) {
 						artist.image = response.data.payload;
@@ -394,22 +400,22 @@
 			},
 
 			loadImages() {
-				this.featuredSongs.forEach(song => {
+				this.featuredSongs.forEach((song) => {
 					this.loadMasterImage(song);
 				});
 
-				this.popularArtists.forEach(artist => {
+				this.popularArtists.forEach((artist) => {
 					this.loadArtistImage(artist);
 				});
 
-				this.trendingNow.forEach(song => {
+				this.trendingNow.forEach((song) => {
 					this.loadMasterImage(song);
 				});
-			}
+			},
 		},
 		mounted() {
 			this.loadImages();
-		}
+		},
 	};
 </script>
 

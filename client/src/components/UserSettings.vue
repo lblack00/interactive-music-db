@@ -593,14 +593,17 @@
 <style scoped>
 	@import "../assets/background.css";
 	@import "../assets/accessibility.css";
+
 	.settings-bg {
 		background: linear-gradient(135deg, #f7fafd 0%, #e3e9f3 100%);
 		min-height: 100vh;
 	}
+
 	.settings-content {
 		padding-top: 32px;
 		padding-bottom: 32px;
 	}
+
 	.settings-card {
 		border-radius: 22px;
 		box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08), 0 1.5px 6px rgba(0, 0, 0, 0.04);
@@ -608,12 +611,14 @@
 		color: var(--text-color);
 		padding-bottom: 32px;
 	}
+
 	.section-card {
 		border-radius: 16px;
 		background: #f8fafc;
 		box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
 		border: 1px solid #e3e9f3;
 	}
+
 	.settings-title {
 		font-size: 2rem;
 		font-weight: 700;
@@ -624,6 +629,7 @@
 		padding-top: 24px;
 		padding-bottom: 8px;
 	}
+
 	.section-title {
 		font-size: 1.25rem;
 		font-weight: 600;
@@ -632,20 +638,25 @@
 		border-left: 4px solid #42a5f5;
 		padding-left: 12px;
 	}
+
 	.rounded-input .v-input__control,
 	.rounded-input .v-field {
 		border-radius: 12px !important;
 	}
+
 	.rounded-switch .v-input__control {
 		border-radius: 12px !important;
 	}
+
 	.rounded-img {
 		border-radius: 50% !important;
 		border: 3px solid #e3e9f3;
 	}
+
 	.profile-img-shadow {
 		box-shadow: 0 2px 12px rgba(66, 165, 245, 0.1);
 	}
+
 	.save-btn {
 		border-radius: 32px;
 		background: linear-gradient(90deg, var(--primary-color) 0%, #42a5f5 100%);
@@ -653,14 +664,17 @@
 		box-shadow: 0 2px 12px rgba(25, 118, 210, 0.15);
 		transition: background 0.2s, box-shadow 0.2s;
 	}
+
 	.save-btn:hover:not(:disabled) {
 		background: linear-gradient(90deg, #1565c0 0%, #1e88e5 100%);
 		box-shadow: 0 4px 24px rgba(25, 118, 210, 0.22);
 	}
+
 	.v-btn--block {
 		margin-left: 0;
 		margin-right: 0;
 	}
+
 	.spotify-btn {
 		border-radius: 24px;
 		font-weight: 600;
@@ -671,15 +685,172 @@
 		color: #fff;
 		box-shadow: 0 2px 8px rgba(30, 215, 96, 0.1);
 	}
+
 	.spotify-btn:hover:not(:disabled) {
 		filter: brightness(1.08);
 		background: linear-gradient(90deg, #169c46 0%, #1db954 100%);
 	}
-	.achromatopsia .save-btn,
-	.achromatopsia .spotify-btn {
-		font-weight: 900 !important;
-		text-shadow: 0 2px 6px #fff, 0 -2px 6px #000;
-		background-color: #bdbdbd !important;
-		color: #222 !important;
+
+	/* High Contrast Mode Enhancements */
+	.high-contrast .settings-card {
+		background: #000000 !important;
+		border: 2px solid #ffffff !important;
+		box-shadow: none !important;
+	}
+
+	.high-contrast .section-card {
+		background: #000000 !important;
+		border: 2px solid #ffffff !important;
+		box-shadow: none !important;
+	}
+
+	.high-contrast .settings-title {
+		color: #ffffff !important;
+		text-shadow: 2px 2px 0 #000000;
+	}
+
+	.high-contrast .section-title {
+		color: #ffffff !important;
+		border-left: 4px solid #ffffff !important;
+	}
+
+	.high-contrast .v-field {
+		background: #000000 !important;
+		border: 2px solid #ffffff !important;
+		color: #ffffff !important;
+	}
+
+	.high-contrast .v-field__input {
+		color: #ffffff !important;
+	}
+
+	.high-contrast .v-field__label {
+		color: #ffffff !important;
+	}
+
+	.high-contrast .v-field:hover {
+		border-color: #ffffff !important;
+	}
+
+	.high-contrast .v-field:focus-within {
+		border-color: #ffffff !important;
+		box-shadow: 0 0 0 2px #ffffff !important;
+	}
+
+	.high-contrast .v-switch__track {
+		background: #000000 !important;
+		border: 2px solid #ffffff !important;
+	}
+
+	.high-contrast .v-switch__thumb {
+		background: #ffffff !important;
+	}
+
+	.high-contrast .v-switch--active .v-switch__track {
+		background: #ffffff !important;
+	}
+
+	.high-contrast .v-switch--active .v-switch__thumb {
+		background: #000000 !important;
+	}
+
+	.high-contrast .v-select__selection {
+		color: #ffffff !important;
+	}
+
+	.high-contrast .v-select__menu {
+		background: #000000 !important;
+		border: 2px solid #ffffff !important;
+	}
+
+	.high-contrast .v-list-item {
+		color: #ffffff !important;
+	}
+
+	.high-contrast .v-list-item:hover {
+		background: #ffffff !important;
+		color: #000000 !important;
+	}
+
+	.high-contrast .v-list-item--active {
+		background: #ffffff !important;
+		color: #000000 !important;
+	}
+
+	.high-contrast .rounded-img {
+		border: 3px solid #ffffff !important;
+	}
+
+	.high-contrast .profile-img-shadow {
+		box-shadow: 0 0 0 2px #ffffff !important;
+	}
+
+	.high-contrast .v-icon {
+		color: #ffffff !important;
+	}
+
+	.high-contrast .text-success {
+		color: #ffffff !important;
+	}
+
+	.high-contrast .text-error {
+		color: #ffffff !important;
+	}
+
+	.high-contrast .v-btn {
+		border: 2px solid #ffffff !important;
+	}
+
+	.high-contrast .save-btn {
+		background: #ffffff !important;
+		color: #000000 !important;
+		box-shadow: none !important;
+	}
+
+	.high-contrast .save-btn:hover:not(:disabled) {
+		background: #ffffff !important;
+		box-shadow: none !important;
+	}
+
+	.high-contrast .spotify-btn {
+		background: #ffffff !important;
+		color: #000000 !important;
+		box-shadow: none !important;
+	}
+
+	.high-contrast .spotify-btn:hover:not(:disabled) {
+		background: #ffffff !important;
+		filter: none !important;
+	}
+
+	.high-contrast .v-input__details {
+		color: #ffffff !important;
+	}
+
+	.high-contrast .v-messages__message {
+		color: #ffffff !important;
+	}
+
+	.high-contrast .v-field__append-inner {
+		color: #ffffff !important;
+	}
+
+	.high-contrast .v-field__prepend-inner {
+		color: #ffffff !important;
+	}
+
+	.high-contrast .v-field__clearable {
+		color: #ffffff !important;
+	}
+
+	.high-contrast .v-field__input::placeholder {
+		color: rgba(255, 255, 255, 0.7) !important;
+	}
+
+	.high-contrast .v-field__input:-webkit-autofill,
+	.high-contrast .v-field__input:-webkit-autofill:hover,
+	.high-contrast .v-field__input:-webkit-autofill:focus {
+		-webkit-text-fill-color: #ffffff !important;
+		-webkit-box-shadow: 0 0 0 30px #000000 inset !important;
 	}
 </style>

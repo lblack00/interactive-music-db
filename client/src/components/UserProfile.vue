@@ -545,6 +545,189 @@
 		border: 1px solid rgba(255, 255, 255, 0.1);
 	}
 
+	/* High Contrast Mode Styles */
+	.high-contrast .profile-header {
+		background: #000000 !important;
+		border: 2px solid #ffffff !important;
+		box-shadow: none !important;
+	}
+
+	.high-contrast .profile-header::before {
+		display: none !important;
+	}
+
+	.high-contrast .profile-avatar {
+		border: 2px solid #ffffff !important;
+		box-shadow: none !important;
+	}
+
+	.high-contrast .text-medium-emphasis {
+		color: #ffffff !important;
+	}
+
+	.high-contrast .stat-card {
+		background: #000000 !important;
+		border: 2px solid #ffffff !important;
+		color: #ffffff !important;
+	}
+
+	.high-contrast .stat-card:hover {
+		transform: translateY(-4px);
+		background: #ffffff !important;
+		color: #000000 !important;
+	}
+
+	.high-contrast .genre-card,
+	.high-contrast .activity-card {
+		background: #000000 !important;
+		border: 2px solid #ffffff !important;
+	}
+
+	.high-contrast .timeline-content {
+		background: #000000 !important;
+		border: 2px solid #ffffff !important;
+	}
+
+	.high-contrast .timeline-content .text-subtitle-2 {
+		color: #ffffff !important;
+	}
+
+	.high-contrast .timeline-content .text-caption.text-medium-emphasis {
+		color: #ffffff !important;
+	}
+
+	.high-contrast .v-timeline .text-caption {
+		color: #ffffff !important;
+	}
+
+	.high-contrast .v-chip {
+		background: #000000 !important;
+		border: 2px solid #ffffff !important;
+		color: #ffffff !important;
+	}
+
+	.high-contrast .v-chip:hover {
+		background: #ffffff !important;
+		color: #000000 !important;
+	}
+
+	.high-contrast .v-progress-linear {
+		background: #000000 !important;
+		border: 2px solid #ffffff !important;
+	}
+
+	.high-contrast .v-progress-linear__determinate {
+		background: #ffffff !important;
+	}
+
+	.high-contrast .v-timeline-item__dot {
+		background: #ffffff !important;
+		border: 2px solid #000000 !important;
+	}
+
+	/* Timeline Line Styles */
+	.high-contrast .v-timeline-divider__line {
+		background: #ffffff !important;
+		width: 2px !important;
+	}
+
+	.high-contrast .v-timeline-divider__line--dashed {
+		background-image: linear-gradient(
+			to bottom,
+			#ffffff 50%,
+			transparent 50%
+		) !important;
+		background-size: 4px 4px !important;
+	}
+
+	.high-contrast .v-timeline-divider__line--dotted {
+		background-image: radial-gradient(#ffffff 50%, transparent 50%) !important;
+		background-size: 4px 4px !important;
+	}
+
+	.high-contrast .v-timeline-divider__line--solid {
+		background: #ffffff !important;
+	}
+
+	.high-contrast .v-timeline-divider__line--dashed,
+	.high-contrast .v-timeline-divider__line--dotted,
+	.high-contrast .v-timeline-divider__line--solid {
+		opacity: 1 !important;
+	}
+
+	.high-contrast .v-timeline-divider__line--dashed::before,
+	.high-contrast .v-timeline-divider__line--dotted::before,
+	.high-contrast .v-timeline-divider__line--solid::before {
+		background: #ffffff !important;
+	}
+
+	.high-contrast .v-timeline-divider__line--dashed::after,
+	.high-contrast .v-timeline-divider__line--dotted::after,
+	.high-contrast .v-timeline-divider__line--solid::after {
+		background: #ffffff !important;
+	}
+
+	.high-contrast .v-btn {
+		background: #000000 !important;
+		border: 2px solid #ffffff !important;
+		color: #ffffff !important;
+	}
+
+	.high-contrast .v-btn:hover {
+		background: #ffffff !important;
+		color: #000000 !important;
+	}
+
+	.high-contrast .v-card-title {
+		color: #ffffff !important;
+	}
+
+	.high-contrast .v-card-text {
+		color: #ffffff !important;
+	}
+
+	.high-contrast .v-icon {
+		color: #ffffff !important;
+	}
+
+	.high-contrast .v-timeline-item__body {
+		color: #ffffff !important;
+	}
+
+	.high-contrast .activity-container::-webkit-scrollbar-track {
+		background: #000000 !important;
+		border: 2px solid #ffffff !important;
+	}
+
+	.high-contrast .activity-container::-webkit-scrollbar-thumb {
+		background: #ffffff !important;
+	}
+
+	.high-contrast .activity-container::-webkit-scrollbar-thumb:hover {
+		background: #ffffff !important;
+	}
+
+	.high-contrast .activity-container::after {
+		background: linear-gradient(
+			to bottom,
+			rgba(0, 0, 0, 0) 0%,
+			rgba(0, 0, 0, 0.8) 50%,
+			rgba(0, 0, 0, 1) 100%
+		) !important;
+	}
+
+	.high-contrast .text-primary {
+		color: #ffffff !important;
+	}
+
+	.high-contrast .text-decoration-none {
+		color: #ffffff !important;
+	}
+
+	.high-contrast .v-timeline-item__opposite {
+		color: #ffffff !important;
+	}
+
 	.profile-header::before {
 		content: "";
 		position: absolute;
@@ -593,8 +776,8 @@
 		border-radius: 12px;
 		margin-bottom: 12px;
 		border: 1px solid rgba(67, 97, 238, 0.1);
-		width: 100%; /* Ensures the content takes up full width */
-		box-sizing: border-box; /* Ensures padding is included in width calculation */
+		width: 100%;
+		box-sizing: border-box;
 	}
 
 	:deep(.v-timeline-item__body) {
@@ -619,7 +802,6 @@
 		gap: 8px;
 	}
 
-	/* Custom scrollbar for timeline */
 	.activity-container::-webkit-scrollbar {
 		width: 4px;
 	}
@@ -639,7 +821,6 @@
 		background: rgba(67, 97, 238, 0.3);
 	}
 
-	/* For Firefox */
 	.activity-container {
 		scrollbar-width: thin;
 		scrollbar-color: rgba(67, 97, 238, 0.2) rgba(67, 97, 238, 0.05);
