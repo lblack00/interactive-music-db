@@ -41,9 +41,25 @@
 			<v-divider></v-divider>
 		</template>
 
-		<!-- Conditional: Show All Playlists or Player -->
+		<!-- Player section - ALWAYS render the iframe -->
 		<div
-			v-if="showAllPlaylists"
+			class="spotify-player-container"
+			:class="{ 'player-hidden': showAllPlaylists, minimized: minimized }"
+		>
+			<iframe
+				:src="`https://open.spotify.com/embed/playlist/${spotifyStore.currentPlaylistId}`"
+				width="100%"
+				:height="minimized ? 0 : 490"
+				frameborder="0"
+				allowtransparency="true"
+				allow="encrypted-media"
+				style="transition: height 0.2s; display: block"
+			></iframe>
+		</div>
+
+		<!-- Conditional: Show All Playlists -->
+		<div
+			v-if="showAllPlaylists && !minimized"
 			class="all-playlists-container playlist-list-bg"
 		>
 			<div class="playlist-list-header d-flex align-center">
@@ -51,6 +67,7 @@
 					><v-icon>mdi-arrow-left</v-icon></v-btn
 				>
 				<span class="playlist-list-title">Your Playlists</span>
+				<v-spacer></v-spacer>
 			</div>
 			<div class="playlist-list">
 				<div
@@ -82,26 +99,16 @@
 				</div>
 			</div>
 		</div>
-		<!-- Floating See All Playlists Button -->
 
-		<div v-else>
-			<button class="see-all-playlists-btn" @click="showAllPlaylists = true">
-				<v-icon left>mdi-playlist-music</v-icon>
-				See All Playlists
-			</button>
-			<!-- Always render the iframe, but hide it when minimized -->
-			<div class="spotify-player-container" :class="{ minimized: minimized }">
-				<iframe
-					:src="`https://open.spotify.com/embed/playlist/${spotifyStore.currentPlaylistId}`"
-					width="100%"
-					:height="minimized ? 0 : 490"
-					frameborder="0"
-					allowtransparency="true"
-					allow="encrypted-media"
-					style="transition: height 0.2s; display: block"
-				></iframe>
-			</div>
-		</div>
+		<!-- Floating See All Playlists Button -->
+		<button
+			v-if="!showAllPlaylists && !minimized"
+			class="see-all-playlists-btn"
+			@click="showAllPlaylists = true"
+		>
+			<v-icon>mdi-playlist-music</v-icon>
+			<span class="tooltip-text">See All Playlists</span>
+		</button>
 	</v-card>
 </template>
 
@@ -119,8 +126,13 @@
 
 	function closePlayer() {
 		spotifyStore.clearPlaylist();
+		showAllPlaylists.value = false;
+		minimized.value = false;
 	}
 	function toggleMinimize() {
+		if (!minimized.value) {
+			showAllPlaylists.value = false;
+		}
 		minimized.value = !minimized.value;
 	}
 	function playFromDialog(playlist) {
@@ -159,11 +171,19 @@
 		overflow: hidden;
 		height: 500px;
 		transition: height 0.2s;
+		position: relative;
+		z-index: 1;
 	}
 	.spotify-player-container.minimized {
 		height: 0 !important;
 		min-height: 0 !important;
 		padding: 0 !important;
+	}
+	.spotify-player-container.player-hidden {
+		position: absolute;
+		opacity: 0;
+		pointer-events: none;
+		/* Keep it working but visually hidden */
 	}
 
 	.minimized-bar {
@@ -207,33 +227,64 @@
 		padding: 0 0 16px 0;
 		max-height: 490px;
 		overflow-y: auto;
+		position: relative;
+		z-index: 2;
 	}
 	.see-all-playlists-btn {
 		position: absolute;
-		width: 75%;
+		width: 40px;
+		height: 40px;
 		left: 50%;
-		bottom: 30px;
 		transform: translateX(-50%);
-		background: rgba(128, 128, 128, 1);
+		background: rgba(128, 128, 128, 0.8);
 		color: #fff;
 		border: none;
-		border-radius: 24px;
+		border-radius: 50%;
 		box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18);
-		padding: 8px 22px 8px 18px;
-		font-weight: 700;
-		font-size: 1rem;
+		padding: 0;
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		text-align: center;
-		gap: 6px;
 		cursor: pointer;
 		z-index: 2;
 		transition: background 0.18s, box-shadow 0.18s;
+		position: relative;
 	}
 	.see-all-playlists-btn:hover {
 		background: #17a74a;
 		box-shadow: 0 6px 20px rgba(0, 0, 0, 0.22);
+	}
+	.see-all-playlists-btn .tooltip-text {
+		visibility: hidden;
+		width: 120px;
+		background-color: rgba(0, 0, 0, 0.8);
+		color: #fff;
+		text-align: center;
+		border-radius: 6px;
+		padding: 5px 0;
+		position: absolute;
+		z-index: 1;
+		bottom: 125%;
+		left: 50%;
+		margin-left: -60px;
+		opacity: 0;
+		transition: opacity 0.3s;
+		font-size: 0.85rem;
+		font-weight: 600;
+	}
+	.see-all-playlists-btn .tooltip-text::after {
+		content: "";
+		position: absolute;
+		top: 100%;
+		left: 50%;
+		margin-left: -5px;
+		border-width: 5px;
+		border-style: solid;
+		border-color: rgba(0, 0, 0, 0.8) transparent transparent transparent;
+	}
+	.see-all-playlists-btn:hover .tooltip-text {
+		visibility: visible;
+		opacity: 1;
 	}
 
 	.playlist-list-bg {
