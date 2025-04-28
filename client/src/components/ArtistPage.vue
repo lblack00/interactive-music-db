@@ -55,16 +55,16 @@
 									>
 										<div class="text-overline mb-2 text-center">TOP ALBUM</div>
 										<v-img
-											src="/images/UnknownSong.png"
+											:src="artistStats.top_album.image_url"
 											height="64"
 											width="64"
 											class="stat-card-img mx-auto mb-2"
 										/>
 										<div class="font-weight-bold stat-card-title text-center">
-											Divide
+											{{ artistStats.top_album.name }}
 										</div>
 										<div class="text-caption stat-card-year text-center">
-											2017
+											{{ artistStats.top_album.year }}
 										</div>
 									</v-card>
 								</v-col>
@@ -75,16 +75,16 @@
 									>
 										<div class="text-overline mb-2 text-center">TOP SONG</div>
 										<v-img
-											src="/images/UnknownSong.png"
+											:src="artistStats.top_track.image_url"
 											height="64"
 											width="64"
 											class="stat-card-img mx-auto mb-2"
 										/>
 										<div class="font-weight-bold stat-card-title text-center">
-											Shape of You
+											{{ artistStats.top_track.name }}
 										</div>
 										<div class="text-caption stat-card-year text-center">
-											2017
+											{{ artistStats.top_track.year }}
 										</div>
 									</v-card>
 								</v-col>
@@ -97,16 +97,16 @@
 											RECENT RELEASE
 										</div>
 										<v-img
-											src="/images/UnknownSong.png"
+											:src="artistStats.recent_album.image_url"
 											height="64"
 											width="64"
 											class="stat-card-img mx-auto mb-2"
 										/>
 										<div class="font-weight-bold stat-card-title text-center">
-											Autumn Variations
+											{{ artistStats.recent_album.name }}
 										</div>
 										<div class="text-caption stat-card-year text-center">
-											2023
+											{{ artistStats.recent_album.year }}
 										</div>
 									</v-card>
 								</v-col>
@@ -190,6 +190,23 @@
 				image_uri: "",
 				discography_images: {},
 				sortBy: "release_date",
+				artistStats: {
+					top_album: {
+						name: "Unknown",
+						year: "Unknown",
+						image_url: "/images/UnknownSong.png",
+					},
+					top_track: {
+						name: "Unknown",
+						year: "Unknown",
+						image_url: "/images/UnknownSong.png",
+					},
+					recent_album: {
+						name: "Unknown",
+						year: "Unknown",
+						image_url: "/images/UnknownSong.png",
+					},
+				},
 			};
 		},
 		methods: {
@@ -259,10 +276,25 @@
 				const image = this.discography_images[masterId];
 				return image || "/images/UnknownSong.png";
 			},
+
+			async getArtistStats() {
+				try {
+					const response = await axios.get(
+						"http://localhost:5001/get-artist-stats",
+						{
+							params: { artist_id: this.$route.params.artist_id },
+						}
+					);
+					this.artistStats = response.data;
+				} catch (error) {
+					console.error("Error fetching artist stats:", error);
+				}
+			},
 		},
 		created() {
 			this.getArtist();
 			this.getDiscographyImages();
+			this.getArtistStats();
 		},
 	};
 </script>

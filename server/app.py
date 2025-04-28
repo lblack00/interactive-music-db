@@ -2374,6 +2374,68 @@ def get_user_top_genres():
         print(f"Error fetching top genres: {e}")
         return jsonify({'error': 'Server error'}), 500
     
+@app.route('/get-artist-stats', methods=['GET'])
+def get_artist_stats():
+    if request.method == 'GET':
+        artist_id = int(request.args.get('artist_id'))
+        
+        try:
+            # Get artist data
+            artist_data = artist.get_artist(artist_id)
+            if not artist_data:
+                return jsonify({"error": "Artist not found"}), 404
+                
+            # Get discography
+            discography = artist.get_discography(artist_id)
+            if not discography:
+                return jsonify({"error": "No discography found"}), 404
+                
+            # Sort discography by year to find most recent release
+            sorted_discography = sorted(discography, key=lambda x: x.get('year', 0), reverse=True)
+            recent_release = sorted_discography[0] if sorted_discography else None
+            
+            # Get the most popular album (based on number of versions)
+            popular_album = max(discography, key=lambda x: len(release.get_all_versions_of_master(x['id'])))
+            
+            # Get the most popular track (based on number of releases)
+            popular_track = None
+            max_releases = 0
+            for album in discography:
+                tracks = release.get_release_tracklist(album['id'])
+                for track in tracks:
+                    track_releases = len(release.get_all_versions_of_master(album['id']))
+                    if track_releases > max_releases:
+                        max_releases = track_releases
+                        popular_track = track
+            
+            # Get images for the releases
+            recent_image = master.get_discogs_api_master(recent_release['id']) if recent_release else None
+            popular_image = master.get_discogs_api_master(popular_album['id']) if popular_album else None
+            
+            response = {
+                'top_album': {
+                    'name': popular_album.get('title', 'Unknown'),
+                    'year': popular_album.get('year', 'Unknown'),
+                    'image_url': popular_image['images'][0]['uri'] if popular_image and 'images' in popular_image else '/images/UnknownSong.png'
+                },
+                'top_track': {
+                    'name': popular_track.get('title', 'Unknown') if popular_track else 'Unknown',
+                    'year': popular_album.get('year', 'Unknown'),
+                    'image_url': popular_image['images'][0]['uri'] if popular_image and 'images' in popular_image else '/images/UnknownSong.png'
+                },
+                'recent_album': {
+                    'name': recent_release.get('title', 'Unknown') if recent_release else 'Unknown',
+                    'year': recent_release.get('year', 'Unknown') if recent_release else 'Unknown',
+                    'image_url': recent_image['images'][0]['uri'] if recent_image and 'images' in recent_image else '/images/UnknownSong.png'
+                }
+            }
+            
+            return jsonify(response), 200
+            
+        except Exception as e:
+            print(f"Error getting artist stats: {e}")
+            return jsonify({"error": "Internal server error"}), 500
+
 if __name__ == "__main__":
     if authenticate_discogs_API:
         authenticate_discogs()
