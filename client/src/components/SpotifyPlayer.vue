@@ -157,7 +157,7 @@
 		bottom: 20px;
 		right: 20px;
 		width: 320px;
-		background: rgba(255, 255, 255, 0.1);
+		background: rgba(30, 40, 60, 0.3);
 		border: 1px solid rgba(255, 255, 255, 0.2);
 		color: white;
 		z-index: 1000;
@@ -183,7 +183,6 @@
 		position: absolute;
 		opacity: 0;
 		pointer-events: none;
-		/* Keep it working but visually hidden */
 	}
 
 	.minimized-bar {

@@ -13,196 +13,198 @@
 			</div>
 
 			<main>
-				<v-container class="py-4">
-					<!-- Header Card -->
-					<v-card class="header-card mb-8" elevation="0">
-						<div class="header-content pa-8">
-							<h1
-								id="page-title"
-								class="text-h3 font-weight-bold text-white mb-2"
-							>
-								Upcoming Releases
-							</h1>
-							<p class="text-subtitle-1 text-white text-opacity-70">
-								Stay updated with the latest music releases
-							</p>
-						</div>
-						<div class="header-pattern"></div>
-					</v-card>
-
-					<div
-						v-if="loading"
-						class="d-flex flex-column justify-center align-center min-vh-50"
-						role="status"
-						aria-label="Loading content"
-					>
-						<v-progress-circular
-							indeterminate
-							color="teal-accent-3"
-							size="64"
-							aria-hidden="true"
-						></v-progress-circular>
-						<span class="mt-4 text-h6">Loading releases...</span>
-					</div>
-
-					<div v-else>
-						<div v-if="Object.keys(groupedAlbums).length > 0">
-							<section
-								v-for="(albums, date) in groupedAlbums"
-								:key="date"
-								class="release-section mb-8"
-								role="region"
-								:aria-labelledby="`date-${date}`"
-							>
-								<!-- Date Container -->
-								<v-card class="date-container mb-6" elevation="0">
-									<v-card-item class="py-5 px-6">
-										<div
-											class="d-flex align-center justify-space-between flex-wrap gap-4"
-										>
-											<div class="date-info">
-												<div class="date-display">
-													<div class="primary-date">
-														<span class="date-month">{{
-															formatDatePart(date, "month").toUpperCase()
-														}}</span>
-														<span class="date-day">{{
-															formatDatePart(date, "day")
-														}}</span>
-														<span class="date-year">{{
-															formatDatePart(date, "year")
-														}}</span>
-													</div>
-													<div class="date-divider"></div>
-													<div class="secondary-info">
-														<span class="date-weekday">{{
-															formatDatePart(date, "weekday")
-														}}</span>
-														<span class="releases-count"
-															>{{ albums.length }} release{{
-																albums.length !== 1 ? "s" : ""
-															}}</span
-														>
-													</div>
-												</div>
-											</div>
-											<v-chip
-												:color="getCountdownColor(date)"
-												variant="elevated"
-												size="large"
-												class="countdown-chip"
-											>
-												{{ calculateCountdown(date) }}
-											</v-chip>
-										</div>
-									</v-card-item>
-
-									<v-row class="px-4 pb-6">
-										<v-col
-											v-for="album in albums"
-											:key="album.id"
-											cols="12"
-											sm="6"
-											md="4"
-											class="py-2"
-										>
-											<v-card class="album-card h-100" elevation="2">
-												<div class="album-image-container">
-													<v-img
-														:src="getAlbumCover(album)"
-														height="280"
-														cover
-														:alt="`Album cover for ${album.title}`"
-													>
-														<template v-slot:placeholder>
-															<div
-																class="d-flex align-center justify-center fill-height"
-															>
-																<v-progress-circular
-																	indeterminate
-																	color="teal-accent-3"
-																	size="32"
-																></v-progress-circular>
-															</div>
-														</template>
-													</v-img>
-													<div v-if="currentUser" class="album-overlay">
-														<v-btn
-															:icon="
-																album.isFavorite
-																	? 'mdi-heart'
-																	: 'mdi-heart-outline'
-															"
-															:color="album.isFavorite ? 'error' : 'white'"
-															variant="text"
-															size="x-large"
-															@click="toggleFavorite(album)"
-															:aria-label="`${
-																album.isFavorite ? 'Remove from' : 'Add to'
-															} favorites`"
-															class="favorite-btn"
-														></v-btn>
-													</div>
-												</div>
-
-												<v-card-item class="pt-4 pb-2">
-													<v-card-title
-														class="text-h6 font-weight-bold mb-1 text-truncate"
-													>
-														{{ album.title }}
-													</v-card-title>
-													<v-card-subtitle
-														class="text-subtitle-1 text-medium-emphasis"
-													>
-														{{ album.artist }}
-													</v-card-subtitle>
-												</v-card-item>
-
-												<v-card-actions class="px-4 pb-4 pt-2">
-													<v-btn
-														block
-														color="teal"
-														variant="elevated"
-														prepend-icon="mdi-bell-ring-outline"
-														@click="notifyUser(album)"
-														:aria-label="`Get notified when ${album.title} is released`"
-														class="notify-btn"
-													>
-														Notify Me
-													</v-btn>
-												</v-card-actions>
-											</v-card>
-										</v-col>
-									</v-row>
-								</v-card>
-							</section>
-						</div>
-
-						<div v-else class="empty-state" role="status">
-							<div class="empty-state-content">
-								<v-icon size="64" color="teal" class="mb-4"
-									>mdi-music-note-outline</v-icon
+				<div class="countdown-main-wrapper">
+					<v-container class="py-4">
+						<!-- Header Card -->
+						<v-card class="header-card mb-8" elevation="0">
+							<div class="header-content pa-8">
+								<h1
+									id="page-title"
+									class="text-h3 font-weight-bold text-white mb-2"
 								>
-								<h3 class="text-h4 font-weight-medium mb-2">
-									No Upcoming Releases
-								</h3>
-								<p class="text-subtitle-1 text-medium-emphasis mb-6">
-									Check back soon for new music releases
+									Upcoming Releases
+								</h1>
+								<p class="text-subtitle-1 text-white text-opacity-70">
+									Stay updated with the latest music releases
 								</p>
-								<v-btn
-									color="teal"
-									variant="elevated"
-									size="large"
-									prepend-icon="mdi-refresh"
-									@click="fetchReleases"
-									class="empty-state-btn"
+							</div>
+							<div class="header-pattern"></div>
+						</v-card>
+
+						<div
+							v-if="loading"
+							class="d-flex flex-column justify-center align-center min-vh-50"
+							role="status"
+							aria-label="Loading content"
+						>
+							<v-progress-circular
+								indeterminate
+								color="teal-accent-3"
+								size="64"
+								aria-hidden="true"
+							></v-progress-circular>
+							<span class="mt-4 text-h6">Loading releases...</span>
+						</div>
+
+						<div v-else>
+							<div v-if="Object.keys(groupedAlbums).length > 0">
+								<section
+									v-for="(albums, date) in groupedAlbums"
+									:key="date"
+									class="release-section mb-8"
+									role="region"
+									:aria-labelledby="`date-${date}`"
 								>
-									Refresh
-								</v-btn>
+									<!-- Date Container -->
+									<v-card class="date-container mb-6" elevation="0">
+										<v-card-item class="py-5 px-6">
+											<div
+												class="d-flex align-center justify-space-between flex-wrap gap-4"
+											>
+												<div class="date-info">
+													<div class="date-display">
+														<div class="primary-date">
+															<span class="date-month">{{
+																formatDatePart(date, "month").toUpperCase()
+															}}</span>
+															<span class="date-day">{{
+																formatDatePart(date, "day")
+															}}</span>
+															<span class="date-year">{{
+																formatDatePart(date, "year")
+															}}</span>
+														</div>
+														<div class="date-divider"></div>
+														<div class="secondary-info">
+															<span class="date-weekday">{{
+																formatDatePart(date, "weekday")
+															}}</span>
+															<span class="releases-count"
+																>{{ albums.length }} release{{
+																	albums.length !== 1 ? "s" : ""
+																}}</span
+															>
+														</div>
+													</div>
+												</div>
+												<v-chip
+													:color="getCountdownColor(date)"
+													variant="elevated"
+													size="large"
+													class="countdown-chip"
+												>
+													{{ calculateCountdown(date) }}
+												</v-chip>
+											</div>
+										</v-card-item>
+
+										<v-row class="px-4 pb-6">
+											<v-col
+												v-for="album in albums"
+												:key="album.id"
+												cols="12"
+												sm="6"
+												md="4"
+												class="py-2"
+											>
+												<v-card class="album-card h-100" elevation="2">
+													<div class="album-image-container">
+														<v-img
+															:src="getAlbumCover(album)"
+															height="280"
+															cover
+															:alt="`Album cover for ${album.title}`"
+														>
+															<template v-slot:placeholder>
+																<div
+																	class="d-flex align-center justify-center fill-height"
+																>
+																	<v-progress-circular
+																		indeterminate
+																		color="teal-accent-3"
+																		size="32"
+																	></v-progress-circular>
+																</div>
+															</template>
+														</v-img>
+														<div v-if="currentUser" class="album-overlay">
+															<v-btn
+																:icon="
+																	album.isFavorite
+																		? 'mdi-heart'
+																		: 'mdi-heart-outline'
+																"
+																:color="album.isFavorite ? 'error' : 'white'"
+																variant="text"
+																size="x-large"
+																@click="toggleFavorite(album)"
+																:aria-label="`${
+																	album.isFavorite ? 'Remove from' : 'Add to'
+																} favorites`"
+																class="favorite-btn"
+															></v-btn>
+														</div>
+													</div>
+
+													<v-card-item class="pt-4 pb-2">
+														<v-card-title
+															class="text-h6 font-weight-bold mb-1 text-truncate"
+														>
+															{{ album.title }}
+														</v-card-title>
+														<v-card-subtitle
+															class="text-subtitle-1 text-medium-emphasis"
+														>
+															{{ album.artist }}
+														</v-card-subtitle>
+													</v-card-item>
+
+													<v-card-actions class="px-4 pb-4 pt-2">
+														<v-btn
+															block
+															color="teal"
+															variant="elevated"
+															prepend-icon="mdi-bell-ring-outline"
+															@click="notifyUser(album)"
+															:aria-label="`Get notified when ${album.title} is released`"
+															class="notify-btn"
+														>
+															Notify Me
+														</v-btn>
+													</v-card-actions>
+												</v-card>
+											</v-col>
+										</v-row>
+									</v-card>
+								</section>
+							</div>
+
+							<div v-else class="empty-state" role="status">
+								<div class="empty-state-content">
+									<v-icon size="64" color="teal" class="mb-4"
+										>mdi-music-note-outline</v-icon
+									>
+									<h3 class="text-h4 font-weight-medium mb-2">
+										No Upcoming Releases
+									</h3>
+									<p class="text-subtitle-1 text-medium-emphasis mb-6">
+										Check back soon for new music releases
+									</p>
+									<v-btn
+										color="teal"
+										variant="elevated"
+										size="large"
+										prepend-icon="mdi-refresh"
+										@click="fetchReleases"
+										class="empty-state-btn"
+									>
+										Refresh
+									</v-btn>
+								</div>
 							</div>
 						</div>
-					</div>
-				</v-container>
+					</v-container>
+				</div>
 			</main>
 
 			<!-- Add login prompt dialog -->
@@ -701,5 +703,13 @@
 
 	.high-contrast .cancel-btn:hover {
 		background: rgba(255, 255, 255, 0.1) !important;
+	}
+
+	/* Make the main content area less wide and centered */
+	.countdown-main-wrapper {
+		max-width: 1100px;
+		margin: 0 auto;
+		padding-left: 16px;
+		padding-right: 16px;
 	}
 </style>
