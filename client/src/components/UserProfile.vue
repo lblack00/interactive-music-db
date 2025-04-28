@@ -52,7 +52,7 @@
 											prepend-icon="mdi-clock-outline"
 											variant="elevated"
 										>
-											{{ userMetrics.totalHours }}h Listened
+											{{ userMetrics.totalHours }} Listened
 										</v-chip>
 									</div>
 								</v-col>
@@ -245,7 +245,7 @@
 				return [
 					{
 						title: "LISTENING TIME",
-						value: `${this.userMetrics.totalHours}h`,
+						value: this.userMetrics.totalHours,
 						subtitle: "Total hours of music enjoyed",
 						color: "#3cba92",
 					},
@@ -300,6 +300,9 @@
 					// Fetch recent activities
 					const activities = await this.getRecentUserActivity(this.user.id, 10);
 					this.userMetrics.recentActivity = activities;
+
+					// Calculate total listening time
+					await this.calculateTotalListeningTime(this.user.id);
 				} catch (error) {
 					console.error("Error finding user:", error);
 					this.$router.push("/404");
@@ -520,6 +523,56 @@
 					currentLimit + 10
 				);
 				this.userMetrics.recentActivity = newActivities;
+			},
+			async calculateTotalListeningTime(userId) {
+				try {
+					// Get all master IDs rated by the user
+					const response = await axios.get(
+						`http://localhost:5001/api/musiclist/${this.user.username}/master`
+					);
+					const ratedMasters = response.data;
+
+					let totalSeconds = 0;
+
+					// For each rated master, get its tracklist and sum durations
+					for (const master of ratedMasters) {
+						const masterResponse = await axios.get(
+							"http://localhost:5001/master/",
+							{
+								params: { master_id: master.id },
+							}
+						);
+
+						const tracks = masterResponse.data.payload.tracks;
+						if (tracks) {
+							for (const track of tracks) {
+								if (track.duration) {
+									// Parse duration in format "MM:SS" or "HH:MM:SS"
+									const parts = track.duration.split(":");
+									if (parts.length === 2) {
+										// MM:SS format
+										totalSeconds +=
+											parseInt(parts[0]) * 60 + parseInt(parts[1]);
+									} else if (parts.length === 3) {
+										// HH:MM:SS format
+										totalSeconds +=
+											parseInt(parts[0]) * 3600 +
+											parseInt(parts[1]) * 60 +
+											parseInt(parts[2]);
+									}
+								}
+							}
+						}
+					}
+
+					// Convert to hours and minutes
+					const hours = Math.floor(totalSeconds / 3600);
+					const minutes = Math.floor((totalSeconds % 3600) / 60);
+					this.userMetrics.totalHours = `${hours}h ${minutes}m`;
+				} catch (error) {
+					console.error("Error calculating listening time:", error);
+					this.userMetrics.totalHours = "0h 0m";
+				}
 			},
 		},
 		created() {
