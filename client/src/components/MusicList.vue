@@ -530,6 +530,7 @@
 	import axios from "axios";
 	import NotFound from "./NotFound.vue";
 	import RatingSystem from "./RatingSystem.vue";
+	import { useSpotifyStore } from "../stores/spotify";
 
 	export default {
 		name: "MusicList",
@@ -819,23 +820,9 @@
 				this.playlistDialog = true;
 			},
 			playPlaylist(playlist) {
-				this.currentPlaylist = playlist;
-				this.currentPlaylistId = playlist.id;
-
-				localStorage.setItem("lastPlayedPlaylistId", playlist.id);
-				localStorage.setItem(
-					"lastPlayedPlaylistData",
-					JSON.stringify(playlist)
-				);
-
+				const spotifyStore = useSpotifyStore();
+				spotifyStore.setCurrentPlaylist(playlist);
 				this.playlistDialog = false;
-
-				this.$nextTick(() => {
-					const playerElement = document.querySelector(".now-playing-card");
-					if (playerElement) {
-						playerElement.scrollIntoView({ behavior: "smooth" });
-					}
-				});
 			},
 			playPlaylistFromDialog() {
 				if (this.selectedPlaylist) {

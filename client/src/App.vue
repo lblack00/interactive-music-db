@@ -2,12 +2,14 @@
 <template>
 	<div id="app" :class="accessibilityStore.accessibilityClasses">
 		<RouterView />
+		<SpotifyPlayer />
 	</div>
 </template>
 
 <script setup>
 	import { RouterView } from "vue-router";
 	import { useAccessibilityStore } from "./stores/accessibility";
+	import SpotifyPlayer from "./components/SpotifyPlayer.vue";
 
 	const accessibilityStore = useAccessibilityStore();
 </script>
