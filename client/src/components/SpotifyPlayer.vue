@@ -1,6 +1,6 @@
 <template>
 	<v-card
-		v-if="spotifyStore.currentPlaylistId"
+		v-if="spotifyStore.currentPlaylistId || showAllPlaylists"
 		class="spotify-player-card pa-3 mb-3"
 	>
 		<!-- Minimized Bar -->
@@ -40,33 +40,92 @@
 			</v-card-title>
 			<v-divider></v-divider>
 		</template>
-		<!-- Always render the iframe, but hide it when minimized -->
-		<div class="spotify-player-container" :class="{ minimized: minimized }">
-			<iframe
-				:src="`https://open.spotify.com/embed/playlist/${spotifyStore.currentPlaylistId}`"
-				width="100%"
-				:height="minimized ? 0 : 490"
-				frameborder="0"
-				allowtransparency="true"
-				allow="encrypted-media"
-				style="transition: height 0.2s; display: block"
-			></iframe>
+
+		<!-- Conditional: Show All Playlists or Player -->
+		<div
+			v-if="showAllPlaylists"
+			class="all-playlists-container playlist-list-bg"
+		>
+			<div class="playlist-list-header d-flex align-center">
+				<v-btn icon @click="showAllPlaylists = false" size="small" class="mr-2"
+					><v-icon>mdi-arrow-left</v-icon></v-btn
+				>
+				<span class="playlist-list-title">Your Playlists</span>
+			</div>
+			<div class="playlist-list">
+				<div
+					v-for="playlist in spotifyStore.playlists"
+					:key="playlist.id"
+					class="playlist-row"
+				>
+					<v-img
+						v-if="playlist.images && playlist.images.length > 0"
+						:src="playlist.images[0].url"
+						alt="Playlist cover"
+						width="48"
+						height="48"
+						aspect-ratio="1"
+						cover
+						class="playlist-img"
+					></v-img>
+					<v-icon v-else size="48" class="playlist-img">mdi-music</v-icon>
+					<div class="playlist-info">
+						<div class="playlist-title">{{ playlist.name }}</div>
+						<div class="playlist-owner">{{ playlist.owner?.display_name }}</div>
+					</div>
+					<v-btn
+						icon
+						class="playlist-play-btn"
+						@click="playFromDialog(playlist)"
+						><v-icon>mdi-play</v-icon></v-btn
+					>
+				</div>
+			</div>
+		</div>
+		<!-- Floating See All Playlists Button -->
+
+		<div v-else>
+			<button class="see-all-playlists-btn" @click="showAllPlaylists = true">
+				<v-icon left>mdi-playlist-music</v-icon>
+				See All Playlists
+			</button>
+			<!-- Always render the iframe, but hide it when minimized -->
+			<div class="spotify-player-container" :class="{ minimized: minimized }">
+				<iframe
+					:src="`https://open.spotify.com/embed/playlist/${spotifyStore.currentPlaylistId}`"
+					width="100%"
+					:height="minimized ? 0 : 490"
+					frameborder="0"
+					allowtransparency="true"
+					allow="encrypted-media"
+					style="transition: height 0.2s; display: block"
+				></iframe>
+			</div>
 		</div>
 	</v-card>
 </template>
 
 <script setup>
-	import { ref } from "vue";
+	import { ref, onMounted } from "vue";
 	import { useSpotifyStore } from "../stores/spotify";
 
 	const spotifyStore = useSpotifyStore();
 	const minimized = ref(false);
+	const showAllPlaylists = ref(false);
+
+	onMounted(() => {
+		spotifyStore.fetchSpotifyPlaylists();
+	});
 
 	function closePlayer() {
 		spotifyStore.clearPlaylist();
 	}
 	function toggleMinimize() {
 		minimized.value = !minimized.value;
+	}
+	function playFromDialog(playlist) {
+		spotifyStore.setCurrentPlaylist(playlist);
+		showAllPlaylists.value = false;
 	}
 </script>
 
@@ -142,5 +201,147 @@
 	}
 	.full-title {
 		max-width: 200px;
+	}
+
+	.all-playlists-container {
+		padding: 0 0 16px 0;
+		max-height: 490px;
+		overflow-y: auto;
+	}
+	.see-all-playlists-btn {
+		position: absolute;
+		width: 75%;
+		left: 50%;
+		bottom: 30px;
+		transform: translateX(-50%);
+		background: rgba(128, 128, 128, 1);
+		color: #fff;
+		border: none;
+		border-radius: 24px;
+		box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18);
+		padding: 8px 22px 8px 18px;
+		font-weight: 700;
+		font-size: 1rem;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		text-align: center;
+		gap: 6px;
+		cursor: pointer;
+		z-index: 2;
+		transition: background 0.18s, box-shadow 0.18s;
+	}
+	.see-all-playlists-btn:hover {
+		background: #17a74a;
+		box-shadow: 0 6px 20px rgba(0, 0, 0, 0.22);
+	}
+
+	.playlist-list-bg {
+		background: #23272f;
+		border-radius: 18px;
+		box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+		padding: 0 0 16px 0;
+	}
+	.playlist-list-header {
+		padding: 18px 20px 10px 20px;
+		background: #23272f;
+		border-top-left-radius: 18px;
+		border-top-right-radius: 18px;
+		color: #fff;
+		font-weight: 700;
+		font-size: 1.15rem;
+		margin-bottom: 0;
+	}
+	.playlist-list-title {
+		font-size: 1.15rem;
+		font-weight: 700;
+		color: #fff;
+	}
+	.playlist-list {
+		background: transparent;
+		padding: 0 8px;
+	}
+	.playlist-list-item.reformatted {
+		background: #23272f;
+		border-radius: 12px;
+		margin: 0 0 6px 0;
+		padding: 0;
+		transition: background 0.18s;
+	}
+	.playlist-list-item.reformatted:hover {
+		background: #2e323a;
+	}
+	.playlist-row {
+		display: flex;
+		align-items: center;
+		gap: 14px;
+		padding: 10px 8px 10px 8px;
+	}
+	.playlist-img {
+		border-radius: 6px;
+		width: 48px !important;
+		height: 48px !important;
+		min-width: 48px !important;
+		min-height: 48px !important;
+		max-width: 48px !important;
+		max-height: 48px !important;
+		object-fit: cover;
+		background: #222;
+		display: block;
+	}
+	.playlist-info {
+		flex: 1;
+		min-width: 0;
+		display: flex;
+		flex-direction: column;
+		justify-content: center;
+	}
+	.playlist-title {
+		font-weight: 700;
+		font-size: 1.12rem;
+		color: #fff;
+		white-space: normal;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		line-height: 1.2;
+		display: -webkit-box;
+		-webkit-line-clamp: 2;
+		-webkit-box-orient: vertical;
+		max-height: 2.6em;
+	}
+	.playlist-owner {
+		font-size: 0.97rem;
+		color: #b3b3b3;
+		margin-top: 2px;
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		line-height: 1.1;
+	}
+	.playlist-play-btn {
+		margin-left: 8px;
+		width: 32px;
+		height: 32px;
+		min-width: 32px;
+		min-height: 32px;
+		max-width: 32px;
+		max-height: 32px;
+		border: none;
+		outline: none;
+		border-radius: 50%;
+		background: #1db954;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		cursor: pointer;
+		transition: background 0.18s;
+		padding: 0;
+	}
+	.playlist-play-btn:hover {
+		background: #17a74a;
+	}
+	.playlist-play-btn .v-icon {
+		font-size: 18px !important;
+		color: #fff !important;
 	}
 </style>

@@ -1,10 +1,25 @@
 import { defineStore } from "pinia";
 import { ref } from "vue";
+import axios from "axios";
 
 export const useSpotifyStore = defineStore("spotify", () => {
 	const currentPlaylistId = ref(null);
 	const currentPlaylist = ref(null);
 	const isPlaying = ref(false);
+	const playlists = ref([]);
+
+	async function fetchSpotifyPlaylists() {
+		try {
+			const path = "http://localhost:5001/get-spotify-playlists";
+			const response = await axios.get(path, { withCredentials: true });
+			if (response.data.items) {
+				playlists.value = response.data.items;
+			}
+		} catch (error) {
+			playlists.value = [];
+			console.error("Error fetching Spotify playlists:", error);
+		}
+	}
 
 	function setCurrentPlaylist(playlist) {
 		currentPlaylist.value = playlist;
@@ -28,6 +43,8 @@ export const useSpotifyStore = defineStore("spotify", () => {
 		currentPlaylistId,
 		currentPlaylist,
 		isPlaying,
+		playlists,
+		fetchSpotifyPlaylists,
 		setCurrentPlaylist,
 		clearPlaylist,
 		setIsPlaying,

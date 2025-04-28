@@ -343,7 +343,7 @@
 						<!-- Spotify Playlists -->
 						<v-row>
 							<v-col
-								v-for="(playlist, index) in spotifyPlaylists"
+								v-for="(playlist, index) in spotifyStore.playlists"
 								:key="'spotify-' + index"
 								cols="12"
 								sm="6"
@@ -548,7 +548,6 @@
 				userTracks: [],
 				userArtists: [],
 				playlists: [],
-				spotifyPlaylists: [],
 				playlistDialog: false,
 				selectedPlaylist: null,
 				currentPlaylistId: null,
@@ -565,14 +564,16 @@
 				averageRatingBackend: "0.00",
 			};
 		},
-		props: {
-			playlists: {
-				type: Array,
-				default: () => [
-					{ name: "Playlist 1", songs: ["Song 1", "Song 2", "Song 3"] },
-					{ name: "Playlist 2", songs: ["Track A", "Track B"] },
-					{ name: "Playlist 3", songs: ["Melody X", "Tune Y", "Harmony Z"] },
-				],
+		computed: {
+			spotifyStore() {
+				return useSpotifyStore();
+			},
+			averageRating() {
+				const allRatings = [...this.userSongs, ...this.userArtists].map(
+					(item) => item.rating
+				);
+				if (allRatings.length === 0) return 0;
+				return allRatings.reduce((a, b) => a + b, 0) / allRatings.length;
 			},
 		},
 		watch: {
@@ -585,16 +586,8 @@
 			},
 		},
 		async created() {
-			this.initPage();
-		},
-		computed: {
-			averageRating() {
-				const allRatings = [...this.userSongs, ...this.userArtists].map(
-					(item) => item.rating
-				);
-				if (allRatings.length === 0) return 0;
-				return allRatings.reduce((a, b) => a + b, 0) / allRatings.length;
-			},
+			await this.initPage();
+			this.spotifyStore.fetchSpotifyPlaylists();
 		},
 		methods: {
 			async initPage() {
@@ -602,8 +595,6 @@
 				this.getPFP();
 				await this.fetchMusicList();
 				await this.fetchUserRatingStats(this.userId);
-				await this.fetchSpotifyPlaylists();
-				this.isListOwner = await this.isSessionUser(this.username, "username");
 				const savedPlaylistId = localStorage.getItem("lastPlayedPlaylistId");
 				const savedPlaylistData = localStorage.getItem(
 					"lastPlayedPlaylistData"
@@ -612,6 +603,7 @@
 					this.currentPlaylistId = savedPlaylistId;
 					this.currentPlaylist = JSON.parse(savedPlaylistData);
 				}
+				this.isListOwner = await this.isSessionUser(this.username, "username");
 			},
 			async getUserId() {
 				try {
@@ -801,27 +793,12 @@
 					}
 				}
 			},
-			async fetchSpotifyPlaylists() {
-				try {
-					const path = "http://localhost:5001/get-spotify-playlists";
-					const response = await axios.get(path, {
-						withCredentials: true,
-					});
-
-					if (response.data.items) {
-						this.spotifyPlaylists = response.data.items;
-					}
-				} catch (error) {
-					console.error("Error fetching Spotify playlists:", error);
-				}
-			},
 			showPlaylistDetails(playlist) {
 				this.selectedPlaylist = playlist;
 				this.playlistDialog = true;
 			},
 			playPlaylist(playlist) {
-				const spotifyStore = useSpotifyStore();
-				spotifyStore.setCurrentPlaylist(playlist);
+				this.spotifyStore.setCurrentPlaylist(playlist);
 				this.playlistDialog = false;
 			},
 			playPlaylistFromDialog() {
