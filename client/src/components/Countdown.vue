@@ -677,32 +677,58 @@
 	}
 
 	/* High contrast mode styles */
+	.high-contrast .header-card,
+	.high-contrast .date-container,
+	.high-contrast .album-card,
+	.high-contrast .empty-state,
 	.high-contrast .login-prompt-card {
-		background: #000000 !important;
-		border: 2px solid #ffffff !important;
+		background: #000 !important;
+		border: 2px solid #fff !important;
+		color: #fff !important;
+		box-shadow: none !important;
 	}
 
-	.high-contrast .login-prompt-card::before {
-		background: #ffffff !important;
+	.high-contrast .header-content h1,
+	.high-contrast .header-content p,
+	.high-contrast .date-month,
+	.high-contrast .date-day,
+	.high-contrast .date-year,
+	.high-contrast .date-weekday,
+	.high-contrast .releases-count,
+	.high-contrast .album-card .v-card-title,
+	.high-contrast .album-card .v-card-subtitle,
+	.high-contrast .empty-state-content h3,
+	.high-contrast .empty-state-content p,
+	.high-contrast .login-prompt-card h3,
+	.high-contrast .login-prompt-card p {
+		color: #fff !important;
 	}
 
+	.high-contrast .notify-btn,
+	.high-contrast .empty-state-btn,
+	.high-contrast .countdown-chip,
 	.high-contrast .action-btn {
-		background: #000000 !important;
-		color: #ffffff !important;
-		border: 2px solid #ffffff !important;
+		background: #000 !important;
+		color: #fff !important;
+		border: 2px solid #fff !important;
+		box-shadow: none !important;
 	}
 
+	.high-contrast .notify-btn:hover,
+	.high-contrast .empty-state-btn:hover,
 	.high-contrast .action-btn:hover {
-		background: #ffffff !important;
-		color: #000000 !important;
+		background: #fff !important;
+		color: #000 !important;
 	}
 
 	.high-contrast .cancel-btn {
-		color: #ffffff !important;
+		color: #fff !important;
 	}
 
-	.high-contrast .cancel-btn:hover {
-		background: rgba(255, 255, 255, 0.1) !important;
+	.high-contrast .v-alert {
+		background: #000 !important;
+		border: 2px solid #fff !important;
+		color: #fff !important;
 	}
 
 	/* Make the main content area less wide and centered */

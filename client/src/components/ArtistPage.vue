@@ -489,4 +489,49 @@
 		margin-top: 2px;
 		letter-spacing: 1px;
 	}
+	/* High contrast mode styles */
+	.high-contrast .artist-sidebar-header,
+	.high-contrast .artist-stat-card,
+	.high-contrast .artist-discography-card,
+	.high-contrast .artist-discography-album-card {
+		background: #000 !important;
+		color: #fff !important;
+		border: 2px solid #fff !important;
+		box-shadow: none !important;
+		backdrop-filter: none !important;
+	}
+
+	.high-contrast .artist-header-title,
+	.high-contrast .artist-header-bio,
+	.high-contrast .stat-card-title,
+	.high-contrast .stat-card-year,
+	.high-contrast .artist-discography-title,
+	.high-contrast .artist-discography-album-link {
+		color: #fff !important;
+	}
+
+	.high-contrast .artist-chip,
+	.high-contrast .v-chip {
+		background: #000 !important;
+		color: #fff !important;
+		border: 2px solid #fff !important;
+		box-shadow: none !important;
+	}
+
+	.high-contrast .artist-discography-album-link:hover {
+		color: #000 !important;
+		background: #fff !important;
+		text-decoration: underline !important;
+	}
+
+	.high-contrast .stat-card-img,
+	.high-contrast .artist-discography-album-img {
+		background: #000 !important;
+		border: 2px solid #fff !important;
+		box-shadow: none !important;
+	}
+
+	.high-contrast .loading {
+		color: #fff !important;
+	}
 </style>

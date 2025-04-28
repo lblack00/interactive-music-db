@@ -494,4 +494,56 @@
 			text-align: center;
 		}
 	}
+
+	/* High contrast mode styles */
+	.high-contrast .album-hero-vibrant,
+	.high-contrast .album-hero-gradient-vibrant,
+	.high-contrast .album-info-card-glass,
+	.high-contrast .main-content-card-modern,
+	.high-contrast .section-card-modern,
+	.high-contrast .notes-pre-modern {
+		background: #000 !important;
+		color: #fff !important;
+		border: 2px solid #fff !important;
+		box-shadow: none !important;
+		backdrop-filter: none !important;
+	}
+
+	.high-contrast .album-title-glass,
+	.high-contrast .section-title-modern,
+	.high-contrast .credit-role-modern,
+	.high-contrast .company-type-modern,
+	.high-contrast .credit-artists-modern,
+	.high-contrast .company-names-modern,
+	.high-contrast .loading {
+		color: #fff !important;
+	}
+
+	.high-contrast .album-chip {
+		background: #000 !important;
+		color: #fff !important;
+		border: 2px solid #fff !important;
+		box-shadow: none !important;
+	}
+
+	.high-contrast .track-row-modern {
+		background: #000 !important;
+		color: #fff !important;
+	}
+
+	.high-contrast .track-row-modern:hover {
+		background: #222 !important;
+	}
+
+	.high-contrast table,
+	.high-contrast th,
+	.high-contrast td {
+		background: #000 !important;
+		color: #fff !important;
+		border-color: #fff !important;
+	}
+
+	.high-contrast hr {
+		border-top: 2px solid #fff !important;
+	}
 </style>
