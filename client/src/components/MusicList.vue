@@ -414,17 +414,17 @@
 
 	<!-- Confirmation Dialog -->
 	<v-dialog v-model="deleteDialog" max-width="500px">
-		<v-card>
-			<v-card-title class="headline">Confirm Deletion</v-card-title>
-			<v-card-text>
-				Are you sure you want to delete this item from your list?
-			</v-card-text>
-			<v-card-actions>
-				<v-btn color="green darken-1" text @click="deleteEntry">Yes</v-btn>
-				<v-btn color="red darken-1" text @click="cancelDelete">No</v-btn>
-			</v-card-actions>
-		</v-card>
-	</v-dialog>
+    <v-card>
+      <v-card-title class="headline">Confirm Deletion</v-card-title>
+      <v-card-text>
+        Are you sure you want to delete this item from your list?
+      </v-card-text>
+      <v-card-actions>
+        <v-btn text @click="cancelDelete">Cancel</v-btn>
+        <v-btn color="error" text @click="deleteEntry">Delete</v-btn>
+      </v-card-actions>
+    </v-card>
+  </v-dialog>
 
 	<v-dialog v-model="ratingDialog" max-width="600px">
 		<v-card>
