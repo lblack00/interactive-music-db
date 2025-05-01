@@ -2,10 +2,8 @@
 	<div
 		class="grid-container"
 		:class="[
-			colorblindClass,
 			{
-				'enable-patterns': enablePatterns,
-				'show-labels': showLabels,
+				'high-contrast': highContrast,
 				'dark-mode': darkMode,
 			},
 		]"
@@ -92,38 +90,25 @@
 										class="rounded-input"
 									></v-file-input>
 								</v-card>
-								<!-- Accessibility Section -->
+								<!-- Display Settings Section -->
 								<v-card class="section-card mb-6 pa-5" variant="outlined">
-									<h2 class="section-title">Accessibility Settings</h2>
-									<v-select
-										v-model="colorblindMode"
-										label="Color Vision Mode"
-										:items="[
-											'Default',
-											'Red-Blind (Protanopia)',
-											'Green-Blind (Deuteranopia)',
-											'Blue-Blind (Tritanopia)',
-											'Grayscale (achromatopsia)',
-											'High Contrast',
-										]"
-										variant="outlined"
-										@update:model-value="applyColorblindMode"
-										class="mb-4 rounded-input"
-									></v-select>
-									<v-switch
-										v-model="enablePatterns"
-										label="Enable Patterns on UI Elements"
-										hint="Adds textures to buttons to make them more distinguishable"
-										persistent-hint
-										@update:model-value="applyAccessibilitySettings"
-										class="mb-4 rounded-switch"
-									></v-switch>
+									<h2 class="section-title">Display Settings</h2>
 									<v-switch
 										v-model="darkMode"
 										label="Dark Mode"
 										hint="Enable dark theme for better visibility in low-light conditions"
 										persistent-hint
-										@update:model-value="applyDarkMode"
+										@update:model-value="handleDarkModeChange"
+										:disabled="highContrast"
+										class="mb-4 rounded-switch"
+									></v-switch>
+									<v-switch
+										v-model="highContrast"
+										label="High Contrast"
+										hint="Enable high contrast mode for better visibility"
+										persistent-hint
+										@update:model-value="handleHighContrastChange"
+										:disabled="darkMode"
 										class="mb-4 rounded-switch"
 									></v-switch>
 								</v-card>
@@ -203,33 +188,10 @@
 
 	const accessibilityStore = useAccessibilityStore();
 
-	const colorblindMode = ref(accessibilityStore.colorblindMode);
-	const enablePatterns = ref(accessibilityStore.enablePatterns);
-	const showLabels = ref(accessibilityStore.showLabels);
 	const darkMode = ref(accessibilityStore.darkMode);
+	const highContrast = ref(accessibilityStore.highContrast);
 
 	// Watch for store changes
-	watch(
-		() => accessibilityStore.colorblindMode,
-		(newValue) => {
-			colorblindMode.value = newValue;
-		}
-	);
-
-	watch(
-		() => accessibilityStore.enablePatterns,
-		(newValue) => {
-			enablePatterns.value = newValue;
-		}
-	);
-
-	watch(
-		() => accessibilityStore.showLabels,
-		(newValue) => {
-			showLabels.value = newValue;
-		}
-	);
-
 	watch(
 		() => accessibilityStore.darkMode,
 		(newValue) => {
@@ -237,16 +199,29 @@
 		}
 	);
 
-	const applyColorblindMode = () => {
-		accessibilityStore.setColorblindMode(colorblindMode.value);
+	watch(
+		() => accessibilityStore.highContrast,
+		(newValue) => {
+			highContrast.value = newValue;
+		}
+	);
+
+	const handleDarkModeChange = (value) => {
+		if (value) {
+			highContrast.value = false;
+			accessibilityStore.setHighContrast(false);
+		}
+		darkMode.value = value;
+		accessibilityStore.setDarkMode(value);
 	};
 
-	const applyAccessibilitySettings = () => {
-		accessibilityStore.setEnablePatterns(enablePatterns.value);
-	};
-
-	const applyDarkMode = () => {
-		accessibilityStore.setDarkMode(darkMode.value);
+	const handleHighContrastChange = (value) => {
+		if (value) {
+			darkMode.value = false;
+			accessibilityStore.setDarkMode(false);
+		}
+		highContrast.value = value;
+		accessibilityStore.setHighContrast(value);
 	};
 
 	onMounted(() => {
@@ -258,16 +233,13 @@
 		}
 		setInterval(refreshAccessToken, 50 * 60 * 1000);
 
-		// Initialize values from store
-		colorblindMode.value = accessibilityStore.colorblindMode;
-		enablePatterns.value = accessibilityStore.enablePatterns;
-		showLabels.value = accessibilityStore.showLabels;
+		// Initialize settings from store
 		darkMode.value = accessibilityStore.darkMode;
+		highContrast.value = accessibilityStore.highContrast;
 
 		// Apply saved settings
-		applyColorblindMode();
-		applyAccessibilitySettings();
-		applyDarkMode();
+		handleDarkModeChange(accessibilityStore.darkMode);
+		handleHighContrastChange(accessibilityStore.highContrast);
 	});
 
 	const loggedIn = ref(false);
@@ -600,16 +572,7 @@
 		// Clean up any applied filters
 		const appElement = document.getElementById("app");
 		if (appElement) {
-			appElement.classList.remove(
-				"protanopia",
-				"deuteranopia",
-				"tritanopia",
-				"achromatopsia",
-				"high-contrast",
-				"enable-patterns",
-				"show-labels",
-				"dark-mode"
-			);
+			appElement.classList.remove("high-contrast", "dark-mode");
 		}
 	});
 </script>
