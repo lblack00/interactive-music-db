@@ -7,6 +7,7 @@ export const useAccessibilityStore = defineStore("accessibility", () => {
 	);
 	const enablePatterns = ref(localStorage.getItem("enablePatterns") === "true");
 	const showLabels = ref(localStorage.getItem("showLabels") === "true");
+	const darkMode = ref(localStorage.getItem("darkMode") === "true");
 
 	const accessibilityClasses = computed(() => {
 		const classes = [];
@@ -33,6 +34,7 @@ export const useAccessibilityStore = defineStore("accessibility", () => {
 		// Add additional classes
 		if (enablePatterns.value) classes.push("enable-patterns");
 		if (showLabels.value) classes.push("show-labels");
+		if (darkMode.value) classes.push("dark-mode");
 
 		return classes;
 	});
@@ -52,13 +54,20 @@ export const useAccessibilityStore = defineStore("accessibility", () => {
 		localStorage.setItem("showLabels", value);
 	}
 
+	function setDarkMode(value) {
+		darkMode.value = value;
+		localStorage.setItem("darkMode", value);
+	}
+
 	return {
 		colorblindMode,
 		enablePatterns,
 		showLabels,
+		darkMode,
 		accessibilityClasses,
 		setColorblindMode,
 		setEnablePatterns,
 		setShowLabels,
+		setDarkMode,
 	};
 });

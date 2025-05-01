@@ -6,6 +6,7 @@
 			{
 				'enable-patterns': enablePatterns,
 				'show-labels': showLabels,
+				'dark-mode': darkMode,
 			},
 		]"
 	>
@@ -117,6 +118,14 @@
 										@update:model-value="applyAccessibilitySettings"
 										class="mb-4 rounded-switch"
 									></v-switch>
+									<v-switch
+										v-model="darkMode"
+										label="Dark Mode"
+										hint="Enable dark theme for better visibility in low-light conditions"
+										persistent-hint
+										@update:model-value="applyDarkMode"
+										class="mb-4 rounded-switch"
+									></v-switch>
 								</v-card>
 								<!-- Spotify Section -->
 								<v-card class="section-card mb-6 pa-5" variant="outlined">
@@ -197,6 +206,7 @@
 	const colorblindMode = ref(accessibilityStore.colorblindMode);
 	const enablePatterns = ref(accessibilityStore.enablePatterns);
 	const showLabels = ref(accessibilityStore.showLabels);
+	const darkMode = ref(accessibilityStore.darkMode);
 
 	// Watch for store changes
 	watch(
@@ -220,12 +230,23 @@
 		}
 	);
 
+	watch(
+		() => accessibilityStore.darkMode,
+		(newValue) => {
+			darkMode.value = newValue;
+		}
+	);
+
 	const applyColorblindMode = () => {
 		accessibilityStore.setColorblindMode(colorblindMode.value);
 	};
 
 	const applyAccessibilitySettings = () => {
 		accessibilityStore.setEnablePatterns(enablePatterns.value);
+	};
+
+	const applyDarkMode = () => {
+		accessibilityStore.setDarkMode(darkMode.value);
 	};
 
 	onMounted(() => {
@@ -241,10 +262,12 @@
 		colorblindMode.value = accessibilityStore.colorblindMode;
 		enablePatterns.value = accessibilityStore.enablePatterns;
 		showLabels.value = accessibilityStore.showLabels;
+		darkMode.value = accessibilityStore.darkMode;
 
 		// Apply saved settings
 		applyColorblindMode();
 		applyAccessibilitySettings();
+		applyDarkMode();
 	});
 
 	const loggedIn = ref(false);
@@ -584,7 +607,8 @@
 				"achromatopsia",
 				"high-contrast",
 				"enable-patterns",
-				"show-labels"
+				"show-labels",
+				"dark-mode"
 			);
 		}
 	});
@@ -1030,5 +1054,141 @@
 	.high-contrast .v-field__input:-webkit-autofill:focus {
 		-webkit-text-fill-color: #ffffff !important;
 		-webkit-box-shadow: 0 0 0 30px #000000 inset !important;
+	}
+
+	/* Dark Mode Styles */
+	.dark-mode .settings-card {
+		background: #1a1a1a !important;
+		color: #ffffff !important;
+	}
+
+	.dark-mode .section-card {
+		background: #2d2d2d !important;
+		border-color: #404040 !important;
+	}
+
+	.dark-mode .settings-title {
+		color: #ffffff !important;
+	}
+
+	.dark-mode .section-title {
+		color: #ffffff !important;
+		border-left-color: #42a5f5 !important;
+	}
+
+	.dark-mode .v-field {
+		background: #2d2d2d !important;
+		border-color: #404040 !important;
+		color: #ffffff !important;
+	}
+
+	.dark-mode .v-field__input {
+		color: #ffffff !important;
+	}
+
+	.dark-mode .v-field__label {
+		color: #ffffff !important;
+	}
+
+	.dark-mode .v-field:hover {
+		border-color: #42a5f5 !important;
+	}
+
+	.dark-mode .v-field:focus-within {
+		border-color: #42a5f5 !important;
+		box-shadow: 0 0 0 2px rgba(66, 165, 245, 0.2) !important;
+	}
+
+	.dark-mode .v-switch__track {
+		background: #404040 !important;
+	}
+
+	.dark-mode .v-switch__thumb {
+		background: #ffffff !important;
+	}
+
+	.dark-mode .v-switch--active .v-switch__track {
+		background: #42a5f5 !important;
+	}
+
+	.dark-mode .v-select__selection {
+		color: #ffffff !important;
+	}
+
+	.dark-mode .v-select__menu {
+		background: #2d2d2d !important;
+		border-color: #404040 !important;
+	}
+
+	.dark-mode .v-list-item {
+		color: #ffffff !important;
+	}
+
+	.dark-mode .v-list-item:hover {
+		background: #404040 !important;
+	}
+
+	.dark-mode .v-list-item--active {
+		background: #42a5f5 !important;
+		color: #ffffff !important;
+	}
+
+	.dark-mode .rounded-img {
+		border-color: #404040 !important;
+	}
+
+	.dark-mode .profile-img-shadow {
+		box-shadow: 0 2px 12px rgba(66, 165, 245, 0.1) !important;
+	}
+
+	.dark-mode .v-icon {
+		color: #ffffff !important;
+	}
+
+	.dark-mode .text-success {
+		color: #4caf50 !important;
+	}
+
+	.dark-mode .text-error {
+		color: #f44336 !important;
+	}
+
+	.dark-mode .save-btn {
+		background: linear-gradient(90deg, #1565c0 0%, #42a5f5 100%) !important;
+	}
+
+	.dark-mode .spotify-btn {
+		background: linear-gradient(90deg, #1db954 0%, #1ed760 100%) !important;
+	}
+
+	.dark-mode .v-input__details {
+		color: #ffffff !important;
+	}
+
+	.dark-mode .v-messages__message {
+		color: #ffffff !important;
+	}
+
+	.dark-mode .v-field__append-inner {
+		color: #ffffff !important;
+	}
+
+	.dark-mode .v-field__prepend-inner {
+		color: #ffffff !important;
+	}
+
+	.dark-mode .v-field__clearable {
+		color: #ffffff !important;
+	}
+
+	.dark-mode .v-field__input::placeholder {
+		color: rgba(255, 255, 255, 0.7) !important;
+	}
+
+	.dark-mode .v-field__input:-webkit-autofill,
+	.dark-mode .v-field__input:-webkit-autofill:hover,
+	.dark-mode .v-field__input:-webkit-autofill:focus {
+		-webkit-text-fill-color: #ffffff !important;
+		-webkit-box-shadow: 0 0 0 30px #2d2d2d inset !important;
 	}
 </style>

@@ -204,4 +204,48 @@
 	.mt-5 {
 		margin-top: 40px;
 	}
+
+	/* Dark mode styles */
+	.dark-mode .container {
+		background-color: #2d2d2d;
+		box-shadow: 0 4px 24px rgba(0, 0, 0, 0.2);
+		border: 1px solid rgba(255, 255, 255, 0.1);
+	}
+
+	.dark-mode .search-bar-header {
+		background: #363636;
+		border: 1px solid rgba(255, 255, 255, 0.1);
+		box-shadow: 0 2px 12px rgba(0, 0, 0, 0.2);
+	}
+
+	.dark-mode .search-header-text {
+		color: rgba(255, 255, 255, 0.9);
+	}
+
+	.dark-mode .result-item {
+		background-color: #363636;
+		border: 1px solid rgba(255, 255, 255, 0.1);
+		color: rgba(255, 255, 255, 0.9);
+	}
+
+	.dark-mode .result-item:hover {
+		background-color: #404040;
+		box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
+	}
+
+	.dark-mode .result-link {
+		color: #3cba92;
+	}
+
+	.dark-mode .result-link:hover {
+		color: #4fd1a5;
+	}
+
+	.dark-mode .no-results {
+		color: #ff6b6b;
+	}
+
+	.dark-mode .loading-spinner {
+		color: #3cba92;
+	}
 </style>

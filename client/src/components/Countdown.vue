@@ -382,15 +382,18 @@
 
 	.header-card {
 		background: linear-gradient(135deg, #3cba92, #2c7a7b) !important;
-		border-radius: 24px;
+		border-radius: 12px;
+		box-shadow: 0 8px 32px rgba(20, 160, 133, 0.13),
+			0 4px 20px rgba(0, 0, 0, 0.08);
+		margin-bottom: 0;
 		position: relative;
 		overflow: hidden;
-		border: 1px solid rgba(255, 255, 255, 0.1);
 	}
 
 	.header-content {
 		position: relative;
 		z-index: 2;
+		padding: 24px;
 	}
 
 	.header-pattern {
@@ -401,12 +404,12 @@
 		bottom: 0;
 		background: radial-gradient(
 				circle at 20% 150%,
-				rgba(255, 255, 255, 0.12) 0%,
+				rgba(255, 255, 255, 0.08) 0%,
 				transparent 50%
 			),
 			radial-gradient(
 				circle at 80% -50%,
-				rgba(255, 255, 255, 0.12) 0%,
+				rgba(255, 255, 255, 0.08) 0%,
 				transparent 50%
 			);
 		z-index: 1;
@@ -737,5 +740,150 @@
 		margin: 0 auto;
 		padding-left: 16px;
 		padding-right: 16px;
+	}
+
+	/* Dark Mode Styles */
+	.dark-mode .grid-container {
+		background-color: #121212 !important;
+	}
+
+	.dark-mode .header-card {
+		background: #2d2d2d !important;
+		border: 1px solid rgba(255, 255, 255, 0.1);
+		box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+	}
+
+	.dark-mode .header-pattern {
+		background: radial-gradient(
+				circle at 20% 150%,
+				rgba(20, 160, 133, 0.15) 0%,
+				transparent 50%
+			),
+			radial-gradient(
+				circle at 80% -50%,
+				rgba(20, 160, 133, 0.15) 0%,
+				transparent 50%
+			);
+	}
+
+	.dark-mode .date-container {
+		background: #2d2d2d !important;
+		backdrop-filter: blur(10px);
+		-webkit-backdrop-filter: blur(10px);
+		border: 1px solid rgba(255, 255, 255, 0.1);
+		box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+	}
+
+	.dark-mode .album-card {
+		background: #2d2d2d !important;
+		backdrop-filter: blur(10px);
+		-webkit-backdrop-filter: blur(10px);
+		border: 1px solid rgba(255, 255, 255, 0.1);
+		box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+	}
+
+	.dark-mode .album-card:hover {
+		background: #363636 !important;
+		box-shadow: 0 12px 24px rgba(0, 0, 0, 0.3);
+	}
+
+	.dark-mode .date-month {
+		color: var(--primary-color);
+	}
+
+	.dark-mode .date-day {
+		color: rgba(255, 255, 255, 0.9);
+	}
+
+	.dark-mode .date-year,
+	.dark-mode .date-weekday,
+	.dark-mode .releases-count {
+		color: rgba(255, 255, 255, 0.7);
+	}
+
+	.dark-mode .date-divider {
+		background: linear-gradient(
+			to bottom,
+			rgba(255, 255, 255, 0.2),
+			transparent
+		);
+	}
+
+	.dark-mode .countdown-chip {
+		background: rgba(20, 184, 166, 0.2) !important;
+		backdrop-filter: blur(8px);
+		-webkit-backdrop-filter: blur(8px);
+		border: 1px solid rgba(20, 184, 166, 0.3);
+		color: #7fd8c2 !important;
+	}
+
+	.dark-mode .album-overlay {
+		background: linear-gradient(to bottom, rgba(0, 0, 0, 0.6), transparent);
+	}
+
+	.dark-mode .v-card-title {
+		color: rgba(255, 255, 255, 0.9) !important;
+	}
+
+	.dark-mode .v-card-subtitle {
+		color: rgba(255, 255, 255, 0.7) !important;
+	}
+
+	.dark-mode .notify-btn {
+		background: linear-gradient(135deg, #14b8a6, #0d9488) !important;
+		border: 1px solid rgba(255, 255, 255, 0.1);
+	}
+
+	.dark-mode .notify-btn:hover {
+		background: linear-gradient(135deg, #0d9488, #0f766e) !important;
+	}
+
+	.dark-mode .empty-state {
+		background: #2d2d2d !important;
+		border: 1px solid rgba(255, 255, 255, 0.1);
+		box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+	}
+
+	.dark-mode .empty-state h3 {
+		color: rgba(255, 255, 255, 0.9) !important;
+	}
+
+	.dark-mode .empty-state p {
+		color: rgba(255, 255, 255, 0.7) !important;
+	}
+
+	.dark-mode .login-prompt-card {
+		background: #2d2d2d !important;
+		border: 1px solid rgba(255, 255, 255, 0.1);
+	}
+
+	.dark-mode .login-prompt-card::before {
+		background: linear-gradient(
+			90deg,
+			var(--primary-color) 0%,
+			#1de9b6 100%
+		) !important;
+	}
+
+	.dark-mode .action-btn {
+		background: #363636 !important;
+		color: rgba(255, 255, 255, 0.9) !important;
+		border: 1px solid rgba(255, 255, 255, 0.1);
+	}
+
+	.dark-mode .action-btn:hover {
+		background: #404040 !important;
+	}
+
+	.dark-mode .cancel-btn {
+		color: rgba(255, 255, 255, 0.7) !important;
+	}
+
+	.dark-mode .cancel-btn:hover {
+		background: rgba(255, 255, 255, 0.1) !important;
+	}
+
+	.dark-mode .text-medium-emphasis {
+		color: rgba(255, 255, 255, 0.6) !important;
 	}
 </style>

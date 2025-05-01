@@ -9,6 +9,128 @@
 	--link-color: #2196f3;
 }
 
+/* Dark Mode */
+.dark-mode {
+	--primary-color: #14a085;
+	--teal-color: #14a085;
+	--secondary-color: #42a5f5;
+	--background-color: #1a1a1a;
+	--text-color: #ffffff;
+	--link-color: #2196f3;
+	background-color: var(--background-color) !important;
+	color: var(--text-color) !important;
+}
+
+.dark-mode .v-card {
+	background-color: #2d2d2d !important;
+	border-color: #404040 !important;
+}
+
+.dark-mode .v-btn.v-btn--elevated {
+	background-color: var(--primary-color) !important;
+	color: white !important;
+}
+
+.dark-mode .v-field {
+	background-color: #2d2d2d !important;
+	border-color: #404040 !important;
+	color: #ffffff !important;
+}
+
+.dark-mode .v-field__input {
+	color: #ffffff !important;
+}
+
+.dark-mode .v-field__label {
+	color: #ffffff !important;
+}
+
+.dark-mode .v-field:hover {
+	border-color: #42a5f5 !important;
+}
+
+.dark-mode .v-field:focus-within {
+	border-color: #42a5f5 !important;
+	box-shadow: 0 0 0 2px rgba(66, 165, 245, 0.2) !important;
+}
+
+.dark-mode .v-switch__track {
+	background: #404040 !important;
+}
+
+.dark-mode .v-switch__thumb {
+	background: #ffffff !important;
+}
+
+.dark-mode .v-switch--active .v-switch__track {
+	background: #42a5f5 !important;
+}
+
+.dark-mode .v-select__selection {
+	color: #ffffff !important;
+}
+
+.dark-mode .v-select__menu {
+	background: #2d2d2d !important;
+	border-color: #404040 !important;
+}
+
+.dark-mode .v-list-item {
+	color: #ffffff !important;
+}
+
+.dark-mode .v-list-item:hover {
+	background: #404040 !important;
+}
+
+.dark-mode .v-list-item--active {
+	background: #42a5f5 !important;
+	color: #ffffff !important;
+}
+
+.dark-mode .v-icon {
+	color: #ffffff !important;
+}
+
+.dark-mode .text-success {
+	color: #4caf50 !important;
+}
+
+.dark-mode .text-error {
+	color: #f44336 !important;
+}
+
+.dark-mode .v-input__details {
+	color: #ffffff !important;
+}
+
+.dark-mode .v-messages__message {
+	color: #ffffff !important;
+}
+
+.dark-mode .v-field__append-inner {
+	color: #ffffff !important;
+}
+
+.dark-mode .v-field__prepend-inner {
+	color: #ffffff !important;
+}
+
+.dark-mode .v-field__clearable {
+	color: #ffffff !important;
+}
+
+.dark-mode .v-field__input::placeholder {
+	color: rgba(255, 255, 255, 0.7) !important;
+}
+
+.dark-mode .v-field__input:-webkit-autofill,
+.dark-mode .v-field__input:-webkit-autofill:hover,
+.dark-mode .v-field__input:-webkit-autofill:focus {
+	-webkit-text-fill-color: #ffffff !important;
+	-webkit-box-shadow: 0 0 0 30px #2d2d2d inset !important;
+}
+
 /* Protanopia (Red-Blind) */
 .protanopia {
 	--primary-color: #74a8d2;

@@ -1123,4 +1123,192 @@
 	.v-container {
 		overflow: hidden;
 	}
+
+	/* Dark Mode Styles */
+	.dark-mode .forum-gradient-header {
+		background: linear-gradient(90deg, #2d2d2d 0%, #363636 100%) !important;
+		border: 1px solid rgba(255, 255, 255, 0.1);
+		box-shadow: 0 4px 32px rgba(0, 0, 0, 0.3);
+	}
+
+	.dark-mode .forum-title {
+		color: #ffffff !important;
+		text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+	}
+
+	.dark-mode .forum-subtitle {
+		color: rgba(255, 255, 255, 0.7) !important;
+	}
+
+	.dark-mode .forum-header-btn {
+		background: rgba(255, 255, 255, 0.1) !important;
+		color: #ffffff !important;
+		border: 1px solid rgba(255, 255, 255, 0.2);
+	}
+
+	.dark-mode .forum-header-btn:hover {
+		background: rgba(255, 255, 255, 0.15) !important;
+	}
+
+	.dark-mode .v-card {
+		background: #2d2d2d !important;
+		border: 1px solid rgba(255, 255, 255, 0.1);
+		box-shadow: 0 6px 32px rgba(0, 0, 0, 0.2);
+	}
+
+	.dark-mode h2,
+	.dark-mode .text-h5 {
+		color: #ffffff !important;
+		border-left: 4px solid var(--primary-color);
+	}
+
+	.dark-mode .v-list-item {
+		background: transparent !important;
+		border: none;
+		margin-bottom: 8px;
+		transition: background-color 0.2s ease;
+	}
+
+	.dark-mode .v-list-item:hover {
+		background: rgba(255, 255, 255, 0.05) !important;
+	}
+
+	.dark-mode .v-list {
+		background: transparent !important;
+		padding: 0;
+	}
+
+	.dark-mode .v-list-item-title {
+		color: #ffffff !important;
+	}
+
+	.dark-mode .v-list-item-subtitle {
+		color: rgba(255, 255, 255, 0.7) !important;
+	}
+
+	.dark-mode .v-list-item + .v-list-item {
+		border-top: 1px solid rgba(255, 255, 255, 0.1);
+	}
+
+	.dark-mode .v-card {
+		background: #2d2d2d !important;
+		border: 1px solid rgba(255, 255, 255, 0.1);
+		box-shadow: 0 6px 32px rgba(0, 0, 0, 0.2);
+	}
+
+	.dark-mode .v-card > .v-list {
+		background: transparent !important;
+		padding: 8px;
+	}
+
+	.dark-mode .active-category {
+		background: var(--primary-color) !important;
+		color: #ffffff !important;
+		border: 1px solid rgba(255, 255, 255, 0.2);
+	}
+
+	.dark-mode .show-all-btn {
+		background: rgba(255, 255, 255, 0.1) !important;
+		color: #ffffff !important;
+		border: 1px solid rgba(255, 255, 255, 0.2) !important;
+	}
+
+	.dark-mode .show-all-btn:hover {
+		background: rgba(255, 255, 255, 0.15) !important;
+	}
+
+	.dark-mode .forum-create-btn {
+		background: linear-gradient(
+			90deg,
+			var(--primary-color) 0%,
+			#1de9b6 100%
+		) !important;
+		color: #ffffff !important;
+		border: none;
+	}
+
+	.dark-mode .v-dialog .v-card {
+		background: #2d2d2d !important;
+		border: 1px solid rgba(255, 255, 255, 0.1);
+	}
+
+	.dark-mode .v-dialog .v-card-title,
+	.dark-mode .v-dialog .v-card-text {
+		color: #ffffff !important;
+	}
+
+	.dark-mode .login-prompt-card {
+		background: #2d2d2d !important;
+		border: 1px solid rgba(255, 255, 255, 0.1);
+	}
+
+	.dark-mode .login-prompt-card::before {
+		background: linear-gradient(
+			90deg,
+			var(--primary-color) 0%,
+			#1de9b6 100%
+		) !important;
+	}
+
+	.dark-mode .action-btn {
+		background: rgba(255, 255, 255, 0.1) !important;
+		color: #ffffff !important;
+		border: 1px solid rgba(255, 255, 255, 0.2);
+	}
+
+	.dark-mode .action-btn:hover {
+		background: rgba(255, 255, 255, 0.15) !important;
+	}
+
+	.dark-mode .cancel-btn {
+		color: rgba(255, 255, 255, 0.7) !important;
+	}
+
+	.dark-mode .cancel-btn:hover {
+		background: rgba(255, 255, 255, 0.1) !important;
+	}
+
+	.dark-mode .v-text-field .v-field__input,
+	.dark-mode .v-textarea .v-field__input {
+		background: #363636 !important;
+		color: #ffffff !important;
+		border: 1px solid rgba(255, 255, 255, 0.1);
+	}
+
+	.dark-mode .v-text-field .v-field__label,
+	.dark-mode .v-textarea .v-field__label {
+		color: rgba(255, 255, 255, 0.7) !important;
+	}
+
+	.dark-mode .v-text-field .v-field__outline {
+		--v-field-border-opacity: 0.2 !important;
+		border-color: rgba(255, 255, 255, 0.2) !important;
+	}
+
+	.dark-mode .v-card[role="complementary"],
+	.dark-mode aside .v-card,
+	.dark-mode section .v-card {
+		background: #2d2d2d !important;
+	}
+
+	.dark-mode a:link,
+	.dark-mode a:visited,
+	.dark-mode a:hover,
+	.dark-mode a:active {
+		color: #ffffff !important;
+	}
+
+	.dark-mode a:hover {
+		color: var(--primary-color) !important;
+	}
+
+	.dark-mode .v-list-item-subtitle,
+	.dark-mode .text-caption,
+	.dark-mode .text-medium-emphasis {
+		color: rgba(255, 255, 255, 0.7) !important;
+	}
+
+	.dark-mode .grid-container {
+		background-color: #121212 !important;
+	}
 </style>

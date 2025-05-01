@@ -1033,4 +1033,182 @@
 		text-align: center;
 		padding-top: 8px;
 	}
+
+	/* Dark Mode Styles */
+	.dark-mode .profile-header {
+		background: linear-gradient(135deg, #1a1a1a, #2d2d2d) !important;
+		border: 1px solid rgba(255, 255, 255, 0.1) !important;
+		color: #ffffff !important;
+	}
+
+	.dark-mode .profile-header::before {
+		background: linear-gradient(
+			135deg,
+			rgba(255, 255, 255, 0.05) 0%,
+			rgba(255, 255, 255, 0) 100%
+		) !important;
+	}
+
+	.dark-mode .profile-avatar {
+		border: 4px solid rgba(255, 255, 255, 0.9) !important;
+		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+	}
+
+	.dark-mode .text-medium-emphasis {
+		color: rgba(255, 255, 255, 0.85) !important;
+	}
+
+	.dark-mode .stat-card {
+		background: linear-gradient(135deg, #2d2d2d, #404040) !important;
+		border: 1px solid rgba(255, 255, 255, 0.1) !important;
+		color: #ffffff !important;
+	}
+
+	.dark-mode .stat-card:hover {
+		transform: translateY(-4px);
+		background: linear-gradient(135deg, #404040, #4d4d4d) !important;
+	}
+
+	.dark-mode .genre-card,
+	.dark-mode .activity-card {
+		background: #2d2d2d !important;
+		border: 1px solid rgba(255, 255, 255, 0.1) !important;
+	}
+
+	.dark-mode .timeline-content {
+		background-color: rgba(255, 255, 255, 0.05) !important;
+		border: 1px solid rgba(255, 255, 255, 0.1) !important;
+	}
+
+	.dark-mode .timeline-content .text-subtitle-2 {
+		color: rgba(255, 255, 255, 0.87) !important;
+	}
+
+	.dark-mode .timeline-content .text-caption.text-medium-emphasis {
+		color: rgba(255, 255, 255, 0.6) !important;
+	}
+
+	.dark-mode .v-timeline .text-caption {
+		color: rgba(255, 255, 255, 0.6) !important;
+	}
+
+	.dark-mode .v-chip {
+		background: rgba(255, 255, 255, 0.1) !important;
+		color: #ffffff !important;
+	}
+
+	.dark-mode .v-chip:hover {
+		background: rgba(255, 255, 255, 0.2) !important;
+	}
+
+	.dark-mode .v-progress-linear {
+		background: rgba(255, 255, 255, 0.1) !important;
+	}
+
+	.dark-mode .v-progress-linear__determinate {
+		background: #42a5f5 !important;
+	}
+
+	.dark-mode .v-timeline-item__dot {
+		background: #42a5f5 !important;
+	}
+
+	.dark-mode .v-timeline-divider__line {
+		background: rgba(255, 255, 255, 0.1) !important;
+	}
+
+	.dark-mode .v-btn {
+		background: rgba(255, 255, 255, 0.1) !important;
+		color: #ffffff !important;
+	}
+
+	.dark-mode .v-btn:hover {
+		background: rgba(255, 255, 255, 0.2) !important;
+	}
+
+	.dark-mode .v-card-title {
+		color: #ffffff !important;
+	}
+
+	.dark-mode .v-card-text {
+		color: rgba(255, 255, 255, 0.87) !important;
+	}
+
+	.dark-mode .v-icon {
+		color: #ffffff !important;
+	}
+
+	.dark-mode .v-timeline-item__body {
+		color: #ffffff !important;
+	}
+
+	.dark-mode .activity-container::-webkit-scrollbar-track {
+		background: rgba(255, 255, 255, 0.05) !important;
+	}
+
+	.dark-mode .activity-container::-webkit-scrollbar-thumb {
+		background: rgba(255, 255, 255, 0.2) !important;
+	}
+
+	.dark-mode .activity-container::-webkit-scrollbar-thumb:hover {
+		background: rgba(255, 255, 255, 0.3) !important;
+	}
+
+	.dark-mode .activity-container::after {
+		background: linear-gradient(
+			to bottom,
+			rgba(26, 26, 26, 0) 0%,
+			rgba(26, 26, 26, 0.8) 50%,
+			rgba(26, 26, 26, 1) 100%
+		) !important;
+	}
+
+	.dark-mode .text-primary {
+		color: #42a5f5 !important;
+	}
+
+	.dark-mode .text-decoration-none {
+		color: #42a5f5 !important;
+	}
+
+	.dark-mode .v-timeline-item__opposite {
+		color: rgba(255, 255, 255, 0.6) !important;
+	}
+
+	.dark-mode .v-chip--elevated {
+		background: rgba(255, 255, 255, 0.1) !important;
+		color: #ffffff !important;
+	}
+
+	.dark-mode .v-chip--elevated:hover {
+		background: rgba(255, 255, 255, 0.2) !important;
+	}
+
+	.dark-mode .v-chip--elevated.v-chip--color-success {
+		background: rgba(76, 175, 80, 0.2) !important;
+		color: #4caf50 !important;
+	}
+
+	.dark-mode .v-chip--elevated.v-chip--color-primary {
+		background: rgba(66, 165, 245, 0.2) !important;
+		color: #42a5f5 !important;
+	}
+
+	.dark-mode .v-chip--elevated.v-chip--color-info {
+		background: rgba(3, 169, 244, 0.2) !important;
+		color: #03a9f4 !important;
+	}
+
+	.dark-mode .v-chip--elevated.v-chip--color-deep-purple {
+		background: rgba(103, 58, 183, 0.2) !important;
+		color: #673ab7 !important;
+	}
+
+	.dark-mode .v-chip--elevated .v-icon {
+		color: inherit !important;
+	}
+
+	.dark-mode .v-chip--elevated:hover .v-icon {
+		color: inherit !important;
+	}
 </style>

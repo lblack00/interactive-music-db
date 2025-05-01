@@ -136,3 +136,43 @@ h1 {
 	font-size: 4rem;
 	margin-bottom: 0;
 }
+
+/* Dark mode grid background */
+.dark-mode .grid-container {
+	background: linear-gradient(
+		160deg,
+		#000000 0%,
+		#000000 40%,
+		#1a1a1a 60%,
+		#333333 100%
+	) !important;
+}
+
+/* Dark mode horizontal grid lines */
+.dark-mode .grid-container::before {
+	background-image: linear-gradient(
+		to bottom,
+		rgba(255, 255, 255, 0.3) 1px,
+		transparent 1px
+	) !important;
+}
+
+/* Dark mode vertical grid lines */
+.dark-mode .grid-container::after {
+	background-image: linear-gradient(
+		to right,
+		rgba(255, 255, 255, 0.3) 1px,
+		transparent 1px
+	) !important;
+}
+
+/* Dark mode grid-container-no-min-height */
+.dark-mode .grid-container-no-min-height {
+	background: linear-gradient(
+		160deg,
+		#000000 0%,
+		#000000 40%,
+		#1a1a1a 60%,
+		#333333 100%
+	) !important;
+}

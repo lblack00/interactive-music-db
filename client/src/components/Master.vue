@@ -546,4 +546,130 @@
 	.high-contrast hr {
 		border-top: 2px solid #fff !important;
 	}
+
+	/* Dark mode styles */
+	.dark-mode .album-hero-gradient-vibrant {
+		background: linear-gradient(120deg, #2d2d2d 0%, #363636 100%);
+		opacity: 0.92;
+	}
+
+	.dark-mode .album-info-card-glass {
+		background: rgba(45, 45, 45, 0.95);
+		backdrop-filter: blur(10px);
+		border: 1px solid rgba(255, 255, 255, 0.1);
+		box-shadow: 0 4px 24px rgba(0, 0, 0, 0.2);
+		color: rgba(255, 255, 255, 0.9);
+	}
+
+	.dark-mode .album-title-glass {
+		color: #3cba92;
+	}
+
+	.dark-mode .artist-link-glass {
+		color: #4fd1a5;
+	}
+
+	.dark-mode .artist-link-glass:hover {
+		color: #3cba92;
+	}
+
+	.dark-mode .album-chip {
+		background: #363636;
+		color: #3cba92;
+		border: 1px solid rgba(255, 255, 255, 0.1);
+		box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+	}
+
+	.dark-mode .main-content-card-modern {
+		background: #2d2d2d;
+		box-shadow: 0 6px 32px rgba(0, 0, 0, 0.2);
+		border: 1px solid rgba(255, 255, 255, 0.1);
+		color: rgba(255, 255, 255, 0.9);
+	}
+
+	.dark-mode .section-card-modern {
+		background: #363636;
+		border: 1px solid rgba(255, 255, 255, 0.1);
+		box-shadow: 0 2px 12px rgba(0, 0, 0, 0.2);
+	}
+
+	.dark-mode .section-title-modern {
+		color: #3cba92;
+	}
+
+	.dark-mode hr {
+		border-top: 2px solid rgba(255, 255, 255, 0.1);
+	}
+
+	.dark-mode .tracklist-table-modern {
+		background: #2d2d2d;
+		color: rgba(255, 255, 255, 0.9);
+		border: 1px solid rgba(255, 255, 255, 0.1);
+	}
+
+	.dark-mode .tracklist-table-modern thead {
+		background: #363636;
+	}
+
+	.dark-mode .tracklist-table-modern th {
+		color: rgba(255, 255, 255, 0.9);
+		border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+		background: #363636;
+	}
+
+	.dark-mode .tracklist-table-modern td {
+		color: rgba(255, 255, 255, 0.9);
+		border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+		background: #2d2d2d;
+	}
+
+	.dark-mode .track-row-modern {
+		background: #2d2d2d;
+	}
+
+	.dark-mode .track-row-modern:hover {
+		background: #404040;
+	}
+
+	.dark-mode .track-row-modern td {
+		border-color: rgba(255, 255, 255, 0.1);
+	}
+
+	.dark-mode .notes-pre-modern {
+		background: #2d2d2d;
+		color: rgba(255, 255, 255, 0.9);
+		border: 1px solid rgba(255, 255, 255, 0.1);
+		box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+	}
+
+	.dark-mode .credit-role-modern {
+		background: #363636;
+		color: #3cba92;
+		border: 1px solid rgba(255, 255, 255, 0.1);
+	}
+
+	.dark-mode .credit-artists-modern {
+		color: rgba(255, 255, 255, 0.9);
+	}
+
+	.dark-mode .company-type-modern {
+		background: #363636;
+		color: #3cba92;
+		border: 1px solid rgba(255, 255, 255, 0.1);
+	}
+
+	.dark-mode .company-names-modern {
+		color: rgba(255, 255, 255, 0.9);
+	}
+
+	.dark-mode .loading {
+		color: #3cba92;
+	}
+
+	.dark-mode table,
+	.dark-mode th,
+	.dark-mode td {
+		color: rgba(255, 255, 255, 0.9);
+		border-color: rgba(255, 255, 255, 0.1);
+	}
 </style>

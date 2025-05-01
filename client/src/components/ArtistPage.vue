@@ -534,4 +534,80 @@
 	.high-contrast .loading {
 		color: #fff !important;
 	}
+
+	/* Dark mode styles */
+	.dark-mode .artist-sidebar-header {
+		background: #2d2d2d;
+		border: 1px solid rgba(255, 255, 255, 0.1);
+		box-shadow: 0 4px 24px rgba(0, 0, 0, 0.2);
+	}
+
+	.dark-mode .artist-avatar {
+		border-color: rgba(255, 255, 255, 0.2);
+		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+	}
+
+	.dark-mode .artist-chip {
+		background: #363636;
+		color: #3cba92;
+		border: 1px solid rgba(255, 255, 255, 0.1);
+	}
+
+	.dark-mode .artist-header-bio {
+		color: rgba(255, 255, 255, 0.9);
+	}
+
+	.dark-mode .artist-discography-card {
+		background: #2d2d2d;
+		box-shadow: 0 6px 32px rgba(0, 0, 0, 0.2);
+		border: 1px solid rgba(255, 255, 255, 0.1);
+	}
+
+	.dark-mode .artist-discography-title {
+		color: #3cba92;
+	}
+
+	.dark-mode .artist-discography-album-card {
+		background: #363636;
+		border: 1px solid rgba(255, 255, 255, 0.1);
+		box-shadow: 0 4px 18px rgba(0, 0, 0, 0.2);
+		backdrop-filter: none;
+	}
+
+	.dark-mode .artist-discography-album-card:hover {
+		background: #404040;
+		box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+	}
+
+	.dark-mode .artist-discography-album-link {
+		color: #3cba92;
+	}
+
+	.dark-mode .artist-discography-album-link:hover {
+		color: #4fd1a5;
+	}
+
+	.dark-mode .artist-stat-card {
+		background: #363636;
+		border: 1px solid rgba(255, 255, 255, 0.1);
+		box-shadow: 0 2px 12px rgba(0, 0, 0, 0.2);
+	}
+
+	.dark-mode .stat-card-title {
+		color: rgba(255, 255, 255, 0.9);
+	}
+
+	.dark-mode .stat-card-year {
+		color: rgba(255, 255, 255, 0.7);
+	}
+
+	.dark-mode .stat-card-img {
+		background: #2d2d2d;
+		border: 1px solid rgba(255, 255, 255, 0.1);
+		box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+	}
+
+	.dark-mode .loading {
+		color: rgba(255, 255, 255, 0.9);
+	}
 </style>

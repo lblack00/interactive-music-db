@@ -414,17 +414,17 @@
 
 	<!-- Confirmation Dialog -->
 	<v-dialog v-model="deleteDialog" max-width="500px">
-    <v-card>
-      <v-card-title class="headline">Confirm Deletion</v-card-title>
-      <v-card-text>
-        Are you sure you want to delete this item from your list?
-      </v-card-text>
-      <v-card-actions>
-        <v-btn text @click="cancelDelete">Cancel</v-btn>
-        <v-btn color="error" text @click="deleteEntry">Delete</v-btn>
-      </v-card-actions>
-    </v-card>
-  </v-dialog>
+		<v-card>
+			<v-card-title class="headline">Confirm Deletion</v-card-title>
+			<v-card-text>
+				Are you sure you want to delete this item from your list?
+			</v-card-text>
+			<v-card-actions>
+				<v-btn text @click="cancelDelete">Cancel</v-btn>
+				<v-btn color="error" text @click="deleteEntry">Delete</v-btn>
+			</v-card-actions>
+		</v-card>
+	</v-dialog>
 
 	<v-dialog v-model="ratingDialog" max-width="600px">
 		<v-card>
@@ -1075,5 +1075,204 @@
 	.high-contrast .stat-item {
 		background: rgba(255, 255, 255, 0.2) !important;
 		border: 1px solid rgba(255, 255, 255, 0.3) !important;
+	}
+
+	/* Dark Mode Styles */
+	.dark-mode .grid-container {
+		background-color: #121212 !important;
+	}
+
+	.dark-mode .profile-header {
+		background: #2d2d2d !important;
+		border: 1px solid rgba(255, 255, 255, 0.1);
+		box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+	}
+
+	.dark-mode .gradient-title {
+		background: #2d2d2d !important;
+		border: 1px solid rgba(255, 255, 255, 0.1);
+		color: rgba(255, 255, 255, 0.9) !important;
+	}
+
+	.dark-mode .gradient-title::before {
+		background: linear-gradient(
+			135deg,
+			rgba(20, 160, 133, 0.15) 0%,
+			rgba(20, 160, 133, 0) 100%
+		);
+	}
+
+	.dark-mode .profile-avatar {
+		border: 4px solid rgba(255, 255, 255, 0.2);
+		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+	}
+
+	.dark-mode .scrollable-card {
+		background: #2d2d2d !important;
+		border: 1px solid rgba(255, 255, 255, 0.1);
+		box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+	}
+
+	.dark-mode .v-list-item {
+		background: transparent !important;
+		color: rgba(255, 255, 255, 0.9) !important;
+	}
+
+	.dark-mode .v-list-item:hover {
+		background: rgba(255, 255, 255, 0.05) !important;
+	}
+
+	.dark-mode .rating-text {
+		color: var(--primary-color) !important;
+	}
+
+	.dark-mode .stat-item {
+		background: rgba(255, 255, 255, 0.05) !important;
+		border: 1px solid rgba(255, 255, 255, 0.1);
+	}
+
+	.dark-mode .stat-value {
+		color: rgba(255, 255, 255, 0.9) !important;
+	}
+
+	.dark-mode .stat-label {
+		color: rgba(255, 255, 255, 0.7) !important;
+	}
+
+	.dark-mode .list-item-hover:hover {
+		background: rgba(255, 255, 255, 0.05) !important;
+	}
+
+	.dark-mode .v-card-title {
+		color: rgba(255, 255, 255, 0.9) !important;
+	}
+
+	.dark-mode .v-card-subtitle {
+		color: rgba(255, 255, 255, 0.7) !important;
+	}
+
+	.dark-mode .v-card-text {
+		color: rgba(255, 255, 255, 0.9) !important;
+	}
+
+	.dark-mode .v-btn {
+		color: rgba(255, 255, 255, 0.9) !important;
+		background: #363636 !important;
+		border: 1px solid rgba(255, 255, 255, 0.1);
+	}
+
+	.dark-mode .v-btn:hover {
+		background: #404040 !important;
+		border-color: rgba(255, 255, 255, 0.2);
+	}
+
+	.dark-mode .v-btn--icon {
+		color: rgba(255, 255, 255, 0.9) !important;
+		background: #363636 !important;
+		border: 1px solid rgba(255, 255, 255, 0.1);
+	}
+
+	.dark-mode .v-btn--icon:hover {
+		background: #404040 !important;
+		border-color: rgba(255, 255, 255, 0.2);
+	}
+
+	.dark-mode .v-btn.variant--text {
+		background: transparent !important;
+		color: rgba(255, 255, 255, 0.9) !important;
+	}
+
+	.dark-mode .v-btn.variant--text:hover {
+		background: rgba(255, 255, 255, 0.1) !important;
+	}
+
+	.dark-mode .v-btn.color--primary {
+		background: var(--primary-color) !important;
+		color: #ffffff !important;
+		border: none;
+	}
+
+	.dark-mode .v-btn.color--primary:hover {
+		background: #0d9488 !important;
+	}
+
+	.dark-mode .v-btn.color--success {
+		background: #2e7d32 !important;
+		color: #ffffff !important;
+		border: none;
+	}
+
+	.dark-mode .v-btn.color--success:hover {
+		background: #1b5e20 !important;
+	}
+
+	.dark-mode .v-btn.color--error {
+		background: #c62828 !important;
+		color: #ffffff !important;
+		border: none;
+	}
+
+	.dark-mode .v-btn.color--error:hover {
+		background: #b71c1c !important;
+	}
+
+	.dark-mode .v-menu .v-list {
+		background: #2d2d2d !important;
+		border: 1px solid rgba(255, 255, 255, 0.1);
+	}
+
+	.dark-mode .v-menu .v-list-item {
+		color: rgba(255, 255, 255, 0.9) !important;
+	}
+
+	.dark-mode .v-menu .v-list-item:hover {
+		background: rgba(255, 255, 255, 0.1) !important;
+	}
+
+	.dark-mode .v-dialog .v-card {
+		background: #2d2d2d !important;
+		border: 1px solid rgba(255, 255, 255, 0.1);
+	}
+
+	.dark-mode .v-dialog .v-card-title {
+		color: rgba(255, 255, 255, 0.9) !important;
+	}
+
+	.dark-mode .v-dialog .v-card-text {
+		color: rgba(255, 255, 255, 0.9) !important;
+	}
+
+	.dark-mode .v-dialog .v-btn {
+		color: rgba(255, 255, 255, 0.9) !important;
+	}
+
+	.dark-mode .v-dialog .v-btn:hover {
+		background: rgba(255, 255, 255, 0.1) !important;
+	}
+
+	.dark-mode .now-playing-card {
+		background: #2d2d2d !important;
+		border: 1px solid rgba(255, 255, 255, 0.1);
+	}
+
+	.dark-mode .playlist-card {
+		background: #2d2d2d !important;
+		border: 1px solid rgba(255, 255, 255, 0.1);
+	}
+
+	.dark-mode .empty-state {
+		color: rgba(255, 255, 255, 0.7) !important;
+	}
+
+	.dark-mode .v-divider {
+		border-color: rgba(255, 255, 255, 0.1) !important;
+	}
+
+	.dark-mode .text-grey {
+		color: rgba(255, 255, 255, 0.7) !important;
+	}
+
+	.dark-mode .text-caption {
+		color: rgba(255, 255, 255, 0.7) !important;
 	}
 </style>
