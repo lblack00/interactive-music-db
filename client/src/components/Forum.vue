@@ -129,12 +129,14 @@
 											<v-list-item-content>
 												<v-list-item-title>
 													<router-link
+														style="color: var(--primary-color);text-decoration:none;"
 														:to="thread.link"
 														:aria-label="`${thread.title} in ${thread.category} with ${thread.replies} replies`"
 														>{{ thread.title }}</router-link
 													>
 												</v-list-item-title>
-												<v-list-item-subtitle>
+												<v-list-item-subtitle
+													style="color:#000">
 													<span class="font-weight-medium">{{
 														thread.category
 													}}</span>
