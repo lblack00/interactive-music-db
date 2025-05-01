@@ -9,7 +9,7 @@
 		]"
 	>
 		<header role="navigation">
-			<Navbar />
+			<Navbar :key="originalUser.username" />
 		</header>
 		<div class="content settings-content">
 			<v-container class="py-10">
