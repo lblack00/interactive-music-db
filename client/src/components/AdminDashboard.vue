@@ -379,4 +379,8 @@
 
 <style scoped>
 	@import "../../src/assets/background.css";
+
+	.v-card {
+		border-radius: 24px;
+	}
 </style>
