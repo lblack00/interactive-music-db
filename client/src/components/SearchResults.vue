@@ -248,4 +248,57 @@
 	.dark-mode .loading-spinner {
 		color: #3cba92;
 	}
+
+	/* High Contrast Mode Styles */
+	.high-contrast .container {
+		background-color: #000000 !important;
+		border: 2px solid #ffffff !important;
+		box-shadow: none !important;
+	}
+
+	.high-contrast .search-bar-header {
+		background: #000000 !important;
+		border: 2px solid #ffffff !important;
+		box-shadow: none !important;
+	}
+
+	.high-contrast .search-header-icon {
+		color: #ffffff !important;
+	}
+
+	.high-contrast .search-header-text {
+		color: #ffffff !important;
+		text-shadow: 2px 2px 0 #000000;
+	}
+
+	.high-contrast .result-item {
+		background-color: #000000 !important;
+		border: 2px solid #ffffff !important;
+		color: #ffffff !important;
+		box-shadow: none !important;
+	}
+
+	.high-contrast .result-item:hover {
+		background-color: #ffffff !important;
+		color: #000000 !important;
+	}
+
+	.high-contrast .result-link {
+		color: #ffffff !important;
+	}
+
+	.high-contrast .result-link:hover {
+		color: #000000 !important;
+		background-color: #ffffff !important;
+	}
+
+	.high-contrast .no-results {
+		color: #ffffff !important;
+		text-shadow: 2px 2px 0 #000000;
+	}
+
+	.high-contrast .loading-spinner {
+		color: #ffffff !important;
+		text-shadow: 2px 2px 0 #000000;
+	}
 </style>
