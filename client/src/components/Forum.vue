@@ -721,7 +721,7 @@
 	}
 
 	.v-list-item-subtitle {
-		color: #7fd8c2;
+		color: #0f7862;
 		font-size: 0.97rem;
 		font-weight: 500;
 		margin-top: 2px;
@@ -850,7 +850,6 @@
 	}
 	.forum-header-btn {
 		font-size: 1.1rem;
-		padding: 12px 32px;
 		border-radius: 24px;
 		font-weight: 800;
 		box-shadow: 0 2px 12px rgba(20, 160, 133, 0.13);
@@ -858,7 +857,7 @@
 		color: var(--primary-color) !important;
 	}
 	.forum-header-btn:hover {
-		background: #eafaf7 !important;
+		background: #cadad7 !important;
 	}
 
 	/* High Contrast Mode Styles */

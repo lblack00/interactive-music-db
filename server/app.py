@@ -544,11 +544,12 @@ class forum:
                 r.updated_at,
                 r.parent_id,
                 r.is_edited,
+                r.is_deleted,
                 u.id as author_id, 
                 u.username as author_name
             FROM forum_replies r
             JOIN users u ON r.user_id = u.id
-            WHERE r.thread_id = %s AND r.is_deleted = FALSE
+            WHERE r.thread_id = %s
             ORDER BY r.created_at ASC;
         """
         return forum.db.read_data(query, (thread_id,))
@@ -1914,6 +1915,7 @@ def get_forum_thread(thread_id):
                 "content": reply['content'],
                 "date": reply['created_at'].strftime("%B %d, %Y") if isinstance(reply['created_at'], datetime) else reply['created_at'],
                 "isEdited": reply.get('is_edited', False),
+                "isDeleted": reply.get('is_deleted', False),
                 "parentId": reply['parent_id'],
                 "author": {
                     "id": reply['author_id'],

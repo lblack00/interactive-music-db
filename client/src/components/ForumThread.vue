@@ -101,7 +101,7 @@
 										></v-textarea>
 										<p v-else class="thread-text">{{ thread.content }}</p>
 									</div>
-									<div v-if="isEditingThread" class="d-flex justify-end">
+									<div v-if="isEditingThread" class="d-flex justify-end m-2">
 										<v-btn text @click="cancelEditThread" class="mr-2"
 											>Cancel</v-btn
 										>
@@ -145,6 +145,7 @@
 												>
 													<div class="d-flex align-center">
 														<router-link
+															v-if="!reply.isDeleted"
 															:to="`/user/${reply.author.name}`"
 															class="text-decoration-none"
 														>
@@ -160,9 +161,9 @@
 															:to="`/user/${reply.author.name}`"
 															class="reply-username text-decoration-none"
 														>
-															{{ reply.author.name }}
+															{{ reply.isDeleted ? "[deleted]" : reply.author.name }}
 														</router-link>
-														<span class="reply-date">{{ reply.date }}</span>
+														<span class="ml-2 reply-date">{{ reply.date }}</span>
 													</div>
 													<v-menu offset-y>
 														<template v-slot:activator="{ props }">
@@ -230,7 +231,7 @@
 													</div>
 												</v-list-item-text>
 												<v-list-item-text v-else>{{
-													reply.content
+													reply.isDeleted ? "[deleted]" : reply.content
 												}}</v-list-item-text>
 											</v-list-item>
 										</template>
@@ -404,7 +405,7 @@
 		</v-dialog>
 
 		<!-- Add Reference dialog -->
-		<v-dialog v-model="showAddReferenceDialog" max-width="500">
+		<v-dialog v-model="showAddReferenceDialog" max-width="550">
 			<v-card class="reference-card pa-4">
 				<div class="mb-2">
 					<h3 class="reference-title mb-1">Add Reference</h3>
@@ -484,7 +485,7 @@
 						<v-btn
 							color="primary"
 							icon
-							density="compact"
+							density="medium"
 							:disabled="!selectedReference"
 							@click="addReference(selectedReference)"
 							class="reference-add-btn"
@@ -723,7 +724,7 @@
 
 			getReplyAuthorName(replyId) {
 				if (!this.thread) return "Unknown";
-				const parentReply = this.thread.replies.find((r) => r.id === replyId);
+				const parentReply = this.thread.replies.find((r) => r.id === replyId && !r.isDeleted);
 				return parentReply ? parentReply.author.name : "Unknown";
 			},
 
@@ -1211,6 +1212,9 @@
 		font-weight: 500;
 		border-radius: 8px;
 		transition: all 0.2s ease;
+		display: flex;
+		align-items: center;
+		justify-content: center;
 	}
 
 	.v-btn--icon {
@@ -1357,7 +1361,6 @@
 		font-style: italic;
 		color: #7fd8c2;
 		font-size: 0.97rem;
-		margin-left: 2.2rem;
 		margin-bottom: 2px;
 	}
 

@@ -346,10 +346,10 @@
 		max-width: 520px;
 		display: flex;
 		flex-direction: column;
-		align-items: flex-start;
+		align-items: center;
 		justify-content: center;
 		text-align: left;
-		height: 300px;
+		height: auto;
 	}
 	.album-title-glass {
 		font-size: 2.3rem;

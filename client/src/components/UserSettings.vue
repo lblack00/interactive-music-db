@@ -35,7 +35,6 @@
 										label="Email"
 										variant="outlined"
 										required
-										readonly
 										class="mb-4 rounded-input"
 									></v-text-field>
 									<v-textarea
@@ -133,7 +132,7 @@
 										>
 											{{
 												user.spotifyConnected
-													? "Connected to Spotify"
+													? `Connected to ${spotifyUsername}'s Spotify`
 													: "Not connected to Spotify"
 											}}
 										</span>
@@ -154,9 +153,9 @@
 										prepend-icon="mdi-spotify"
 										@click="disconnectSpotify"
 										block
-										class="spotify-btn"
+										class="spotify-btn spotify-btn-err"
 									>
-										Disconnect Spotify
+										Disconnect {{spotifyUsername}}'s Spotify
 									</v-btn>
 								</v-card>
 								<!-- Save Button -->
@@ -224,14 +223,19 @@
 		accessibilityStore.setHighContrast(value);
 	};
 
-	onMounted(() => {
+	onMounted(async () => {
 		getCurrentSettings();
+
 
 		// Handle Spotify callback if needed
 		if (window.location.search.includes("code")) {
-			handleSpotifyCallback();
+			await handleSpotifyCallback();
 		}
 		setInterval(refreshAccessToken, 50 * 60 * 1000);
+
+		if (localStorage.getItem("spotify_access_token")) {
+			await getSpotifyUsername();
+		}
 
 		// Initialize settings from store
 		darkMode.value = accessibilityStore.darkMode;
@@ -263,6 +267,7 @@
 	const clientId = import.meta.env.VITE_SPOTIFY_CLIENT_ID;
 	const redirectUri = "http://localhost:5173/user-settings";
 	const accessToken = ref("");
+	const spotifyUsername = ref("");
 
 	const colorblindClass = computed(() => {
 		switch (colorblindMode.value) {
@@ -446,6 +451,28 @@
 			console.error("Error initiating Spotify auth:", error);
 		}
 	};
+
+	const getSpotifyUsername = async () => {
+		try {
+			const accessToken = localStorage.getItem("spotify_access_token");
+			const response = await fetch('https://api.spotify.com/v1/me', {
+				headers: {
+					'Authorization': `Bearer ${accessToken}`
+				}
+			});
+			
+			if (!response.ok) {
+				throw new Error(`HTTP error code: ${response.status}`);
+			}
+			
+			const data = await response.json();
+			spotifyUsername.value = data.display_name;
+		} catch (error) {
+			console.error('Error fetching Spotify display name:', error);
+			throw error;
+		}
+	};
+
 	const handleSpotifyCallback = async () => {
 		const urlParams = new URLSearchParams(window.location.search);
 		const code = urlParams.get("code");
@@ -453,8 +480,7 @@
 		const storedState = localStorage.getItem("spotify_auth_state");
 
 		if (!code || state !== storedState) {
-			alert("Authorization failed. Try again.");
-			return;
+			throw new Error("Authorization failed. Try again.");
 		}
 
 		localStorage.removeItem("spotify_auth_state");
@@ -491,6 +517,8 @@
 					);
 					alert("Spotify connected successfully!");
 					user.value.spotifyConnected = true;
+
+					getSpotifyUsername();
 				} catch (error) {
 					console.error("Error saving Spotify tokens:", error);
 				}
@@ -854,6 +882,15 @@
 	.spotify-btn:hover:not(:disabled) {
 		filter: brightness(1.08);
 		background: linear-gradient(90deg, #169c46 0%, #1db954 100%);
+	}
+
+	.spotify-btn-err {
+		background: linear-gradient(90deg, #b91d54 0%, #d71e60 100%);
+	}
+
+	.spotify-btn-err:hover:not(:disabled) {
+		filter: brightness(1.08);
+		background: linear-gradient(90deg, #9c1646 0%, #b91d54 100%);
 	}
 
 	/* High Contrast Mode Enhancements */

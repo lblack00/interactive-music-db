@@ -349,7 +349,7 @@
 								sm="6"
 								md="4"
 							>
-								<v-card class="mb-4 playlist-card">
+								<v-card class="mb-4 playlist-card scrollable-card" height="360">
 									<v-img
 										v-if="playlist.images && playlist.images.length > 0"
 										:src="playlist.images[0].url"
@@ -383,6 +383,7 @@
 									</v-card-text>
 									<v-card-actions>
 										<v-btn
+											class="profile-header"
 											color="primary"
 											variant="elevated"
 											@click="playPlaylist(playlist)"
@@ -446,7 +447,7 @@
 
 	<!-- Playlist Dialog -->
 	<v-dialog v-model="playlistDialog" max-width="600px">
-		<v-card v-if="selectedPlaylist">
+		<v-card v-if="selectedPlaylist" style="border-radius: 24px;">
 			<v-img
 				v-if="selectedPlaylist.images && selectedPlaylist.images.length > 0"
 				:src="selectedPlaylist.images[0].url"
@@ -475,6 +476,7 @@
 			</v-card-text>
 			<v-card-actions>
 				<v-btn
+					class="profile-header"
 					color="primary"
 					variant="elevated"
 					@click="playPlaylistFromDialog()"
@@ -492,7 +494,7 @@
 					Open in Spotify
 				</v-btn>
 				<v-spacer></v-spacer>
-				<v-btn color="grey" variant="text" @click="playlistDialog = false">
+				<v-btn variant="text" @click="playlistDialog=false">
 					Close
 				</v-btn>
 			</v-card-actions>
@@ -500,28 +502,7 @@
 	</v-dialog>
 
 	<!-- Now Playing Card -->
-	<v-card v-if="currentPlaylistId" class="pa-4 mb-4 now-playing-card">
-		<v-card-title class="d-flex align-center">
-			<span
-				>Now Playing:
-				{{ currentPlaylist ? currentPlaylist.name : "Unknown Playlist" }}</span
-			>
-			<v-spacer></v-spacer>
-			<v-btn icon @click="closePlayer">
-				<v-icon>mdi-close</v-icon>
-			</v-btn>
-		</v-card-title>
-		<v-divider></v-divider>
-		<div class="spotify-player-container">
-			<iframe
-				:src="`https://open.spotify.com/embed/playlist/${currentPlaylistId}`"
-				width="100%"
-				height="450"
-				frameborder="0"
-				allowtransparency="true"
-				allow="encrypted-media"
-			></iframe>
-		</div>
+	<v-card v-if="currentPlaylist !== null" class="now-playing-card">
 	</v-card>
 </template>
 

@@ -291,7 +291,7 @@
 				const now = new Date();
 				const release = new Date(releaseDate);
 				const diffTime = release - now;
-				const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+				const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) - 1;
 
 				if (diffDays < 0) return "Released";
 				if (diffDays === 0) return "Out Today!";
