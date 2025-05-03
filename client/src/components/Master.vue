@@ -45,7 +45,7 @@
 									data.genre?.map((entry) => entry.genre).join(", ") ||
 									"Unknown"
 								}}</span>
-								<span class="album-chip">{{
+								<span v-if="data.style.length > 0" class="album-chip">{{
 									data.style?.map((entry) => entry.style).join(", ") ||
 									"Unknown"
 								}}</span>

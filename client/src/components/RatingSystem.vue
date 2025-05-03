@@ -36,41 +36,37 @@
 			<span v-if="totalRatings">({{ totalRatings }} ratings)</span>
 		</div>
 		<transition name="fade">
-			<div
-				class="login-prompt-overlay"
-				v-if="showLoginPrompt"
-				role="dialog"
-				aria-labelledby="login-prompt-title"
-				aria-modal="true"
-			>
-				<div class="login-prompt-modal">
-					<h3 id="login-prompt-title">Please Log In</h3>
-					<p>You need to be logged in to rate items.</p>
-					<div class="buttons" role="group" aria-label="Login options">
-						<button
-							class="cancel-btn"
+			<v-dialog v-model="showLoginPrompt" max-width="400px">
+				<v-card class="login-prompt-card">
+					<v-card-text class="text-center pa-6">
+						<v-icon size="48" color="primary" class="mb-4"
+							>mdi-account-lock</v-icon
+						>
+						<h3 class="text-h5 font-weight-bold mb-3 dialog-title">
+							Please Log In
+						</h3>
+						<p class="text-subtitle-1 text-medium-emphasis mb-6">
+							You need to log in to do that.
+						</p>
+						<div class="d-flex justify-center mb-4 gap-3">
+							<v-btn color="primary" class="action-btn" @click="goToLogin">
+								Log In
+							</v-btn>
+							<v-btn color="secondary" class="action-btn" @click="goToSignup">
+								Sign Up
+							</v-btn>
+						</div>
+						<v-btn
+							variant="text"
+							color="grey-darken-1"
 							@click="showLoginPrompt = false"
-							aria-label="Cancel and return to page"
+							class="cancel-btn"
 						>
 							Cancel
-						</button>
-						<button
-							class="login-btn"
-							@click="goToLogin"
-							aria-label="Go to login page"
-						>
-							Log In
-						</button>
-						<button
-							class="signup-btn"
-							@click="goToSignup"
-							aria-label="Go to signup page"
-						>
-							Sign Up
-						</button>
-					</div>
-				</div>
-			</div>
+						</v-btn>
+					</v-card-text>
+				</v-card>
+			</v-dialog>
 		</transition>
 	</section>
 	<!-- </div> -->
