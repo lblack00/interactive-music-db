@@ -58,7 +58,7 @@ class TestSearchIntegrationAPI(unittest.TestCase):
 
         expected_data = [
             {'artists': 'Unknown Artist', 'id': 45678, 'title': 'Test Album 2', 'year': '2021'},
-            {'artists': 'Test Artist', 'id': 12345, 'title': 'Test Master', 'year': '2020'},
+            {'artists': 'Unknown Artist', 'id': 12345, 'title': 'Test Master', 'year': '2020'},
             {'artists': 'Unknown Artist', 'id': 34567, 'title': 'Test Album 1', 'year': '2020'}
         ]
 

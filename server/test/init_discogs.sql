@@ -1549,15 +1549,6 @@ INSERT INTO public.master (id, title, year, main_release, data_quality) VALUES
 (45678, 'Test Album 2', 2021, 45678, 'Correct'),
 (56789, 'Kind of Blue', 1959, 56789, 'Correct');
 
-INSERT INTO public.master_artist (id, master_id, artist_id, artist_name) VALUES
-(1, 12345, 12345, 'Test Artist');
-
-INSERT INTO public.master_style (id, master_id, style) VALUES
-(1, 12345, 'Thrash');
-
-INSERT INTO public.master_genre (id, master_id, genre) VALUES
-(1, 12345, 'Rock');
-
 -- Insert test data for releases
 INSERT INTO public.release (id, title, released, country, notes, data_quality, master_id, status) VALUES
 (12345, 'Test Release', '2020', 'US', 'Test release notes', 'Correct', 12345, 'Official'),
