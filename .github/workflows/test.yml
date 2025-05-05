@@ -46,6 +46,13 @@ jobs:
       - name: Install dependencies
         run: |
           pip install -r requirements.txt
+      - name: Initialize test databases
+        run: |
+          sudo apt-get update && sudo apt-get install -y postgresql-client
+          psql -h localhost -U postgres -p 5433 -d test_discogs_db -f server/test/init_discogs.sql
+          psql -h localhost -U postgres -p 5434 -d test_users_db -f server/test/init_users.sql
+        env:
+          PGPASSWORD: postgres
       - name: Wait for PostgreSQL
         run: |
           until pg_isready -h localhost -p 5433; do sleep 1; done
