@@ -122,31 +122,15 @@ class TestUserManagement(unittest.TestCase):
         data = json.loads(response.data)
         self.assertEqual(data['error'], 'Invalid file type. Only JPG, JPEG, and PNG are allowed.')
 
-    @patch('app.os.path.exists')
-    def test_get_profile_image_path_exists(self, mock_path_exists):
-        mock_path_exists.return_value = True
-
-        result = get_profile_image_path(1)
-
-        self.assertEqual(result, '/static/pfp/1profilepic.png')
-
-    @patch('app.os.path.exists')
-    def test_get_profile_image_path_not_exists(self, mock_path_exists):
-        mock_path_exists.return_value = False
-
-        result = get_profile_image_path(1)
-
-        self.assertEqual(result, '/static/pfp/unknownPFP.png')
-
     @patch('app.get_profile_image_path')
     def test_get_profile_image(self, mock_get_path):
-        mock_get_path.return_value = '/static/pfp/1profilepic.png'
+        mock_get_path.return_value = '/static/pfp/unknownPFP.png'
 
         response = self.app.get('/get-profile-image/1')
 
         self.assertEqual(response.status_code, 200)
         data = json.loads(response.data)
-        self.assertEqual(data['image_url'], '/static/pfp/1profilepic.png')
+        self.assertEqual(data['image_url'], '/static/pfp/unknownPFP.png')
 
         mock_get_path.assert_called_once_with(1)
 

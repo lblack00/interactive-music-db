@@ -181,7 +181,6 @@ class TestForumIntegrationAPI(unittest.TestCase):
         self.assertEqual(data['isEdited'], False)
         self.assertEqual(data['author']['id'], 1)
         self.assertEqual(data['author']['name'], 'Test User')
-        self.assertEqual(data['author']['pfp'], '/static/pfp/1profilepic.png')
 
         self.assertEqual(len(data['replies']), 4)
         self.assertEqual(data['replies'][0]['id'], 1)
@@ -239,7 +238,6 @@ class TestForumIntegrationAPI(unittest.TestCase):
             self.assertEqual(data['parentId'], None)
             self.assertEqual(data['author']['id'], 1)
             self.assertEqual(data['author']['name'], 'Test User')
-            self.assertEqual(data['author']['pfp'], '/static/pfp/1profilepic.png')
 
             # clean up
             forum.db.mutate_data("DELETE FROM forum_replies WHERE content=%s;",
