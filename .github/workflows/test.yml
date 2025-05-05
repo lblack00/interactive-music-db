@@ -60,4 +60,4 @@ jobs:
       - name: Run tests
         run: |
           cd server
-          python3 -m unittest discover test -b
+          python3 -m unittest discover test
