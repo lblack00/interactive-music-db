@@ -1549,6 +1549,15 @@ INSERT INTO public.master (id, title, year, main_release, data_quality) VALUES
 (45678, 'Test Album 2', 2021, 45678, 'Correct'),
 (56789, 'Kind of Blue', 1959, 56789, 'Correct');
 
+INSERT INTO public.master_artist (id, master_id, artist_id, artist_name) VALUES
+(1, 12345, 12345, 'Test Artist');
+
+INSERT INTO public.master_style (id, master_id, style) VALUES
+(1, 12345, 'Thrash');
+
+INSERT INTO public.master_genre (id, master_id, genre) VALUES
+(1, 12345, 'Rock');
+
 -- Insert test data for releases
 INSERT INTO public.release (id, title, released, country, notes, data_quality, master_id, status) VALUES
 (12345, 'Test Release', '2020', 'US', 'Test release notes', 'Correct', 12345, 'Official'),
@@ -1556,22 +1565,6 @@ INSERT INTO public.release (id, title, released, country, notes, data_quality, m
 (34567, 'Test Album 1', '2020-01-01', 'US', 'Test album notes', 'Correct', 34567, 'Official'),
 (45678, 'Test Album 2', '2021-06-15', 'UK', 'Another test album', 'Correct', 45678, 'Official'),
 (56789, 'Kind of Blue', '1959-08-17', 'US', 'Classic jazz album', 'Correct', 56789, 'Official');
-
--- Insert test data for master_artist junction
--- INSERT INTO public.master_artist (master_id, artist_id, artist_name) VALUES
--- (12345, 12345, 'Test Artist'),
--- (23456, 34567, 'The Beatles'),
--- (34567, 23456, 'Test Artist 2'),
--- (45678, 23456, 'Test Artist 2'),
--- (56789, 56789, 'Miles Davis');
-
--- -- Insert test data for release_artist junction
--- INSERT INTO public.release_artist (release_id, artist_id, artist_name) VALUES
--- (12345, 12345, 'Test Artist'),
--- (23456, 34567, 'The Beatles'),
--- (34567, 23456, 'Test Artist 2'),
--- (45678, 23456, 'Test Artist 2'),
--- (56789, 56789, 'Miles Davis');
 
 -- Insert test data for release_track
 INSERT INTO public.release_track (id, release_id, sequence, title, duration) VALUES
@@ -1581,12 +1574,3 @@ INSERT INTO public.release_track (id, release_id, sequence, title, duration) VAL
 (4, 34567, 1, 'Test Track 1', '4:30'),
 (5, 45678, 1, 'Test Track 2', '3:22'),
 (6, 56789, 1, 'So What', '9:22');
-
--- Insert test data for release_track_artist
--- INSERT INTO public.release_track_artist (release_id, track_id, artist_id, artist_name) VALUES
--- (12345, 1, 12345, 'Test Artist'),
--- (23456, 1, 34567, 'The Beatles'),
--- (23456, 2, 34567, 'The Beatles'),
--- (34567, 1, 23456, 'Test Artist 2'),
--- (45678, 1, 23456, 'Test Artist 2'),
--- (56789, 1, 56789, 'Miles Davis');
