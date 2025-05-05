@@ -3,7 +3,7 @@ name: Run CI/CD
 on:
   push:
     branches: [main, ci-cd]
-  pull:
+  pull_request:
     branches: [main, ci-cd]
   workflow_dispatch:
     inputs:
