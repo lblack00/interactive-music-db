@@ -92,7 +92,7 @@ jobs:
           docker buildx build \
             --platform linux/amd64,linux/arm64 \
             --tag discogs-app-backend:latest \
-            --output type=docker,dest=docker-images/backend-image.tar \
+            --output type=oci,dest=docker-images/backend-image.tar \
             ./server
         working-directory: .
       - name: Upload Docker image artifact
