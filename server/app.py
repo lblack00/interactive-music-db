@@ -71,7 +71,7 @@ consumer_secret = "UFlGrCViqSkoBNfRTGZyUfmpTGNbFbMM"
 user_agent = "PassTheAux/1.0"
 token_file = "discogs_auth.json"
 
-authenticate_discogs_API = True
+authenticate_discogs_API = False
 discogs_client_instance = None
 cache = Cache(app, config={'CACHE_TYPE': 'simple'})
 
