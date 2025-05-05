@@ -1,22 +1,21 @@
 # This file was written by Lucas Black
 import unittest
-from unittest.mock import patch
+from unittest.mock import patch, MagicMock
 from app import app
+from release import release
 
-class TestRelease(unittest.TestCase):
+class TestReleaseIntegrationAPI(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        release.set_db_for_testing()
+
     def setUp(self):
-        """Set up the test client before each test."""
         self.app = app.test_client()
         self.app.testing = True
 
-    @patch('app.release.get_release')
-    def test_get_release_success(self, mock_release):
+    def test_get_release_success(self):
         release_id = 12345
 
-        # essentially, patch allows use to set return value of get_release() here
-        mock_release.return_value = [{"id": release_id, "title": "Test Release"}]
-
-        # make get request to release
         response = self.app.get(f'/release/?release_id={release_id}')
         data = response.get_json()
 
@@ -28,11 +27,8 @@ class TestRelease(unittest.TestCase):
         self.assertEqual(data["payload"]["release"][0]["title"], "Test Release")
         self.assertEqual(data["payload"]["release"][0]["id"], release_id)
 
-    @patch('app.release.get_release')
-    def test_get_release_not_found(self, mock_release):
+    def test_get_release_not_found(self):
         release_id = -1
-
-        mock_release.return_value = []
 
         response = self.app.get(f'/release/?release_id={release_id}')
         data = response.get_json()
@@ -41,8 +37,7 @@ class TestRelease(unittest.TestCase):
         self.assertIn("error", data)
         self.assertEqual(data["error"], "Release not found")
 
-    @patch('app.release.get_release')
-    def test_get_release_invalid_id(self, mock_release):
+    def test_get_release_invalid_id(self):
         response = self.app.get('/release/?release_id=abc')
         data = response.get_json()
 
@@ -50,8 +45,7 @@ class TestRelease(unittest.TestCase):
         self.assertIn("error", data)
         self.assertEqual(data["error"], "Invalid release_id format")
 
-    @patch('app.release.get_release')
-    def test_get_release_missing_id(self, mock_release):
+    def test_get_release_missing_id(self):
         response = self.app.get('/release/')
         data = response.get_json()
 
@@ -70,6 +64,41 @@ class TestRelease(unittest.TestCase):
 
         self.assertEqual(response.status_code, 500)
         self.assertIn("error", data)
+
+    def test_get_release_image_success(self):
+        mock_release = MagicMock()
+        mock_release.images = [{'uri': 'http://example.com/image1.jpg'}, {'uri': 'http://example.com/image2.jpg'}]
+        
+        mock_client = MagicMock()
+        mock_client.release.return_value = mock_release
+        
+        result = release.get_discogs_api_release(123, True, mock_client)
+        
+        mock_client.release.assert_called_with(123)
+        
+        self.assertEqual(result, {
+            "images": [{'uri': 'http://example.com/image1.jpg'}, {'uri': 'http://example.com/image2.jpg'}]
+        })
+
+    def test_get_release_image_no_images(self):
+        mock_release = MagicMock()
+        mock_release.images = []
+        
+        mock_client = MagicMock()
+        mock_client.release.return_value = mock_release
+        
+        result = release.get_discogs_api_release(123, True, mock_client)
+        
+        self.assertEqual(result, {"images": []})
+
+    def test_get_release_image_exception(self):
+        mock_client = MagicMock()
+        mock_client.release.side_effect = Exception("API Error")
+        
+        with patch('builtins.print') as mock_print:
+            result = release.get_discogs_api_release(123, True, mock_client)
+            mock_print.assert_called_with("Error retrieving release: API Error")
+            self.assertIsNone(result)
 
 if __name__ == '__main__':
     unittest.main()

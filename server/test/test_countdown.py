@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 from app import app
 import json
 
-class CountdownTests(unittest.TestCase):
+class TestCountdown(unittest.TestCase):
     def setUp(self):
         self.app = app.test_client()
         self.app.testing = True

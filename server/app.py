@@ -19,6 +19,13 @@ from datetime import timedelta, datetime
 from flask_cors import cross_origin
 from functools import wraps
 from PIL import Image
+from db_utils import db_utils
+from forum import forum
+from release import release
+from master import master
+from artist import artist
+from users import users
+from search import search
 
 app = Flask(__name__)
 app.secret_key = os.urandom(16)
@@ -38,7 +45,7 @@ app.config['MAIL_USE_TLS'] = True
 app.config['MAIL_USERNAME'] = 'jax.395629@gmail.com'  
 app.config['MAIL_PASSWORD'] = 'enddzwbchwjiyzev'     # Set by us
 mail = Mail(app)
-CHECK_EMAIL_VERIFICATION = True
+CHECK_EMAIL_VERIFICATION = False
 
 # JWT Configuration
 app.config["JWT_SECRET_KEY"] = "your-secret-key"  # Change this to a secure secret key
@@ -116,628 +123,6 @@ def authenticate_discogs():
         print("Unable to authenticate.")
         sys.exit(1)
 
-# Class for handling DB connections and operations with psycopg
-class db_utils:
-    def __init__(self, dbname, user):
-        self.dbname = dbname
-        self.user = user
-
-    def read_data(self, query="", query_params=()):
-        if not isinstance(query_params, tuple):
-            query_params = (query_params,)
-
-        conn = psycopg.Connection.connect("dbname=%s user=%s" % (self.dbname, self.user),
-            row_factory=psycopg.rows.dict_row)
-
-        results = []
-        with conn.cursor() as cur:
-            # could add a database logger here
-            cur.execute(query, query_params)
-            results = cur.fetchall()
-
-        conn.close()
-
-        return results
-
-    def mutate_data(self, query="", query_params=()):
-        if not isinstance(query_params, tuple):
-            query_params = (query_params,)
-
-        conn = psycopg.Connection.connect("dbname=%s user=%s" % (self.dbname, self.user))
-
-        try:
-            with conn.cursor() as cur:
-                cur.execute(query, query_params)
-                if cur.description:  # Check if the query returns data
-                    result = cur.fetchall()  # Get any returned data
-                else:
-                    result = None
-            conn.commit()  # Commit the transaction
-            return result
-        except Exception as e:
-            print(f"Database error: {e}")
-            conn.rollback()  # Rollback on error
-            raise e
-        finally:
-            conn.close()
-
-# Class for building SQL release queries and handing them to database connection
-class release:
-    db = db_utils(dbname='discogs_db', user='postgres')
-
-    @staticmethod
-    def get_discogs_api_release(release_id):
-        if discogs_client_instance is None:
-            print("Discogs client not initialized!")
-            return None
-
-        try:
-            release = discogs_client_instance.release(release_id)
-            images = [{'uri': img['uri']} for img in release.images] if release.images else []
-            return {"images": images}
-        except Exception as e:
-            print(f"Error retrieving release: {e}")
-            return None
-
-    # def get_track_credits(track_id):
-    @staticmethod
-    def get_all_versions_of_master(master_id):
-        query = "SELECT * FROM release WHERE master_id=%s;"
-
-        return release.db.read_data(query, (master_id,))
-
-    @staticmethod
-    def get_release(release_id):
-        # todo: need to sanitize SQL input from a user
-        query = "SELECT * FROM release WHERE id=%s;"
-
-        return release.db.read_data(query, (release_id,))
-
-    @staticmethod
-    def get_release_tracklist(release_id):
-        # todo: need to sanitize SQL input from a user
-        query = "SELECT * FROM release_track WHERE release_id=%s;"
-
-        return release.db.read_data(query, (release_id,))
-
-    @staticmethod
-    def get_release_genre(release_id):
-        query = "SELECT * FROM release_genre WHERE release_id=%s;"
-
-        return release.db.read_data(query, (release_id,))
-
-    @staticmethod
-    def get_release_style(release_id):
-        query = "SELECT * FROM release_style WHERE release_id=%s;"
-
-        return release.db.read_data(query, (release_id,))
-
-    @staticmethod
-    def get_release_label(release_id):
-        query = "SELECT * FROM release_label WHERE release_id=%s;"
-
-        return release.db.read_data(query, (release_id,))
-
-    @staticmethod
-    def get_release_artist(release_id):
-        query = "SELECT * FROM release_artist WHERE release_id=%s;"
-
-        return release.db.read_data(query, (release_id,))
-
-    @staticmethod
-    def get_release_track_artist(release_id):
-        query = "SELECT * FROM release_track_artist WHERE release_id=%s;"
-
-        return release.db.read_data(query, (release_id,))
-
-    @staticmethod
-    def get_release_format(release_id):
-        query = "SELECT * FROM release_format WHERE release_id=%s;"
-
-        return release.db.read_data(query, (release_id,))
-
-    @staticmethod
-    def get_release_identifier(release_id):
-        query = "SELECT * FROM release_identifier WHERE release_id=%s;"
-
-        return release.db.read_data(query, (release_id,))
-
-    @staticmethod
-    def get_release_video(release_id):
-        query = "SELECT * FROM release_video WHERE release_id=%s;"
-
-        return release.db.read_data(query, (release_id,))
-
-    @staticmethod
-    def get_release_company(release_id):
-        query = "SELECT * FROM release_company WHERE release_id=%s;"
-
-        return release.db.read_data(query, (release_id,))
-
-    @staticmethod
-    def get_release_image(release_id):
-        query = "SELECT * FROM release_image WHERE release_id=%s;"
-
-        return release.db.read_data(query, (release_id,))
-
-class master:
-    db = db_utils(dbname='discogs_db', user='postgres')
-
-    @staticmethod
-    def get_discogs_api_master(master_id):
-        if discogs_client_instance is None:
-            print("Discogs client not initialized!")
-            return None
-
-        try:
-            master = discogs_client_instance.master(master_id)
-            images = [{'uri': img['uri']} for img in master.images] if master.images else []
-            return {"images": images}
-        except Exception as e:
-            print(f"Error retrieving master: {e}")
-            return None
-
-    @staticmethod
-    def get_all_master_releases_from_artist(artist_name):
-        query = """SELECT * FROM master_artist
-                   JOIN master ON master.id=master_artist.master_id
-                   WHERE artist_name='%s';"""
-
-        return master.db.read_data(query, (artist_name,))
-
-    @staticmethod
-    def get_master(master_id):
-        query = "SELECT * FROM master WHERE id=%s;"
-
-        return master.db.read_data(query, (master_id,))
-
-    @staticmethod
-    def get_master_artist(master_id):
-        query = "SELECT * FROM master_artist WHERE master_id=%s;"
-
-        return master.db.read_data(query, (master_id,))
-
-    @staticmethod
-    def get_master_video(master_id):
-        query = "SELECT * FROM master_video WHERE master_id=%s;"
-
-        return master.db.read_data(query, (master_id,))
-
-    @staticmethod
-    def get_master_genre(master_id):
-        query = "SELECT * FROM master_genre WHERE master_id=%s;"
-
-        return master.db.read_data(query, (master_id,))
-
-    @staticmethod
-    def get_master_style(master_id):
-        query = "SELECT * FROM master_style WHERE master_id=%s;"
-
-        return master.db.read_data(query, (master_id,))
-
-    @staticmethod
-    def get_master_release_id(master_id):
-        query = "SELECT main_release FROM master WHERE id=%s;"
-
-        return master.db.read_data(query, (master_id,))
-
-class artist:
-    db = db_utils(dbname='discogs_db', user='postgres')
-
-    @staticmethod
-    def get_discogs_api_artist(artist_id):
-        if discogs_client_instance is None:
-            print("Discogs client not initialized!")
-            return None
-
-        try:
-            artist = discogs_client_instance.artist(artist_id)
-            images = [{'uri': img['uri']} for img in artist.images] if artist.images else []
-            return {"images": images}
-        except Exception as e:
-            print(f"Error retrieving artist: {e}")
-            return None
-
-    @staticmethod
-    def get_artist(artist_id):
-        query = """
-        SELECT a.* 
-        FROM artist a
-        WHERE a.id = %s;
-        """
-
-        # I changed this quere so that it would work and no other function seemed to use this. I put the
-        # previous query down below. AFAICT artist_image has basically nothing there - Matthew Stenvold
-        #
-        #    SELECT a.*, ai.uri as image_uri 
-        #    FROM artist a
-        #    LEFT JOIN artist_image ai ON a.id = ai.artist_id
-        #    WHERE a.id=%s;
-        
-
-        return artist.db.read_data(query, (artist_id))
-
-    @staticmethod
-    def get_discography(artist_id):
-        query = """SELECT * FROM master_artist
-                   JOIN master ON master.id=master_artist.master_id
-                   WHERE artist_id=%s LIMIT 20;"""
-
-        return artist.db.read_data(query, (artist_id))
-
-class search:
-    db = db_utils(dbname='discogs_db', user='postgres')
-
-    @staticmethod
-    def search_artist(artist_name):
-        query = "SELECT * FROM artist WHERE LOWER(name) LIKE %s ORDER BY name LIMIT 25;"
-        return search.db.read_data(query, ("%" + artist_name.lower() + "%",))
-
-    @staticmethod
-    def search_release(release_name):
-        query = """
-            SELECT 
-                m.id, 
-                m.title, 
-                COALESCE(m.year::text, 'N/A') as year,
-                COALESCE(
-                    (
-                        SELECT STRING_AGG(a.name, ', ')
-                        FROM master_artist ma
-                        JOIN artist a ON ma.artist_id = a.id
-                        WHERE ma.master_id = m.id
-                    ),
-                    'Unknown Artist'
-                ) as artists
-            FROM master m
-            WHERE LOWER(m.title) LIKE %s
-            ORDER BY m.year DESC
-            LIMIT 25;
-        """
-        return search.db.read_data(query, ("%" + release_name.lower() + "%",))
-
-    @staticmethod
-    def search_track(track_name):
-        query = """
-            SELECT 
-                rt.title as title,           -- track title
-                rt.release_id,
-                r.title as release_title,    -- album title
-                COALESCE(r.released, 'N/A') as released  -- year with fallback
-            FROM release_track rt
-            JOIN release r ON rt.release_id = r.id
-            WHERE LOWER(rt.title) LIKE %s
-            GROUP BY rt.title, rt.release_id, r.title, r.released
-            LIMIT 25;
-        """
-        return search.db.read_data(query, ("%" + track_name.lower() + "%",))
-
-class users:
-    db = db_utils(dbname='users_db', user='postgres')
-
-    @staticmethod
-    def create_new_user(username, email, hashpass):
-        query = """INSERT INTO users (username, email, password)
-                   VALUES (%s, %s, %s)
-                   RETURNING id;"""
-
-        result = users.db.mutate_data(query, (username, email, hashpass))
-        return result[0][0] if result else None
-
-    @staticmethod
-    def check_username_exists(username):
-        query = "SELECT * FROM users WHERE username=%s;"
-
-        return len(users.db.read_data(query, (username,))) > 0
-
-    @staticmethod
-    def validate_user(username, password):
-        query = "SELECT * FROM users WHERE username=%s;"
-        res = users.db.read_data(query, (username,))[0]['password']
-
-        return check_password_hash(res, password)
-
-    @staticmethod
-    def get_user(username):
-        query = "SELECT * FROM users WHERE username=%s;"
-
-        return users.db.read_data(query, (username,))
-
-    @staticmethod
-    def is_user_admin(username):
-        query = "SELECT is_admin FROM users WHERE username=%s;"
-
-        return users.db.read_data(query, (username,))[0]['is_admin']
-
-class forum:
-    db = db_utils(dbname='users_db', user='postgres')
-
-    @staticmethod
-    def get_all_threads(category=None, limit=20, offset=0):
-        if category:
-            query = """
-                SELECT 
-                    t.id, 
-                    t.title, 
-                    t.category,
-                    t.created_at, 
-                    t.updated_at,
-                    t.is_edited,
-                    u.id as author_id, 
-                    u.username as author_name,
-                        (SELECT COUNT(*)
-                         FROM forum_replies r
-                         WHERE r.thread_id = t.id AND r.is_deleted = FALSE) as reply_count
-                FROM forum_threads t
-                JOIN users u ON t.user_id = u.id
-                WHERE t.is_deleted = FALSE AND t.category = %s
-                ORDER BY t.created_at DESC
-                LIMIT %s OFFSET %s;
-            """
-            return forum.db.read_data(query, (category, limit, offset))
-        else:
-            query = """
-                SELECT 
-                    t.id, 
-                    t.title,
-                    t.category,
-                    t.created_at, 
-                    t.updated_at,
-                    t.is_edited,
-                    u.id as author_id, 
-                    u.username as author_name,
-                        (SELECT COUNT(*)
-                         FROM forum_replies r
-                         WHERE r.thread_id = t.id AND r.is_deleted = FALSE) as reply_count
-                FROM forum_threads t
-                JOIN users u ON t.user_id = u.id
-                WHERE t.is_deleted = FALSE
-                ORDER BY t.created_at DESC
-                LIMIT %s OFFSET %s;
-            """
-            return forum.db.read_data(query, (limit, offset))
-    
-    @staticmethod
-    def get_categories():
-        query = """
-            SELECT DISTINCT category FROM forum_threads
-            WHERE is_deleted = FALSE
-            ORDER BY category;
-        """
-        return forum.db.read_data(query)
-    
-    @staticmethod
-    def create_thread(user_id, title, content, category):
-        query = """
-            INSERT INTO forum_threads (user_id, title, content, category, created_at)
-            VALUES (%s, %s, %s, %s, CURRENT_TIMESTAMP)
-            RETURNING id;
-        """
-        return forum.db.mutate_data(query, (user_id, title, content, category))
-    
-    @staticmethod
-    def get_thread(thread_id):
-        query = """
-            SELECT 
-                t.id,
-                t.title,
-                t.content,
-                t.category,
-                t.created_at,
-                t.updated_at,
-                t.is_deleted,
-                u.id as author_id, 
-                u.username as author_name
-            FROM forum_threads t
-            JOIN users u ON t.user_id = u.id
-            WHERE t.id = %s AND t.is_deleted = FALSE;
-        """
-        return forum.db.read_data(query, (thread_id,))
-    
-    @staticmethod
-    def get_thread_replies(thread_id):
-        query = """
-            SELECT 
-                r.id, 
-                r.content, 
-                r.created_at, 
-                r.updated_at,
-                r.parent_id,
-                r.is_edited,
-                r.is_deleted,
-                u.id as author_id, 
-                u.username as author_name
-            FROM forum_replies r
-            JOIN users u ON r.user_id = u.id
-            WHERE r.thread_id = %s
-            ORDER BY r.created_at ASC;
-        """
-        return forum.db.read_data(query, (thread_id,))
-
-    @staticmethod
-    def get_thread_reply(reply_id):
-        query = """
-            SELECT
-                r.id,
-                r.thread_id,
-                r.content,
-                r.parent_id,
-                r.created_at,
-                r.is_edited,
-                r.is_deleted,
-                u.username as author_name,
-                t.title
-            FROM forum_replies r
-            JOIN users u
-            ON r.user_id = u.id
-            JOIN forum_threads t
-            ON r.thread_id = t.id
-            WHERE r.id = %s;
-        """
-        return forum.db.read_data(query, (reply_id,))
-    
-    @staticmethod
-    def add_reply(user_id, thread_id, content, parent_id=None):
-        query = """
-            INSERT INTO forum_replies (user_id, thread_id, content, parent_id, created_at)
-            VALUES (%s, %s, %s, %s, CURRENT_TIMESTAMP)
-            RETURNING id;
-        """
-        return forum.db.mutate_data(query, (user_id, thread_id, content, parent_id))
-    
-    @staticmethod
-    def update_reply(reply_id, content, user_id):
-        query = """
-            UPDATE forum_replies
-            SET content = %s, updated_at = CURRENT_TIMESTAMP, is_edited = TRUE
-            WHERE id = %s AND user_id = %s
-            RETURNING id;
-        """
-        return forum.db.mutate_data(query, (content, reply_id, user_id))
-    
-    @staticmethod
-    def delete_reply(reply_id, user_id):
-        query = """
-            UPDATE forum_replies
-            SET is_deleted = TRUE, updated_at = CURRENT_TIMESTAMP
-            WHERE id = %s AND user_id = %s
-            RETURNING id;
-        """
-        return forum.db.mutate_data(query, (reply_id, user_id))
-    
-    @staticmethod
-    def update_thread(thread_id, content, user_id):
-        query = """
-            UPDATE forum_threads
-            SET content = %s, updated_at = CURRENT_TIMESTAMP, is_edited = TRUE
-            WHERE id = %s AND user_id = %s
-            RETURNING id;
-        """
-        return forum.db.mutate_data(query, (content, thread_id, user_id))
-    
-    @staticmethod
-    def delete_thread(thread_id, user_id):
-        query = """
-            UPDATE forum_threads
-            SET is_deleted = TRUE, updated_at = CURRENT_TIMESTAMP
-            WHERE id = %s AND user_id = %s
-            RETURNING id;
-        """
-        return forum.db.mutate_data(query, (thread_id, user_id))
-    
-    @staticmethod
-    def report_item(user_id, item_type, item_id, reason):
-        query = """
-            INSERT INTO forum_reports (user_id, item_type, item_id, reason, created_at)
-            VALUES (%s, %s, %s, %s, CURRENT_TIMESTAMP)
-            RETURNING id;
-        """
-        return forum.db.mutate_data(query, (user_id, item_type, item_id, reason))
-
-    @staticmethod
-    def get_reports():
-        query = """
-            SELECT *
-            FROM forum_reports
-            ORDER BY created_at DESC;
-        """
-        reports = forum.db.read_data(query)
-        content = []
-        for report in reports:
-            if report['item_type'] == 'thread':
-                thread_query = """
-                    SELECT 
-                        t.id,
-                        t.title,
-                        t.content,
-                        t.category,
-                        t.created_at,
-                        t.updated_at,
-                        t.is_deleted,
-                        u.id as author_id, 
-                        u.username as author_name
-                    FROM forum_threads t
-                    JOIN users u ON t.user_id = u.id
-                    WHERE t.id = %s;
-                """
-                thread_content = forum.db.read_data(thread_query, (report['item_id'],))
-                if thread_content and len(thread_content) > 0:
-                    content.append(thread_content[0])
-            else:
-                reply_content = forum.get_thread_reply(report['item_id'])
-                if reply_content and len(reply_content) > 0:
-                    content.append(reply_content[0])
-
-        return {
-            'reports': reports,
-            'content': content
-        }
-
-    @staticmethod
-    def resolve_report(report_id, is_resolved):
-        query = """
-            UPDATE forum_reports fr
-            SET resolved = %s, resolved_by = %s, resolved_at = CURRENT_TIMESTAMP
-            WHERE id = %s;
-        """
-        return forum.db.mutate_data(query, (is_resolved, session['user']['id'], report_id))
-
-    @staticmethod
-    def delete_report_reply(reply_id, is_deleted):
-        query = """
-            UPDATE forum_replies
-            SET is_deleted = %s
-            WHERE id = %s;
-        """
-        return forum.db.mutate_data(query, (is_deleted, reply_id))
-
-    @staticmethod
-    def delete_report_thread(thread_id, is_deleted):
-        query = """
-            UPDATE forum_threads
-            SET is_deleted = %s
-            WHERE id = %s;
-        """
-        return forum.db.mutate_data(query, (is_deleted, thread_id))
-
-    @staticmethod
-    def add_reference(item_type, item_id, reference_type, reference_id, name):
-        query = """
-            INSERT INTO forum_references(item_type, item_id, reference_type, reference_id, created_at, name)
-            VALUES(%s, %s, %s, %s, CURRENT_TIMESTAMP, %s)
-            RETURNING id;
-        """
-        return forum.db.mutate_data(query, (item_type, item_id, reference_type, reference_id, name))
-
-    @staticmethod
-    def delete_reference(_id, reference_id):
-        query = """
-            DELETE FROM forum_references fr
-            WHERE id=%s AND reference_id=%s
-            RETURNING id;
-        """
-        return forum.db.mutate_data(query, (_id, reference_id))
-
-    @staticmethod
-    def get_thread_references(item_id):
-        query = """
-            SELECT
-                *
-            FROM forum_references fr
-            WHERE fr.item_id = %s;
-        """
-        return forum.db.read_data(query, (item_id))
-
-    @staticmethod
-    def get_reference(reference_id):
-        query = """
-            SELECT
-                *
-            FROM forum_references fr
-            WHERE fr.reference_id = %s;
-        """
-        return forum.db.read_data(query, (reference_id))
-
 @app.route('/release/', methods=['GET'])
 def get_release():
     try:
@@ -767,7 +152,9 @@ def get_release():
                 'identifier': release.get_release_identifier(release_id),
                 'video': release.get_release_video(release_id),
                 'company': release.get_release_company(release_id),
-                'api_data': release.get_discogs_api_release(release_id),
+                'api_data': release.get_discogs_api_release(release_id, \
+                                                            authenticate_discogs_API, \
+                                                            discogs_client_instance),
             }
         }
 
@@ -778,13 +165,28 @@ def get_release():
 
 @app.route('/master/', methods=['GET'])
 def get_master():
-    if request.method == 'GET':
-        master_id = int(request.args.get('master_id'))
-        main_release_id = master.get_master_release_id(master_id)[0]['main_release']
+    try:
+        master_id = request.args.get('master_id')
+        if not master_id:
+            return jsonify({"error": "Missing master_id parameter"}), 400
+
+        try:
+            master_id = int(master_id)
+        except ValueError:
+            return jsonify({"error": "Invalid master_id format"}), 400
+
+        try:
+            main_release_id = master.get_master_release_id(master_id)[0]['main_release']
+        except IndexError:
+            return jsonify({"error": "Master not found"}), 404
+
+        master_data = master.get_master(master_id)
+        if not master_data:
+            return jsonify({"error": "Master not found"}), 404
 
         data = {
             'payload': {
-                'master': master.get_master(master_id),
+                'master': master_data,
                 'artist': master.get_master_artist(master_id),
                 'genre': master.get_master_genre(master_id),
                 'style': master.get_master_style(master_id),
@@ -799,39 +201,67 @@ def get_master():
                 'identifer': release.get_release_identifier(main_release_id),
                 'company': release.get_release_company(main_release_id),
                 'release': release.get_release(main_release_id),
-                'api_data': master.get_discogs_api_master(master_id),
+                'api_data': master.get_discogs_api_master(master_id, \
+                                                          authenticate_discogs_API,
+                                                          discogs_client_instance),
             }
         }
 
-        return jsonify(data)
+        return jsonify(data), 200
+    except Exception as e:
+        return jsonify({"error": "Internal server error", "message": str(e)}), 500
 
 @app.route('/artist', methods=['GET'])
 def get_artist():
-    if request.method == 'GET':
-        artist_id = int(request.args.get('artist_id'))
+    try:
+        artist_id = request.args.get('artist_id')
+        if not artist_id:
+            return jsonify({"error": "Missing artist_id parameter"}), 400
+
+        try:
+            artist_id = int(artist_id)
+        except ValueError:
+            return jsonify({"error": "Invalid artist_id format"}), 400
+
+        artist_data = artist.get_artist(artist_id)
+        if not artist_data:
+            return jsonify({"error": "Artist not found"}), 404
 
         # todo: can add more here
         data = {
             'payload': {
                 'artist': artist.get_artist(artist_id),
                 'discography': artist.get_discography(artist_id),
-                'api_data': artist.get_discogs_api_artist(artist_id)
+                'api_data': artist.get_discogs_api_artist(artist_id, \
+                                                          authenticate_discogs_API, \
+                                                          discogs_client_instance)
             }
         }
 
-        return jsonify(data)
+        return jsonify(data), 200
+    except Exception as e:
+        return jsonify({"error": "Internal server error", "message": str(e)}), 500
 
 @app.route('/artist-discography-images', methods=['GET'])
 @cache.cached(timeout=3600, query_string=True)
 def get_artist_discography_images():
-    if request.method == 'GET':
-        artist_id = int(request.args.get('artist_id'))
+    try:
+        artist_id = request.args.get('artist_id')
+        if not artist_id:
+            return jsonify({"error": "Missing artist_id parameter"}), 400
+
+        try:
+            artist_id = int(artist_id)
+        except ValueError:
+            return jsonify({"error": "Invalid artist_id format"}), 400
 
         discography = artist.get_discography(artist_id)
         discography_image_uris = {}
         for m in discography:
             image_uris = None
-            discogs_response = master.get_discogs_api_master(m["id"])
+            discogs_response = master.get_discogs_api_master(m["id"], \
+                                                             authenticate_discogs_API, \
+                                                             discogs_client_instance)
 
             if discogs_response and 'images' in discogs_response:
                 image_uris = discogs_response['images']
@@ -844,13 +274,17 @@ def get_artist_discography_images():
         }
 
         return jsonify(data)
+    except Exception as e:
+        return jsonify({"error": "Internal server error", "message": str(e)}), 500
 
 @app.route('/get-master-image', methods=['GET'])
 @cache.cached(timeout=3600, query_string=True)
 def get_master_image():
     if request.method == 'GET':
         master_id = int(request.args.get('master_id'))
-        image_uri = master.get_discogs_api_master(master_id)
+        image_uri = master.get_discogs_api_master(master_id, \
+                                                  authenticate_discogs_API, \
+                                                  discogs_client_instance)
 
         if image_uri and len(image_uri) > 0 and 'images' in image_uri:
             data = {
@@ -863,8 +297,16 @@ def get_master_image():
 @app.route('/get-artist-image', methods=['GET'])
 @cache.cached(timeout=3600, query_string=True)
 def get_artist_image():
-    if request.method == 'GET':
-        artist_id = int(request.args.get('artist_id'))
+    try:
+        if 'artist_id' not in request.args:
+            return jsonify({"error": "Missing artist_id parameter"}), 400
+
+        artist_id = request.args.get('artist_id')
+        try:
+            artist_id = int(artist_id)
+        except ValueError:
+            return jsonify({"error": "Invalid artist_id format"}), 400
+
         image_uri = artist.get_discogs_api_artist(artist_id)
 
         if image_uri and len(image_uri) > 0 and 'images' in image_uri:
@@ -872,8 +314,10 @@ def get_artist_image():
                 'payload': image_uri['images'][0]['uri']
             }
 
-            return jsonify(data)
-        return jsonify({})
+            return jsonify(data), 200
+        return jsonify({}), 400
+    except Exception as e:
+        return jsonify({"error": "Internal server error", "message": str(e)}), 500
 
 # Login limitting methods
 def get_client_identifier():
@@ -2144,7 +1588,7 @@ def delete_forum_report_thread(thread_id):
 @app.route('/forum/reference', methods=['POST'])
 def add_forum_reference():
     if 'user' not in session:
-        return jsonify({'error': 'Not logged in'})
+        return jsonify({'error': 'Not logged in'}), 401
 
     if request.method == 'POST':
         data = request.get_json()
@@ -2155,7 +1599,7 @@ def add_forum_reference():
         reference_name = data.get('reference_name')
 
         if not all([item_type, item_id, reference_type, reference_id]):
-            return jsonify({'error'})
+            return jsonify({'error': 'Missing fields'}), 400
 
         if item_type == 'thread':
             thread = forum.get_thread(item_id)
@@ -2179,7 +1623,7 @@ def add_forum_reference():
 @app.route('/forum/delete-reference/<int:reference_id>', methods=['DELETE'])
 def delete_forum_reference(reference_id):
     if 'user' not in session:
-        return jsonify({'error': 'Not logged in'})
+        return jsonify({'error': 'Not logged in'}), 401
 
     if request.method == 'DELETE':
         reference = forum.get_reference(reference_id)
@@ -2411,8 +1855,16 @@ def get_artist_stats():
                         popular_track = track
             
             # Get images for the releases
-            recent_image = master.get_discogs_api_master(recent_release['id']) if recent_release else None
-            popular_image = master.get_discogs_api_master(popular_album['id']) if popular_album else None
+            recent_image = None
+            popular_image = None
+            if recent_release:
+                recent_image = master.get_discogs_api_master(recent_release['id'], \
+                                                             authenticate_discogs_API, \
+                                                             discogs_client_instance)
+            if popular_album:
+                popular_image = master.get_discogs_api_master(popular_album['id'], \
+                                                              authenticate_discogs_API, \
+                                                              discogs_client_instance)
             
             response = {
                 'top_album': {
