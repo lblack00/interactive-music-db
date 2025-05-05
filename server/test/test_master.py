@@ -14,18 +14,18 @@ class TestMasterIntegrationAPI(unittest.TestCase):
         self.app.testing = True
 
     def test_get_master_success(self):
-        master_id = 12345
+        release_id = 12345
 
-        response = self.app.get(f'/master/?master_id={master_id}')
+        response = self.app.get(f'/release/?release_id={release_id}')
         data = response.get_json()
 
         self.assertEqual(response.status_code, 200)
         self.assertIn("payload", data)
-        self.assertIn("master", data["payload"])
-        self.assertIsInstance(data["payload"]["master"], list)
-        self.assertGreater(len(data["payload"]["master"]), 0)
-        self.assertEqual(data["payload"]["master"][0]["title"], "Test Master")
-        self.assertEqual(data["payload"]["master"][0]["id"], master_id)
+        self.assertIn("release", data["payload"])
+        self.assertIsInstance(data["payload"]["release"], list)
+        self.assertGreater(len(data["payload"]["release"]), 0)
+        self.assertEqual(data["payload"]["release"][0]["title"], "Test Release")
+        self.assertEqual(data["payload"]["release"][0]["id"], release_id)
 
     def test_get_master_not_found(self):
         master_id = -1
