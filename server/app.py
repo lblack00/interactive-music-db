@@ -209,6 +209,7 @@ def get_master():
 
         return jsonify(data), 200
     except Exception as e:
+        print(e)
         return jsonify({"error": "Internal server error", "message": str(e)}), 500
 
 @app.route('/artist', methods=['GET'])
