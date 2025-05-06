@@ -1,7 +1,8 @@
 from db_utils import db_utils
 
 class forum:
-    db = db_utils(dbname='users_db', user='postgres')
+    db = db_utils(dbname='test_users_db', user='postgres', 
+                  password='postgres', host='users_db', port='5434')
 
     @staticmethod
     def get_all_threads(category=None, limit=20, offset=0):

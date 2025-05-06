@@ -14,6 +14,7 @@ class db_utils:
             query_params = (query_params,)
 
         if self.password is not None:
+            print(f"Connecting to DB at host={self.host}, port={self.port}, dbname={self.dbname}")
             conn = psycopg.Connection.connect(dbname=self.dbname,
                                               user=self.user,
                                               password=self.password,

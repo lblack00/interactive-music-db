@@ -1,7 +1,8 @@
 from db_utils import db_utils
 
 class master:
-    db = db_utils(dbname='discogs_db', user='postgres')
+    db = db_utils(dbname='test_discogs_db', user='postgres', 
+                  password='postgres', host='discogs_db', port='5432')
 
     @staticmethod
     def get_discogs_api_master(master_id, authenticate_discogs_API, discogs_client_instance):

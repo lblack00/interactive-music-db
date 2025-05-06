@@ -1,7 +1,8 @@
 from db_utils import db_utils
 
 class search:
-    db = db_utils(dbname='discogs_db', user='postgres')
+    db = db_utils(dbname='test_discogs_db', user='postgres', 
+                  password='postgres', host='discogs_db', port='5433')
 
     @staticmethod
     def search_artist(artist_name):

@@ -92,10 +92,8 @@ jobs:
           docker buildx build \
             --platform linux/amd64,linux/arm64 \
             --tag discogs-app-backend-test:latest \
-            --build-arg FLASK_ENV=testing \
-            --build-arg PORT=5001 \
             --output type=oci,dest=docker-images/backend-test-image.tar \
-            ./server
+            server/
       - name: Upload test Docker image artifact
         uses: actions/upload-artifact@v4
         with:
@@ -103,48 +101,56 @@ jobs:
           path: docker-images/backend-test-image.tar
       - name: Create test deployment package
         run: |
-          mkdir -p test-deployment
+          mkdir -p test-deployment test-deployment/test
           cp -R docker-images/backend-test-image.tar test-deployment/
+          cp server/test/init_users.sql test-deployment/test/init_users.sql
+          cp server/test/init_discogs.sql test-deployment/test/init_discogs.sql
           
           # Create a test docker-compose.yml
           cat > test-deployment/docker-compose.yml << EOL
           version: '3.8'
-          
           services:
-            backend:
-              image: discogs-app-backend-test:latest
-              environment:
-                - FLASK_ENV=testing
-                - FLASK_APP=app.py
-                - DATABASE_URL_DISCOGS=postgresql://postgres:postgres@discogs_db:5432/test_discogs_db
-                - DATABASE_URL_USERS=postgresql://postgres:postgres@users_db:5432/test_users_db
-              ports:
-                - "5001:5001"
-              depends_on:
-                - discogs_db
-                - users_db
-          
             discogs_db:
               image: postgres:13
               environment:
-                - POSTGRES_DB=test_discogs_db
-                - POSTGRES_USER=postgres
-                - POSTGRES_PASSWORD=postgres
+                POSTGRES_DB: test_discogs_db
+                POSTGRES_USER: postgres
+                POSTGRES_PASSWORD: postgres
+              volumes:
+                - ./test/init_discogs.sql:/docker-entrypoint-initdb.d/init.sql
               ports:
                 - "5433:5432"
-              volumes:
-                - ./test/init_discogs.sql:/docker-entrypoint-initdb.d/init_discogs.sql
-          
+              healthcheck:
+                test: ["CMD-SHELL", "pg_isready -U postgres"]
+                interval: 5s
+                timeout: 5s
+                retries: 5
+
             users_db:
               image: postgres:13
               environment:
-                - POSTGRES_DB=test_users_db
-                - POSTGRES_USER=postgres
-                - POSTGRES_PASSWORD=postgres
+                POSTGRES_DB: test_users_db
+                POSTGRES_USER: postgres
+                POSTGRES_PASSWORD: postgres
+              volumes:
+                - ./test/init_users.sql:/docker-entrypoint-initdb.d/init.sql
               ports:
                 - "5434:5432"
-              volumes:
-                - ./test/init_users.sql:/docker-entrypoint-initdb.d/init_users.sql
+              healthcheck:
+                test: ["CMD", "pg_isready", "-U", "postgres"]
+                interval: 5s
+                timeout: 5s
+                retries: 5
+
+            flask_app:
+              build: .
+              ports:
+                - "5001:5001"
+              depends_on:
+                discogs_db:
+                  condition: service_healthy
+                users_db:
+                  condition: service_healthy
           EOL
           
           # Create test deployment instructions

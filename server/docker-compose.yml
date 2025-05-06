@@ -10,8 +10,13 @@ services:
       - ./test/init_discogs.sql:/docker-entrypoint-initdb.d/init.sql
     ports:
       - "5433:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
-  forum_db:
+  users_db:
     image: postgres:13
     environment:
       POSTGRES_DB: test_users_db
@@ -21,4 +26,19 @@ services:
       - ./test/init_users.sql:/docker-entrypoint-initdb.d/init.sql
     ports:
       - "5434:5432"
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  flask_app:
+    build: .
+    ports:
+      - "5001:5001"
+    depends_on:
+      discogs_db:
+        condition: service_healthy
+      users_db:
+        condition: service_healthy
 
