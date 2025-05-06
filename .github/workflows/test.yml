@@ -75,8 +75,8 @@ jobs:
           python3 -m coverage run -m unittest discover test -b
           python3 -m coverage report
 
-  build-backend:
-    name: Build Backend
+  build-test-image:
+    name: Build Test Docker Image
     needs: test
     runs-on: ubuntu-latest
     steps:
@@ -85,57 +85,41 @@ jobs:
         uses: docker/setup-qemu-action@v3
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
-      - name: Create output directory for Docker image
+      - name: Create output directory for Docker images
         run: mkdir -p docker-images
-      - name: Build and export multi-platform Docker image
+      - name: Build test Docker image
         run: |
           docker buildx build \
             --platform linux/amd64,linux/arm64 \
-            --tag discogs-app-backend:latest \
-            --output type=oci,dest=docker-images/backend-image.tar \
+            --tag discogs-app-backend-test:latest \
+            --build-arg FLASK_ENV=testing \
+            --build-arg PORT=5001 \
+            --output type=oci,dest=docker-images/backend-test-image.tar \
             ./server
-        working-directory: .
-      - name: Upload Docker image artifact
+      - name: Upload test Docker image artifact
         uses: actions/upload-artifact@v4
         with:
-          name: backend-docker-image
-          path: docker-images/backend-image.tar
-
-  deploy:
-    name: Deploy Application
-    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/ci-cd') || github.event.inputs.deploy == 'true'
-    needs: [build-backend]
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-          
-      - name: Download backend Docker image
-        uses: actions/download-artifact@v4
-        with:
-          name: backend-docker-image
-          path: dist/backend
-      
-      - name: Create release package
+          name: backend-test-docker-image
+          path: docker-images/backend-test-image.tar
+      - name: Create test deployment package
         run: |
-          mkdir -p release
-          cp -R dist/backend release/backend
-          cp server/docker-compose.yml release/
-          echo "Release created at: $(date)" > release/release_info.txt
+          mkdir -p test-deployment
+          cp -R docker-images/backend-test-image.tar test-deployment/
           
-          # Create a simplified docker-compose for deployment
-          cat > release/docker-compose.yml << EOL
+          # Create a test docker-compose.yml
+          cat > test-deployment/docker-compose.yml << EOL
           version: '3.8'
           
           services:
             backend:
-              image: discogs-app-backend:latest
+              image: discogs-app-backend-test:latest
               environment:
-                - FLASK_ENV=production
+                - FLASK_ENV=testing
                 - FLASK_APP=app.py
-                - DATABASE_URL_DISCOGS=postgresql://postgres:postgres@discogs_db:5432/discogs_db
-                - DATABASE_URL_USERS=postgresql://postgres:postgres@users_db:5432/users_db
+                - DATABASE_URL_DISCOGS=postgresql://postgres:postgres@discogs_db:5432/test_discogs_db
+                - DATABASE_URL_USERS=postgresql://postgres:postgres@users_db:5432/test_users_db
               ports:
-                - "5001:5000"
+                - "5001:5001"
               depends_on:
                 - discogs_db
                 - users_db
@@ -143,60 +127,70 @@ jobs:
             discogs_db:
               image: postgres:13
               environment:
-                - POSTGRES_DB=discogs_db
+                - POSTGRES_DB=test_discogs_db
                 - POSTGRES_USER=postgres
+                - POSTGRES_PASSWORD=postgres
               ports:
-                - "5432:5432"
+                - "5433:5432"
               volumes:
-                - discogs_data:/var/lib/postgresql/data
-                - ./server/test/init_discogs.sql:/docker-entrypoint-initdb.d/init_discogs.sql
+                - ./test/init_discogs.sql:/docker-entrypoint-initdb.d/init_discogs.sql
           
             users_db:
               image: postgres:13
               environment:
-                - POSTGRES_DB=users_db
+                - POSTGRES_DB=test_users_db
                 - POSTGRES_USER=postgres
+                - POSTGRES_PASSWORD=postgres
               ports:
-                - "5435:5432"
+                - "5434:5432"
               volumes:
-                - users_data:/var/lib/postgresql/data
-                - ./server/test/init_users.sql:/docker-entrypoint-initdb.d/init_users.sql
-          
-          volumes:
-            discogs_data:
-            users_data:
+                - ./test/init_users.sql:/docker-entrypoint-initdb.d/init_users.sql
           EOL
           
-          # Create a simple deployment README
-          cat > release/README.md << EOL
-          # Deployment Instructions
+          # Create test deployment instructions
+          cat > test-deployment/README.md << EOL
+          # Test Deployment Instructions
           
-          ## Backend and Database Deployment
+          ## Load the test Docker image:
+          \`\`\`
+          docker load < backend-test-image.tar
+          \`\`\`
           
-          1. Load the Docker image:
-             \`\`\`
-             docker load < backend/backend-image.tar
-             \`\`\`
+          ## Start the test environment:
+          \`\`\`
+          docker-compose up -d
+          \`\`\`
           
-          2. Start the backend and database services:
-             \`\`\`
-             docker-compose up -d
-             \`\`\`
-          
-          ## Configuration
-          
-          Modify the \`docker-compose.yml\` file to adjust environment variables and ports as needed.
+          ## Access the application at:
+          http://localhost:5001
           EOL
           
-          zip -r release.zip release
+          zip -r test-deployment.zip test-deployment
 
-      - name: Create GitHub Release
+      - name: Upload test deployment package
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-deployment-package
+          path: test-deployment.zip
+
+  deploy-test-release:
+    name: Deploy Test Release
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/ci-cd') || github.event.inputs.deploy_test == 'true'
+    needs: [build-test-image]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download test deployment package
+        uses: actions/download-artifact@v4
+        with:
+          name: test-deployment-package
+          
+      - name: Create GitHub Test Release
         uses: softprops/action-gh-release@v1
         with:
-          files: release.zip
-          name: Release ${{ github.run_number }} - ${{ github.sha }}
-          tag_name: v0.1.${{ github.run_number }}
+          files: test-deployment.zip
+          name: Test Release ${{ github.run_number }} - ${{ github.sha }}
+          tag_name: test-v0.1.${{ github.run_number }}
           draft: false
-          prerelease: false
+          prerelease: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
