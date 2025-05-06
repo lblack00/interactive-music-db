@@ -1,3 +1,4 @@
+# This file was written by Lucas Black
 from db_utils import db_utils
 
 # Class for building SQL release queries and handing them to database connection

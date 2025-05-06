@@ -17,9 +17,11 @@ import UserSettings from "@/components/UserSettings.vue";
 import MusicList from "@/components/MusicList.vue";
 import AdminDashboard from "../components/AdminDashboard.vue";
 
-// Release, Master, NotFound, SignUp, Login, and SearchResults were written by Lucas Black
-// Home was written by Jax Hendrickson
-// SongPage and ArtistPage were written by Matthew Stenvold
+// Forum, ForumThread, Release, Master, AristPage, NotFound, NotAuthorized,
+//   SignUp, Login, PlaylistSystem, and SearchResults were written by Lucas Black
+// VerifyEmail, ForgotPassword, ResetPassword,
+//   Home and Countdown were written by Jax Hendrickson
+// UserSettings, UserProfile, MusicList were written by Matthew Stenvold
 const router = createRouter({
 	history: createWebHistory(import.meta.env.BASE_URL),
 	routes: [

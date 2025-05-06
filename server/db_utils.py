@@ -1,3 +1,4 @@
+# This file was written by Lucas Black
 import psycopg
 
 # Class for handling DB connections and operations with psycopg

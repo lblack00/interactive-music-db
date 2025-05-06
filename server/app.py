@@ -54,7 +54,7 @@ jwt = JWTManager(app)
 # Redis for tracking logon attempts
 redis_client = redis.Redis(host="localhost", port=6379, db=0, decode_responses=True)
 
-# Login limitting
+# Login limiting
 ALLOWED_LOGIN_ATTEMPTS = 3
 LOCKOUT_DURATION = 60 * 1  # One minute time out
 
@@ -123,6 +123,7 @@ def authenticate_discogs():
         print("Unable to authenticate.")
         sys.exit(1)
 
+# Written by Lucas Black
 @app.route('/release/', methods=['GET'])
 def get_release():
     try:
@@ -163,6 +164,7 @@ def get_release():
     except Exception as e:
         return jsonify({"error": "Internal server error", "message": str(e)}), 500
 
+# Written by Lucas Black
 @app.route('/master/', methods=['GET'])
 def get_master():
     try:
@@ -212,6 +214,7 @@ def get_master():
         print(e)
         return jsonify({"error": "Internal server error", "message": str(e)}), 500
 
+# Written by Lucas Black
 @app.route('/artist', methods=['GET'])
 def get_artist():
     try:
@@ -243,6 +246,7 @@ def get_artist():
     except Exception as e:
         return jsonify({"error": "Internal server error", "message": str(e)}), 500
 
+# Written by Lucas Black
 @app.route('/artist-discography-images', methods=['GET'])
 @cache.cached(timeout=3600, query_string=True)
 def get_artist_discography_images():
@@ -278,6 +282,7 @@ def get_artist_discography_images():
     except Exception as e:
         return jsonify({"error": "Internal server error", "message": str(e)}), 500
 
+# Written by Lucas Black
 @app.route('/get-master-image', methods=['GET'])
 @cache.cached(timeout=3600, query_string=True)
 def get_master_image():
@@ -295,6 +300,7 @@ def get_master_image():
             return jsonify(data)
         return jsonify({})
 
+# Written by Lucas Black
 @app.route('/get-artist-image', methods=['GET'])
 @cache.cached(timeout=3600, query_string=True)
 def get_artist_image():
@@ -322,7 +328,7 @@ def get_artist_image():
     except Exception as e:
         return jsonify({"error": "Internal server error", "message": str(e)}), 500
 
-# Login limitting methods
+# Login limiting methods written by Lucas Black
 def get_client_identifier():
     return request.remote_addr
 
@@ -380,6 +386,7 @@ def log_security_event(event_type, username, ip_address, details=None):
     # ** Send alerts to some monitoring system and alert adminstrators
     print(f"SECURITY EVENT: {json.dumps(event)}")
 
+# Written by Jax Hendrickson
 @app.route('/signup', methods=['GET', 'POST', 'OPTIONS'])
 def user_signup():
     if request.method == 'POST':
@@ -462,6 +469,8 @@ def user_signup():
 
     return jsonify({}), 200
 
+# Login limiting written by Lucas Black
+# Email verification written by Jax Hendrickson
 @app.route('/login', methods=['POST'])
 def user_login():
     print("1. Login attempt started")
@@ -543,6 +552,7 @@ def user_login():
         traceback.print_exc()
         return jsonify({'error': 'Login failed'}), 500
 
+# Written by Lucas Black
 @app.route('/logout', methods=['POST'])
 def user_logout():
     username = session.get('user', {}).get('username')
@@ -557,6 +567,7 @@ def user_logout():
 
     return response, 200
 
+# Written by Lucas Black
 @app.route('/check-session', methods=['GET'])
 def user_check_session():
     print("Session contents:", session)  # Debug print
@@ -567,6 +578,7 @@ def user_check_session():
         }), 200
     return jsonify({'logged_in': False}), 200
 
+# Written by Matthew Stenvold
 @app.route('/is-session-user', methods=['GET'])
 def is_session_user():
     if 'user' not in session:
@@ -587,6 +599,7 @@ def is_session_user():
 
     return jsonify({'match': match, 'logged_in': True}), 200
 
+# Written by Lucas Black
 @app.route('/search', methods=['POST'])
 def user_search():
     datum = json.loads(request.data)
@@ -605,6 +618,7 @@ def user_search():
 
     return jsonify({'results':[]}), 200
 
+# Written by Lucas Black
 @app.route('/search/reference', methods=['GET'])
 def forum_search_reference():
     query = request.args.get('query', '')
@@ -767,6 +781,7 @@ def rate_item():
         print(f"Error saving rating: {e}")
         return jsonify({'error': 'Server error'}), 500
 
+# Written by Jax Hendrickson
 @app.route('/upcoming-releases', methods=['GET'])
 @cross_origin(supports_credentials=True)
 def get_upcoming_releases():
@@ -792,6 +807,7 @@ def get_upcoming_releases():
         print(f"Error fetching releases: {e}")
         return jsonify({'error': str(e)}), 500
 
+# Written by Lucas Black
 @app.route('/update-spotify-tokens', methods=['POST'])
 def save_spotify_tokens():
     if 'user' not in session:
@@ -818,6 +834,7 @@ def save_spotify_tokens():
 
     return jsonify({"success": "Save Spotify OAuth tokens"}), 200
 
+# Written by Lucas Black
 @app.route('/get-spotify-status', methods=['GET'])
 @cross_origin(supports_credentials=True)
 def get_spotify_status():
@@ -825,6 +842,7 @@ def get_spotify_status():
         return jsonify({"connected": session['user']['spotify']['connected']}), 200
     return jsonify({"error": "Error getting Spotify status"}), 204
 
+# Written by Lucas Black
 @app.route('/get-spotify-playlists', methods=['GET'])
 @cross_origin(supports_credentials=True)
 def get_spotify_playlists():
@@ -1231,7 +1249,6 @@ def get_recent_user_activity():
         print(f"Error fetching recent activity: {e}")
         return jsonify({'error': 'Server error'}), 500
 
-
 # Written by Lucas Black
 @app.route('/forum/threads', methods=['GET'])
 def get_all_threads():
@@ -1325,6 +1342,7 @@ def create_forum_thread():
         return jsonify({"error": "Internal server error", "message": str(e)}), 500
 
 # Written by Lucas Black
+# Profile image added by Matthew Stenvold
 @app.route('/forum/thread/<int:thread_id>', methods=['GET'])
 def get_forum_thread(thread_id):
     try:
@@ -1380,6 +1398,7 @@ def get_forum_thread(thread_id):
 
 
 # Written by Lucas Black
+# Profile image added by Matthew Stenvold
 @app.route('/forum/thread/<int:thread_id>/reply', methods=['POST'])
 def add_thread_reply(thread_id):
     if 'user' not in session:
@@ -1397,7 +1416,7 @@ def add_thread_reply(thread_id):
         result = forum.add_reply(user_id, thread_id, content, parent_id)
         
         if result:
-            reply_id = result[0][0]  # Extract ID from result
+            reply_id = result[0][0]
 
             replies = forum.get_thread_replies(thread_id)
             new_reply = next((r for r in replies if r['id'] == reply_id), None)
@@ -1516,6 +1535,7 @@ def report_forum_item():
         print(f"Error submitting report: {e}")
         return jsonify({"error": "Internal server error", "message": str(e)}), 500
 
+# Written by Lucas Black
 def admin_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
@@ -1528,6 +1548,7 @@ def admin_required(f):
         return f(*args, **kwargs)
     return decorated
 
+# Written by Lucas Black
 @app.route('/admin/reports', methods=['GET'])
 @admin_required
 def get_forum_reports():
@@ -1540,6 +1561,7 @@ def get_forum_reports():
         print(f"Error fetching reports: {e}")
         return jsonify({"error": "Internal server error", "message": str(e)}), 500
 
+# Written by Lucas Black
 @app.route('/admin/reports/resolve/<int:report_id>', methods=['PUT'])
 @admin_required
 def resolve_forum_report(report_id):
@@ -1556,6 +1578,7 @@ def resolve_forum_report(report_id):
         print(f"Error fetching reports: {e}")
         return jsonify({"error": "Internal server error", "message": str(e)}), 500
 
+# Written by Lucas Black
 @app.route('/admin/reports/delete-reply/<int:reply_id>', methods=['PUT'])
 @admin_required
 def delete_forum_report_reply(reply_id):
@@ -1572,6 +1595,7 @@ def delete_forum_report_reply(reply_id):
         print(f"Error fetching reports: {e}")
         return jsonify({"error": "Internal server error", "message": str(e)}), 500
 
+# Written by Lucas Black
 @app.route('/admin/reports/delete-thread/<int:thread_id>', methods=['PUT'])
 @admin_required
 def delete_forum_report_thread(thread_id):
@@ -1588,6 +1612,7 @@ def delete_forum_report_thread(thread_id):
         print(f"Error fetching reports: {e}")
         return jsonify({"error": "Internal server error", "message": str(e)}), 500
 
+# Written by Lucas Black
 @app.route('/forum/reference', methods=['POST'])
 def add_forum_reference():
     if 'user' not in session:
@@ -1623,6 +1648,7 @@ def add_forum_reference():
             print(f'Error adding reference: {e}')
             return jsonify({'error': 'Internal server error'}), 500
 
+# Written by Lucas Black
 @app.route('/forum/delete-reference/<int:reference_id>', methods=['DELETE'])
 def delete_forum_reference(reference_id):
     if 'user' not in session:
@@ -1647,7 +1673,8 @@ def delete_forum_reference(reference_id):
         except Exception as e:
             print(f'Error deleting reference: {e}')
             return jsonify({'error': 'Internal server error'}), 500
-    
+
+# Written by Jax Hendrickson
 @app.route('/verify-email', methods=['GET'])
 def verify_email():
     token = request.args.get('token')
@@ -1675,6 +1702,7 @@ def verify_email():
         print(f"Verification error: {e}")
         return jsonify({'error': 'Verification failed'}), 500
     
+# Written by Jax Hendrickson
 @app.route('/request-password-reset', methods=['POST'])
 def request_password_reset():
     data = request.get_json()
@@ -1731,6 +1759,7 @@ def request_password_reset():
         print(f"Password reset error: {str(e)}")
         return jsonify({'error': 'Failed to process reset request'}), 500
     
+# Written by Jax Hendrickson
 @app.route('/reset-password', methods=['POST'])
 def reset_password():
     data = request.get_json()
@@ -1773,6 +1802,7 @@ def reset_password():
         print(f"Password reset error: {str(e)}")
         return jsonify({'error': 'Failed to reset password'}), 500
 
+# Written by Chantelle Cabanilla
 @app.route('/user-top-genres', methods=['GET'])
 def get_user_top_genres():
     user_id = request.args.get('user_id')
@@ -1822,7 +1852,8 @@ def get_user_top_genres():
     except Exception as e:
         print(f"Error fetching top genres: {e}")
         return jsonify({'error': 'Server error'}), 500
-    
+
+# Written by Chantelle Cabanilla
 @app.route('/get-artist-stats', methods=['GET'])
 def get_artist_stats():
     if request.method == 'GET':
