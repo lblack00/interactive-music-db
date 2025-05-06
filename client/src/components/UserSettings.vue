@@ -1,3 +1,6 @@
+<!-- User settings added by Matthew Stenvold -->
+<!-- Spotify Integration added by Lucas Black -->
+<!-- Accessibility settings and UI added by Chantelle Cabanilla -->
 <template>
 	<div
 		class="grid-container"

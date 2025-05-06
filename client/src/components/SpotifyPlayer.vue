@@ -1,3 +1,4 @@
+<!-- This file was written by Chantelle Cabanilla -->
 <template>
 	<v-card
 		v-if="spotifyStore.currentPlaylistId || showAllPlaylists"

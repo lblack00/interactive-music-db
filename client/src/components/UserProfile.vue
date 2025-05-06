@@ -1,3 +1,4 @@
+<!-- This file was written by Chantelle Cabanilla -->
 <template>
 	<div class="grid-container">
 		<header role="navigation">
