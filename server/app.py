@@ -1,3 +1,4 @@
+# This is a comment
 # This file was written by Lucas Black
 import discogs_client
 import json
