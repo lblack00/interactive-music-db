@@ -143,7 +143,7 @@ jobs:
                 retries: 5
 
             flask_app:
-              build: .
+              image: discogs-app-backend-test:latest
               ports:
                 - "5001:5001"
               depends_on:
