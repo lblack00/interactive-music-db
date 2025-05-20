@@ -1,43 +1,103 @@
 # Pass the Aux
 
-Here’s what to download:
+## Features
 
-So first you’ll need Python3, pip, postgres and nodejs/npm
+- Users can search for favorite artists and songs, post and view user-generated reviews, and explore accurate details about songs and albums, such as title, duration, writing credits, label, and country of origin
+- The platform features up-to-date album release countdowns and text-based forums, where forum content can be moderated through an admin dashboard
+- Spotify playlists can be loaded and played via OAuth
 
-If you have a Mac, you can use homebrew to install via CLI:
+## Dependencies
 
-`brew install python3` (pip3 comes with Python3, and if you already have python3 - no need to install)
-`brew install postgresql@13`
-`brew install libpq`
-`brew install openssl@3` (requirement for Postgres that worked for me)
-`brew install node`
+Before setting up the project, ensure you have the following installed:
 
-Note: in order for any Postgres database to run (at least on Mac) you have to have the PostgreSQL service running. You can do this by running: `brew services start postgresql@13` and it’ll start a background process that allows the backend to communicate with Postgres databases
+- [Python 3.6+](https://www.python.org/downloads/)
+- [pip](https://pip.pypa.io/en/stable/installation/)
+- [PostgreSQL 13](https://www.postgresql.org/download/)
+- [Node.js and npm](https://nodejs.org/en/download/)
 
-If you use Windows, WSL is recommended and should be fairly similar just with `sudo apt-get install` instead.
+## macOS Users
 
-You can use `git clone https://github.com/lblack00/interactive-music-db.git` to download the repository via CLI
+If you're using macOS, you can install the prerequisites using Homebrew:
+```
+brew install python3
+brew install postgresql@13
+brew install libpq
+brew install openssl@3
+brew install node
+```
+Note: To start the PostgreSQL service:
+```
+brew services start postgresql@13
+```
 
-After downloading the project repository, change the directory of wherever you downloaded it in a terminal.
+## Windows Users
 
-I recommend creating a virtual environment in the root folder of the project directory with Python3.
-Like `python3 -m venv .env` and then activate the virtual environment by doing `source .env/bin/activate` (it keeps the pip packages installed local to the virtual environment when active)
+For Windows users, it's recommended to use the [Windows Subsystem for Linux (WSL)](https://docs.microsoft.com/en-us/windows/wsl/install) and install the dependencies with the native package manager.
 
-Then download the required python packages using: `pip3 install -r requirements.txt` and that should be it for the backend dependencies
+## Installation
+### Backend Setup
 
-To install the frontend dependencies:
-`cd client`
-`npm install`
+1. Clone the repository:
+```
+git clone https://github.com/lblack00/interactive-music-db.git
+cd interactive-music-db
+```
 
-For running the project files, you’ll need two terminal tabs or windows.
+2. Create and activate a virtual environment:
+```
+python3 -m venv .env
+source .env/bin/activate
+```
 
-How to run the backend:
-`cd <path-to-project-directory>/server`
-`source ../.env/bin/activate` (activate virtual environment if you made one)
-`python3 app.py`
+3. Install Python dependencies:
+```
+pip install -r requirements.txt
+```
 
-How to run the frontend:
-`cd <path-to-project-directory>/client`
-`npm run dev`
+### Frontend Setup
 
-Open “http://localhost:5173/release/367084” and you should see a release page for Nirvana - Nevermind
+1. Navigate to the `client` directory:
+```
+cd client
+```
+
+2. Install Node.js dependencies:
+```
+npm install
+```
+
+## Running the Application
+
+You'll need two terminal windows or tabs to run the backend and frontend concurrently.
+### Start the Backend
+
+1. Activate the virtual environment (if not already active):
+```
+source ../.env/bin/activate
+```
+
+Navigate to the server directory and run the Flask application:
+```
+cd ../server
+python3 app.py
+```
+
+### Start the Frontend
+
+2. Navigate to the client directory:
+```
+cd ../client
+```
+
+3. Start the React development server:
+```
+npm run dev
+```
+
+Once both servers are running, open your browser and navigate to [http://localhost:5173/release/367084](http://localhost:5173/release/367084) to view the release page for Nirvana's Nevermind album.
+
+## Data Import
+
+To populate the database with music data, you'll need to import data from Discogs using the [discogs-xml2db](https://github.com/philipmat/discogs-xml2db) tool.
+
+Schemas to create the remaining tables can be found in `server/tests/init_dicogs.sql` and `server/tests/init_users.sql`
